@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Aluno": {
+      "title": "Aluno",
+      "description": "Perfil do aluno com dados pessoais e configurações.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "email_verified": { "type": "boolean" }
+      },
+      "required": ["id", "nome", "email"]
+    },
+    "Prescricao": {
+      "title": "Prescricao",
+      "description": "Uma prescrição de treino (ex: Treino A).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "totalSessoes": { "type": "number" },
+        "ativo": { "type": "boolean" },
+        "exercicios": { "type": "array" }
+      },
+      "required": ["nome", "totalSessoes"]
+    },
+    "LogTreino": {
+      "title": "LogTreino",
+      "description": "Registro de um treino executado.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "prescricaoId": { "type": "string" },
+        "dataHora": { "type": "object", "description": "Firestore Timestamp" },
+        "duracaoMinutos": { "type": "number" },
+        "calorias": { "type": "number" },
+        "cargas": { "type": "array", "description": "Lista de exercícios e suas cargas" },
+        "concluido": { "type": "boolean" }
+      },
+      "required": ["prescricaoId", "dataHora", "concluido"]
+    }
+  },
+  "firestore": {
+    "/alunos/{alunoId}": {
+      "schema": "Aluno",
+      "description": "Documento principal do aluno."
+    },
+    "/alunos/{alunoId}/prescricoes/{prescricaoId}": {
+      "schema": "Prescricao",
+      "description": "Subcoleção de prescrições de treino."
+    },
+    "/alunos/{alunoId}/logsTreino/{logId}": {
+      "schema": "LogTreino",
+      "description": "Subcoleção de registros de treinos executados."
+    }
+  }
+}

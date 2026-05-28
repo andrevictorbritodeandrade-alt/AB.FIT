@@ -1,0 +1,11 @@
+{
+  "name": "Remix: OFICIAL 🏋️‍♀️​🦵​ABFIT💪​✏️​",
+  "description": "An AI-powered exercise prescription and biomechanics analysis application for fitness professionals.",
+  "requestFramePermissions": [
+    "geolocation",
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

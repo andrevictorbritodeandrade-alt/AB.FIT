@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "andrevictorbritodeandrade@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidStudent(data) {
+      return data.nome is string && data.nome.size() > 0 && data.nome.size() < 100 &&
+             data.email is string && data.email.size() > 0 && data.email.size() < 100;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /alunos/{alunoId} {
+      allow read: if isAuthenticated(); // Allow all authenticated users to read for the coach/dashboard logic
+      allow write: if isAuthenticated(); // Allow for profile updates and data management
+      
+      match /logsTreino/{logId} {
+        allow read, write: if isAuthenticated();
+      }
+      
+      match /prescricoes/{prescId} {
+        allow read, write: if isAuthenticated();
+      }
+      
+      match /biometria/{bioId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+
+    match /artifacts/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+
+    match /exercise_database/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
