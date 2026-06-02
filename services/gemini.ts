@@ -33,8 +33,9 @@ export async function analyzeExerciseAndGenerateImage(exerciseName: string, stud
     - Se HBC: Haltere (Dumbbell).
     - Se HBL: Barra Longa Olímpica.
     - Se "alternado": Execução assimétrica.
-    
-    Forneça JSON puro: {"description": "descrição curta", "benefits": "3 benefícios principais", "visualPrompt": "Detailed 4k gym prompt for imagen of a black athlete"}`;
+    - SE FOR SUPINO: A prescrição é obrigatoriamente deitada em um banco (Supine position on a bench) com o equipamento indicado. NUNCA gere uma imagem de flexão (push-up). NUNCA gere exercício com o corpo no chão.
+
+    Forneça JSON puro: {"description": "descrição curta", "benefits": "3 benefícios principais", "visualPrompt": "Professional 4k photorealistic gym photography of a black male athlete correctly performing the exercise '${exerciseName}'. If the exercise involves a bench (banco) or press (supino), it MUST show the athlete lying on the flat bench with the correct equipment (dumbbells/barbell). ABSOLUTELY NO push-up poses or bodyweight exercises allowed. Focus on the bench press movement."}`;
 
     const brainResultRaw = await callAI({
       model: MODEL_TEXT,

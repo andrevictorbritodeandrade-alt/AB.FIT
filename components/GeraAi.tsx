@@ -91,6 +91,23 @@ const CATEGORY_ORDER = [
   "Uniarticulares - Unilateral"
 ];
 
+const detectMuscleGroup = (name: string): string => {
+  const n = name.toUpperCase();
+  if (n.includes("SUPINO") || n.includes("CRUCIFIXO") || n.includes("PECK DECK") || n.includes("PEITORAL") || n.includes("VOADOR") || n.includes("FLEXÃO DE COTOVELO")) return "PEITORAL";
+  if (n.includes("DESENVOLVIMENTO") || n.includes("OMBROS") || n.includes("ELEVAÇÃO LATERAL") || n.includes("ELEVAÇÃO FRONTAL") || n.includes("ABDUÇÃO DE OMBRO") || n.includes("OMBRO")) return "OMBROS";
+  if (n.includes("PUXADA") || n.includes("REMADA") || n.includes("BARRA FIXA") || n.includes("DORSAL") || n.includes("COSTAS") || n.includes("PULL DOWN") || n.includes("PULL UP")) return "DORSAIS";
+  if (n.includes("TRÍCEPS") || n.includes("TRICEPS") || n.includes("COICE") || n.includes("CORDA") || n.includes("TESTA")) return "TRÍCEPS";
+  if (n.includes("BÍCEPS") || n.includes("BICEPS") || n.includes("SCOTT") || n.includes("ROSCA")) return "BÍCEPS";
+  if (n.includes("AGACHAMENTO") || n.includes("LEG PRESS") || n.includes("HACK") || n.includes("CADEIRA EXTENSORA") || n.includes("AFUNDO") || n.includes("BULGARO") || n.includes("BÚLGARO") || n.includes("PASSADA") || n.includes("AVANÇO") || n.includes("SISSY")) return "QUADRÍCEPS";
+  if (n.includes("ADUTORA") || n.includes("ADUÇÃO")) return "ADUTORES";
+  if (n.includes("ELEVACAO PELVICA") || n.includes("ELEVAÇÃO PÉLVICA") || n.includes("ELEVAÇÃO DE QUADRIL") || n.includes("HIP THRUST") || n.includes("GLÚTEO") || n.includes("GLUTEO") || n.includes("TERRA") || n.includes("ABDUTORA") || n.includes("ABDUÇÃO DE QUADRIL") || n.includes("QUADRIL") || n.includes("GLUTEOS")) return "GLÚTEOS";
+  if (n.includes("FLEXORA") || n.includes("ISQUIOTIBIAIS") || n.includes("STIFF") || n.includes("FLEXÃO DE JOELHO") || n.includes("POSTERIOR")) return "POSTERIORES DE COXA";
+  if (n.includes("PANTURRILHA") || n.includes("GÊMEOS") || n.includes("PLANTAR")) return "PANTURRILHA";
+  if (n.includes("LOMBAR") || n.includes("EXTENSÃO DE TRONCO") || n.includes("PERDIGUEIRO") || n.includes("MATA-BORRÃO") || n.includes("PARAVERTEBRAIS")) return "PARAVERTEBRAIS";
+  if (n.includes("ABDOMINAL") || n.includes("CRUNCH") || n.includes("INFRA") || n.includes("SUPRA") || n.includes("PRANCHA") || n.includes("CORE")) return "ABDOMINAIS";
+  return "PEITORAL"; // Default to Peitoral if nothing detected
+};
+
 export default function GeraAi({ onBack, initialExerciseName }: { onBack?: () => void, initialExerciseName?: string }) {
   const [selectedMuscle, setSelectedMuscle] = useState<string>("PEITORAL");
   const [searchQuery, setSearchQuery] = useState(initialExerciseName || "");
@@ -121,13 +138,40 @@ export default function GeraAi({ onBack, initialExerciseName }: { onBack?: () =>
 
   useEffect(() => {
     if (initialExerciseName) {
+        let found = false;
+        
+        // 1. Try exact match (case-insensitive)
         for (const [muscle, exercises] of Object.entries(EXERCISE_CATALOG)) {
-            const matchedEx = exercises.find(ex => ex.toLowerCase() === initialExerciseName.toLowerCase() || ex.toLowerCase().includes(initialExerciseName.toLowerCase()));
+            const matchedEx = exercises.find(ex => ex.toLowerCase().trim() === initialExerciseName.toLowerCase().trim());
             if (matchedEx) {
                 setSelectedMuscle(muscle);
                 handleExerciseClick(matchedEx, muscle);
+                found = true;
                 break;
             }
+        }
+        
+        // 2. Try bidirectional partial matching
+        if (!found) {
+            for (const [muscle, exercises] of Object.entries(EXERCISE_CATALOG)) {
+                const matchedEx = exercises.find(ex => 
+                    ex.toLowerCase().includes(initialExerciseName.toLowerCase()) || 
+                    initialExerciseName.toLowerCase().includes(ex.toLowerCase())
+                );
+                if (matchedEx) {
+                    setSelectedMuscle(muscle);
+                    handleExerciseClick(matchedEx, muscle);
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        // 3. Custom exercise absolute fallback: classify muscle and trigger handleExerciseClick directly
+        if (!found) {
+            const detectedMuscle = detectMuscleGroup(initialExerciseName);
+            setSelectedMuscle(detectedMuscle);
+            handleExerciseClick(initialExerciseName, detectedMuscle);
         }
     }
   }, [initialExerciseName]);

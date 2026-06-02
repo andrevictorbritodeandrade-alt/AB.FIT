@@ -170,6 +170,67 @@ function LoginScreen({ onLogin, error, students }: { onLogin: (val: string) => v
 
 import GeraAi from './components/GeraAi';
 
+export const applyDynamicPeriodization = (u: Student): Student => {
+  if (u.id === 'fixed-andre' && u.periodization?.startDate) {
+     const totalWks = u.periodization.phaseTitle?.includes('16 Semanas') ? 16 : 12;
+     const curWk = Math.min(totalWks, Math.max(1, Math.ceil((Date.now() - new Date(u.periodization.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000))));
+     
+     if (u.workouts) {
+        const newWorkouts = u.workouts.map(w => {
+          const isTreinoA = w.title.toLowerCase().includes('treino a');
+          let supCount = 0;
+          const newExercises = w.exercises.map((ex) => {
+             const nameUpper = ex.name.toUpperCase();
+             const isIso = nameUpper.includes('ISOMETRIA');
+             const isPrancha = nameUpper.includes('PRANCHA');
+             const isPerna = nameUpper.includes('EXTENSORA') || nameUpper.includes('LEG PRESS') || nameUpper.includes('AGACHAMENTO') || nameUpper.includes('STIFF') || nameUpper.includes('EXTENSÃO DE QUADRIL') || nameUpper.includes('MESA FLEXORA') || nameUpper.includes('CADEIRA ABDUTORA');
+             const isSuperior = !isIso && !isPrancha && !isPerna;
+             
+             if (isSuperior) supCount++;
+             const isFirstTwoSup = isSuperior && supCount <= 2;
+
+             let finalReps = ex.reps;
+             let finalSets = ex.sets;
+             let finalRest = ex.rest;
+
+             if (isIso || isPrancha) {
+                 finalSets = isPrancha ? '3' : (nameUpper.includes('EXTENSORA') ? '5' : '3');
+                 finalReps = '30-45s';
+                 finalRest = '60s';
+             } else {
+                 if (curWk <= 2) {
+                     finalSets = '3'; finalReps = '12/10/8'; finalRest = '45s';
+                 } else if (curWk >= 3 && curWk <= 5) {
+                     finalSets = '3'; finalReps = '8-10'; finalRest = '60s';
+                 } else if (curWk >= 6 && curWk <= 7) {
+                     finalSets = '3'; finalReps = '10-12'; finalRest = '90s (Bi-set)';
+                 } else if (curWk >= 8 && curWk <= 9) {
+                     finalSets = '3'; 
+                     finalReps = isFirstTwoSup ? 'FALHA (Drop-set 2x)' : '10';
+                     finalRest = '90s';
+                 } else if (curWk === 10) {
+                     finalSets = '3'; finalReps = '12-15'; finalRest = '60s';
+                 } else if (curWk >= 11 && curWk <= 12) {
+                     finalSets = '3'; finalReps = isSuperior ? '6-8 (Explosiva)' : '10-12'; finalRest = isSuperior ? '90s' : '60s';
+                 } else if (curWk >= 13 && curWk <= 14) {
+                     finalSets = '3'; finalReps = '8-10 + 1 Iso(30s)'; finalRest = '75s';
+                 } else if (curWk >= 15) {
+                     finalSets = isSuperior ? '2(15) + 1(5RM)' : '3';
+                     finalReps = isSuperior ? '15 / 5RM' : '12';
+                     finalRest = '60s';
+                 }
+             }
+             
+             return { ...ex, reps: finalReps, sets: finalSets, rest: finalRest };
+          });
+          return { ...w, exercises: newExercises };
+        });
+        return { ...u, workouts: newWorkouts };
+     }
+  }
+  return u;
+};
+
 export default function App() {
   const [view, setView] = useState('LOGIN');
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
@@ -1129,15 +1190,17 @@ export default function App() {
           periodization: {
             id: 'per-andre-01',
             titulo: 'Periodização Científica',
-            startDate: '2026-04-30T10:00:00Z',
+            startDate: '2026-06-01T00:00:00.000Z',
             type: 'STRENGTH',
-            phaseTitle: 'Mesociclo de Recomposição Corporal, Mitigação de Sarcopenia Pós-Bariátrica e Estabilização Patelofemoral - 12 Semanas',
-            generalStrategy: "O perfil do aluno Andre apresenta alta complexidade fisiologica devido ao status pos-cirurgia bariatrica, demandando foco absoluto na mitigacao da sarcopenia (retencao de massa magra) e estimulo a sintese proteica para suportar o deficit calorico continuo rumo aos 87kg. A instabilidade patelar cronica (4 luxacoes) exige prescricao biomecanica restritiva, priorizando o fortalecimento do Vasto Medial Obliquo (VMO) e gluteo medio em cadeia cinetica fechada para realinhamento patelofemoral. O espectro autista (TEA) combinado ao TDAH sugere a necessidade de previsibilidade macroestrutural ambiental para conforto cognitivo, aliada a microvariacoes nos estimulos (gamificacao de carga e metodo) para engajamento dopaminergico continuo.",
+            phaseTitle: 'Mesociclo de Recomposição Corporal, Mitigação de Sarcopenia Pós-Bariátrica e Estabilização Patelofemoral - 16 Semanas',
+            generalStrategy: "O perfil do aluno Andre apresenta alta complexidade fisiologica devido ao status pos-cirurgia bariatrica, demandando foco absoluto na mitigacao da sarcopenia (retencao de massa magra) e estimulo a sintese proteica para suportar o deficit calorico continuo rumo aos 87kg. A instabilidade patelar cronica (4 luxacoes) exige prescricao biomecanica restritiva, priorizando o fortalecimento do Vasto Medial Obliquo (VMO) e gluteo medio em cadeia cinetica fechada para realinhamento patelofemoral. O espectro autista (TEA) combinado ao TDAH sugere a necessidade de previsibilidade macroestrutural ambiental para conforto cognitivo, aliada a microvariacoes nos estimulos (gamificacao de carga e metodo) para engajamento dopaminergico continuo. Dieta: Déficit de 300-500 kcal, 1.8-2.2 g/kg prot.",
             clinicalSafety: [
               "Biomecanica Patelar: Substituir Cadeira Extensora tradicional com arco completo de movimento por variacoes em cadeia cinetica fechada (Leg Press com pes altos, Box Squat, Step-ups controlados) para reduzir forcas de cisalhamento. Fortalecimento de abdutores e rotadores externos do quadril e fundamental para evitar o valgo dinamico.",
               "Fisiologia Pos-Bariatrica: Risco elevado de perda de densidade ossea, malabsorcao e sarcopenia. A hidratacao intra-treino deve ocorrer em pequenos goles constantes (100ml a cada 15 min) para evitar distensao gastrica ou dumping. Garantir com a equipe de nutricao aporte proteico peri-treino adequado.",
               "Neurodivergencia (TEA e TDAH): Manter a ordem geral dos exercicios estritamente identica para evitar ansiedade antecipatoria (TEA), mas estipular quebra de micro-recordes (PRs de carga, repeticao ou qualidade de movimento) para garantir o pico de dopamina necessario ao foco (TDAH). Considerar o uso de fones com cancelamento de ruido para isolamento sensorial no ambiente de academia.",
-              "Recuperacao e Sono: O aluno necessita de higiene do sono rigorosa, pois o deficit calorico somado ao choque neuromuscular exigira otimizacao do GH e testosterona liberados predominantemente nas fases de sono profundo, cruciais para a manutencao da massa magra pos-bariatrica."
+              "Recuperacao e Sono: O aluno necessita de higiene do sono rigorosa, pois o deficit calorico somado ao choque neuromuscular exigira otimizacao do GH e testosterona liberados predominantemente nas fases de sono profundo, cruciais para a manutencao da massa magra pos-bariatrica.",
+              "Script Rápido - Joelho: Dor >3/10 -> parou, diminui amplitude ou troca pra ponte/abdutora.",
+              "Script Rápido - TDAH/TEA: Ansiedade alta = treina 2 séries ou vai embora; treinar curto > não treinar."
             ],
             bioInsight: {
               context: "Referências Científicas: Schoenfeld, B. J. (2010). The mechanisms of muscle hypertrophy and their application to resistance training. Journal of Strength and Conditioning Research, 24(10), 2857-2872. | Escamilla, R. F., et al. (2009). Patellofemoral joint kinematics and kinetics during common lower extremity exercises. Sports Medicine, 39(1), 15-37. | Mechanick, J. I., et al. (2020). Clinical Practice Guidelines for the Perioperative Nutrition, Metabolic, and Nonsurgical Support of Patients Undergoing Bariatric Procedures. Surgery for Obesity and Related Diseases, 16(2), 175-247. | Ratey, J. J. (2008). Spark: The Revolutionary New Science of Exercise and the Brain. Little, Brown Spark. (Mecanismos neurobiologicos do exercicio no TDAH e TEA).",
@@ -1156,39 +1219,75 @@ export default function App() {
             microciclos: [
               {
                 id: 'm1',
-                semanas: '1-3',
-                titulo: 'ADAPTAÇÃO ANATÔMICA, ESTABILIDADE ARTICULAR E CONTROLE MOTOR',
-                metodo: 'Tempo Training (Cadência 4010)',
-                intensidade: '60-65% 1RM | RIR 3-4 | PSE 6',
-                volume: '10-12 series/musculo/semana | 12-15 repeticoes',
-                descricao: 'Obs: Foco na fase excentrica para adaptacao tendinea. Evitar flexao de joelho alem de 90 graus. Nos exercicios de extensao de joelho, utilizar apenas isometria nos 15 graus finais (terminal knee extension) para ativação específica de VMO sem cisalhamento excessivo. Ambiente de treino deve ser previsivel.'
+                semanas: '1-2',
+                titulo: 'RESISTÊNCIA DE FORÇA BÁSICA',
+                metodo: 'Pirâmide decrescente',
+                intensidade: 'Cadência: 2-0-2-1 / Desc: 75s',
+                volume: '3 x 12/10/8 (todos)',
+                descricao: 'Aumentando a carga a cada série. 1ª série 1-2 reps reserva. 2ª mais pesada. 3ª quase falha.'
               },
               {
                 id: 'm2',
-                semanas: '4-6',
-                titulo: 'HIPERTROFIA MIOFIBRILAR E DENSIDADE DE TREINO',
-                metodo: 'Superseries Agonista-Antagonista',
-                intensidade: '70-75% 1RM | RIR 2 | PSE 7-8',
-                volume: '12-14 series/musculo/semana | 8-12 repeticoes',
-                descricao: 'Obs: Progressao de carga linear. Uso de superseries para otimizar a sessao de 60 min, mantendo a frequencia cardiaca elevada (potencializando oxidacao lipidica). Fornecer feedbacks claros e objetivos (TEA). Monitorar fadiga abrupta e sinais de hipoglicemia reativa comum em pacientes bariatricos.'
+                semanas: '3-5',
+                titulo: 'DENSIDADE E CONTROLE MOTOR',
+                metodo: 'Séries retas + cadência lenta',
+                intensidade: 'Cadência: 4-0-2-0 / Desc: 60s',
+                volume: '3 x 8-10',
+                descricao: 'Intensificar hipertrofia sem aumentar séries, preservando joelho. Progressão se completar 3x10 com facilidade.'
               },
               {
                 id: 'm3',
-                semanas: '7-9',
-                titulo: 'FORÇA SUBMÁXIMA E RESISTÊNCIA METABÓLICA',
-                metodo: 'Cluster Sets (Superiores) e Circuito Fechado (Inferiores)',
-                intensidade: '80-85% 1RM | RIR 1-2 | PSE 8-9',
-                volume: '14-16 series/musculo/semana | 4-6 repeticoes (Cluster) e 15-20 (Circuito)',
-                descricao: 'Obs: Uso de Agachamento em Caixa (Box Squat) para garantir bloqueio biomecanico de amplitude e confianca na estabilidade patelar. O metodo Cluster Set permite o uso de cargas mais altas mantendo alta qualidade de execucao, fracionando a serie para modular o deficit de atencao (TDAH) atraves de pequenas metas sequenciais.'
+                semanas: '6-7',
+                titulo: 'HIPERTROFIA: BI-SET ANTAGONISTA (SUPERIORES)',
+                metodo: 'Bi-set (Superiores) / Séries retas (Pernas/Core)',
+                intensidade: 'Cadência: 2-0-2-0 / Desc: 90s',
+                volume: 'Sup: 3x10-12 / Pernas: 3x10-12',
+                descricao: 'Supino+Crucifixo sem descanso (90s após). Pernas séries retas. Se joelho doer, manter pernas nas séries retas sem alteração.'
               },
               {
                 id: 'm4',
-                semanas: '10-12',
-                titulo: 'CHOQUE METABÓLICO E MAXIMIZADO DE EPOC',
-                metodo: 'Rest-Pause',
-                intensidade: '75-80% 1RM | RIR 0-1 | PSE 9-10',
-                volume: '16-18 series/semana (Sem. 10-11) e 10 series (Sem. 12)',
-                descricao: 'Obs: Elevacao do estresse metabolico para maximizar o Consumo Excessivo de Oxigenio Pos-Exercicio (EPOC). Semana 12 servira como Tapering (reducao de 40% do volume) para dissipar fadiga acumulada e consolidar a recomposicao corporal. Atencao redobrada a tecnica sob fadiga para protecao patelofemoral.'
+                semanas: '8-9',
+                titulo: 'HIPERTROFIA: DROP SET MECÂNICO (SUPERIORES)',
+                metodo: 'Drop set nos 2 primeiros de superiores',
+                intensidade: 'Cadência: 2-0-2-0 / Desc: 90s',
+                volume: 'Sup: 3x + drop / Pernas: 3x10',
+                descricao: 'Reduzir carga 2 vezes e até a falha nos primeiros exs superiores. Demais exercícios normais.'
+              },
+              {
+                id: 'm5',
+                semanas: '10',
+                titulo: 'DESCARGA REGENERATIVA',
+                metodo: 'Descarga / Recuperação',
+                intensidade: 'Cadência: 2-0-2-0 / Desc: 60s',
+                volume: '3 x 12-15',
+                descricao: 'Séries leves, sem falha. Isometrias mantidas.'
+              },
+              {
+                id: 'm6',
+                semanas: '11-12',
+                titulo: 'FORÇA FUNCIONAL - ONDULAÇÃO',
+                metodo: 'Ondulação (força sup + manutenção pernas)',
+                intensidade: 'Explosiva concên. (Sup) / 2-0-2-0 (Per)',
+                volume: 'Sup: 3x6-8 / Pernas: 3x10-12',
+                descricao: 'Foco em força para superiores com cadência explosiva, manutenção para os inferiores, protegendo o joelho com carga estável. Desc: 90s/60s.'
+              },
+              {
+                id: 'm7',
+                semanas: '13-14',
+                titulo: 'FORÇA FUNCIONAL - ISOMETRIA',
+                metodo: 'Séries normais + isometria ao final',
+                intensidade: 'Cadência: 2-0-2-0 / Desc: 75s',
+                volume: '3x8-10 + 1 isometria (30-45s)',
+                descricao: 'Ao final do ex. principal adicionar 1 série isométrica no maior ângulo de tensão.'
+              },
+              {
+                id: 'm8',
+                semanas: '15-16',
+                titulo: 'DESCARGA E TESTE',
+                metodo: 'Descarga + teste 5RM (superiores)',
+                intensidade: 'Normal / Desc: 60s',
+                volume: 'Sup: 2x15 + 1x5RM / Pernas: 3x12',
+                descricao: 'Descarga de volume total, teste de RM em exercícios chave com segurança no fim.'
               }
             ]
           },
@@ -1202,50 +1301,36 @@ export default function App() {
           workouts: [
             {
               id: 'treino-a-andre',
-              title: 'TREINO A (segundas e quintas)',
+              title: 'TREINO A (segundas, quartas e sextas)',
               projectedSessions: 20,
-              frequencyWeekly: 2,
+              frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'a-a-1', name: 'SUPINO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-2', name: 'SUPINO ABERTO ALTERNADO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'CRUCIFIXO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-4', name: 'DESENVOLVIMENTO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'FLEXÃO DE OMBRO ALTERNADO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-6', name: 'ABDUÇÃO DE OMBROS EM PÉ COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples' }
+                { id: 'a-a-1', name: 'SUPINO ABERTO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-2', name: 'CRUCIFIXO BANCO RETO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'DESENVOLVIMENTO BANCO 75° COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-4', name: 'TRÍCEPS TESTA BANCO RETO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'CADEIRA EXTENSORA EM ISOMETRIA 60°', sets: '5', reps: '30-45s', rest: '60s', executionType: 'Simples' },
+                { id: 'a-a-6', name: 'LEG PRESS HORIZONTAL AMPLITUDE REDUZIDA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-7', name: 'AGACHAMENTO LIVRE AMPLITUDE REDUZIDA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'PRANCHA VENTRAL EM ISOMETRIA', sets: '3', reps: '30-45s', rest: '60s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-andre',
-              title: 'TREINO B (terças e sextas)',
+              title: 'TREINO B (terças, quintas e sábados)',
               projectedSessions: 20,
-              frequencyWeekly: 2,
+              frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'a-b-1', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '30' },
-                { id: 'a-b-2', name: 'REMADA NEUTRA NA MÁQUINA SENTADA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '15' },
-                { id: 'a-b-3', name: 'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '4' },
-                { id: 'a-b-4', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                { id: 'a-b-5', name: 'PUXADA SUPINADA NO PULLEY ALTO', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                { id: 'a-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '20' },
-                { id: 'a-b-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples', load: '' }
-              ]
-            },
-            {
-              id: 'treino-c-andre',
-              title: 'TREINO C (quartas e sábados)',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
-              status: 'published',
-              exercises: [
-                { id: 'a-c-1', name: 'Elevação de quadril no banco (Hip Thrust)', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-2', name: 'Leg press horizontal (amplitude reduzida)', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-3', name: 'Mesa flexora', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-4', name: 'Cadeira abdutora', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-5', name: 'Stiff unilateral com halter', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-6', name: 'Panturrilha em pé no smith', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'a-c-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples' }
+                { id: 'a-b-1', name: 'PUXADA ABERTA NO PULLEY ALTO', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-2', name: 'REMADA ABERTA NA MÁQUINA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-3', name: 'CRUCIFIXO INVERSO BANCO 30° COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-4', name: 'BÍCEPS EM PÉ COM HALTERES (HBC) SUPINADA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-5', name: 'STIFF EM PÉ COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-6', name: 'EXTENSÃO DE QUADRIL EM PÉ COM CANELEIRA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-7', name: 'MESA FLEXORA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-8', name: 'CADEIRA ABDUTORA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
@@ -1594,13 +1679,13 @@ export default function App() {
                       title: 'TREINO A (segundas e quintas)',
                       status: 'published',
                       exercises: [
-                        { id: 'a-a-1', name: 'SUPINO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-2', name: 'SUPINO ABERTO ALTERNADO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-3', name: 'CRUCIFIXO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-4', name: 'DESENVOLVIMENTO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-5', name: 'FLEXÃO DE OMBRO ALTERNADO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-6', name: 'ABDUÇÃO DE OMBROS EM PÉ COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                        { id: 'a-a-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples' }
+                        { id: 'a-a-1', name: 'SUPINO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-2', name: 'SUPINO ABERTO ALTERNADO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-3', name: 'CRUCIFIXO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-4', name: 'DESENVOLVIMENTO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-5', name: 'FLEXÃO DE OMBRO ALTERNADO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-6', name: 'ABDUÇÃO DE OMBROS EM PÉ COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
+                        { id: 'a-a-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '30s', executionType: 'Simples' }
                       ]
                     },
                     {
@@ -1608,13 +1693,13 @@ export default function App() {
                       title: 'TREINO B (terças e sextas)',
                       status: 'published',
                       exercises: [
-                        { id: 'a-b-1', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '30' },
-                        { id: 'a-b-2', name: 'REMADA NEUTRA NA MÁQUINA SENTADA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '15' },
-                        { id: 'a-b-3', name: 'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '4' },
-                        { id: 'a-b-4', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                        { id: 'a-b-5', name: 'PUXADA SUPINADA NO PULLEY ALTO', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                        { id: 'a-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '20' },
-                        { id: 'a-b-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples', load: '' }
+                        { id: 'a-b-1', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '30' },
+                        { id: 'a-b-2', name: 'REMADA NEUTRA NA MÁQUINA SENTADA', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '15' },
+                        { id: 'a-b-3', name: 'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '4' },
+                        { id: 'a-b-4', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '25' },
+                        { id: 'a-b-5', name: 'PUXADA SUPINADA NO PULLEY ALTO', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '25' },
+                        { id: 'a-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '20' },
+                        { id: 'a-b-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '30s', executionType: 'Simples', load: '' }
                       ]
                     },
                 ];
@@ -1622,7 +1707,7 @@ export default function App() {
             if (student.nome?.includes('Marcelly') && student.workouts) {
               student.workouts = student.workouts.filter(w => !((w.title?.toUpperCase() === 'TREINO A') && (!w.exercises || w.exercises.length === 0)));
             }
-            return student;
+            return applyDynamicPeriodization(student);
           });
           console.log("Updated Students:", updatedStudents);
           setStudents(updatedStudents);
@@ -1701,9 +1786,31 @@ export default function App() {
                       rawData.periodization = defaultProfile.periodization;
                       hasCloudChanges = true;
                   } else if (rawData.periodization && defaultProfile.periodization) {
-                      rawData.periodization!.targetVolume = defaultProfile.periodization.targetVolume;
+                      rawData.periodization = {
+                          ...rawData.periodization,
+                          ...defaultProfile.periodization,
+                          startDate: rawData.periodization.startDate || defaultProfile.periodization.startDate
+                      };
+                      hasCloudChanges = true;
                   }
 
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' && !(rawData as any)._resetJun22026H) {
+                      rawData.workouts = defaultProfile.workouts;
+                      rawData.periodization = defaultProfile.periodization;
+                      rawData.totalGlobalA = 0;
+                      rawData.totalGlobalB = 0;
+                      rawData.totalGlobalC = 0;
+                      rawData.faseAjusteA = 0;
+                      rawData.faseAjusteB = 0;
+                      rawData.faseAjusteC = 0;
+                      rawData.trainingProgress = { completedCount: 0, targetCount: 60 };
+                      
+                      // Also reset history so it matches exactly
+                      rawData.workoutHistory = [];
+                      (rawData as any)._resetJun22026H = true;
+                      hasCloudChanges = true;
+                  }
+                  
                   // Workouts Sync
                   let currentWorkouts = rawData.workouts || [];
                   let workoutsModified = false;
@@ -1750,6 +1857,12 @@ export default function App() {
                       }
                   });
                   
+                  // Force clean workouts for Andre
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com') {
+                      currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
+                      workoutsModified = true;
+                  }
+                  
                   if (workoutsModified || !rawData.workouts) {
                       rawData.workouts = currentWorkouts;
                       hasCloudChanges = true;
@@ -1759,26 +1872,9 @@ export default function App() {
                   let currentHistory = rawData.workoutHistory || [];
                   const defaultHistory = defaultProfile.workoutHistory || [];
 
-                  // Force global counts for Andre
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com') {
-                    if (rawData.totalGlobalA === undefined || rawData.totalGlobalA < 5) { rawData.totalGlobalA = 5; hasCloudChanges = true; }
-                    if (rawData.totalGlobalB === undefined || rawData.totalGlobalB < 4) { rawData.totalGlobalB = 4; hasCloudChanges = true; }
-                    if (rawData.totalGlobalC === undefined || rawData.totalGlobalC < 3) { rawData.totalGlobalC = 3; hasCloudChanges = true; }
-                    if (rawData.faseAjusteA === undefined || rawData.faseAjusteA < 5) { rawData.faseAjusteA = 5; hasCloudChanges = true; }
-                    if (rawData.faseAjusteB === undefined || rawData.faseAjusteB < 4) { rawData.faseAjusteB = 4; hasCloudChanges = true; }
-                    if (rawData.faseAjusteC === undefined || rawData.faseAjusteC < 3) { rawData.faseAjusteC = 3; hasCloudChanges = true; }
-                    if (!rawData.trainingProgress || rawData.trainingProgress.completedCount < 12) {
-                        rawData.trainingProgress = { completedCount: 12, targetCount: 60 };
-                        hasCloudChanges = true;
-                    }
-                  }
 
-                  // Override for André Brito to ensure PERFECTLY sync history and weights (as requested)
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' && !(rawData as any)._fixedHistoryMay19) {
-                      currentHistory = defaultHistory;
-                      (rawData as any)._fixedHistoryMay19 = true;
-                      hasCloudChanges = true;
-                  }
+
+                  // Block removed
 
                   const mergedHistory = [...currentHistory];
                   let historyModified = false;
@@ -1873,11 +1969,12 @@ export default function App() {
                   }
               }
               
-              setSelectedStudent(rawData);
+              const finalData = applyDynamicPeriodization(rawData);
+              setSelectedStudent(finalData);
               
               // Restaurar Treino em Andamento se necessário
-              if ((window as any)._tempWorkoutId && rawData.workouts) {
-                 const w = rawData.workouts.find(w => w.id === (window as any)._tempWorkoutId);
+              if ((window as any)._tempWorkoutId && finalData.workouts) {
+                 const w = finalData.workouts.find(w => w.id === (window as any)._tempWorkoutId);
                  if (w) setSelectedWorkout(w); 
                  delete (window as any)._tempWorkoutId;
               }
@@ -1936,7 +2033,11 @@ export default function App() {
             if (!existing.periodization && def.periodization) {
                 merged[existingIndex].periodization = def.periodization;
             } else if (existing.periodization && def.periodization && merged[existingIndex].periodization) {
-                merged[existingIndex].periodization!.targetVolume = def.periodization.targetVolume;
+                merged[existingIndex].periodization = {
+                    ...merged[existingIndex].periodization,
+                    ...def.periodization,
+                    startDate: merged[existingIndex].periodization!.startDate || def.periodization.startDate
+                };
             }
 
             // Workouts Sync

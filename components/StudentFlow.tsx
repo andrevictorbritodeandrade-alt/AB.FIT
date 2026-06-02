@@ -2190,28 +2190,36 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
       </header>
 
       {/* Barra de Progresso do Macrociclo */}
-      <div className="mb-8 p-6 rounded-3xl bg-zinc-900/50 border border-white/5">
-        <div className="flex justify-between items-end mb-3">
-          <div>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1 italic">Progresso do Macrociclo</p>
-            <h3 className="text-lg font-black uppercase italic tracking-tighter text-white">
-              Semana {Math.min(12, Math.max(1, Math.ceil((Date.now() - new Date(plan.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000))))} <span className="text-white">de 12</span>
-            </h3>
+      {(() => {
+        const totalWks = plan.phaseTitle?.includes('16 Semanas') ? 16 : 12;
+        const curWk = Math.min(totalWks, Math.max(1, Math.ceil((Date.now() - new Date(plan.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000))));
+        const progPct = Math.min(100, Math.round(((Date.now() - new Date(plan.startDate).getTime()) / (totalWks * 7 * 24 * 60 * 60 * 1000)) * 100));
+
+        return (
+          <div className="mb-8 p-6 rounded-3xl bg-zinc-900/50 border border-white/5">
+            <div className="flex justify-between items-end mb-3">
+              <div>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1 italic">Progresso do Macrociclo</p>
+                <h3 className="text-lg font-black uppercase italic tracking-tighter text-white">
+                  Semana {curWk} <span className="text-white">de {totalWks}</span>
+                </h3>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1 italic">Conclusão</p>
+                <p className="text-sm font-black italic text-white">
+                  {progPct}%
+                </p>
+              </div>
+            </div>
+            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white transition-all duration-1000" 
+                style={{ width: `${progPct}%` }}
+              />
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mb-1 italic">Conclusão</p>
-            <p className="text-sm font-black italic text-white">
-              {Math.min(100, Math.round(((Date.now() - new Date(plan.startDate).getTime()) / (12 * 7 * 24 * 60 * 60 * 1000)) * 100))}%
-            </p>
-          </div>
-        </div>
-        <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-white transition-all duration-1000" 
-            style={{ width: `${Math.min(100, ((Date.now() - new Date(plan.startDate).getTime()) / (12 * 7 * 24 * 60 * 60 * 1000)) * 100)}%` }}
-          />
-        </div>
-      </div>
+        );
+      })()}
 
       <div className="space-y-6">
         {plan.bioInsight && (
