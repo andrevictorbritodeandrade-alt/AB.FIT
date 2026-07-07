@@ -171,63 +171,6 @@ function LoginScreen({ onLogin, error, students }: { onLogin: (val: string) => v
 import GeraAi from './components/GeraAi';
 
 export const applyDynamicPeriodization = (u: Student): Student => {
-  if (u.id === 'fixed-andre' && u.periodization?.startDate) {
-     const totalWks = u.periodization.phaseTitle?.includes('16 Semanas') ? 16 : 12;
-     const curWk = Math.min(totalWks, Math.max(1, Math.ceil((Date.now() - new Date(u.periodization.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000))));
-     
-     if (u.workouts) {
-        const newWorkouts = u.workouts.map(w => {
-          const isTreinoA = w.title.toLowerCase().includes('treino a');
-          let supCount = 0;
-          const newExercises = w.exercises.map((ex) => {
-             const nameUpper = ex.name.toUpperCase();
-             const isIso = nameUpper.includes('ISOMETRIA');
-             const isPrancha = nameUpper.includes('PRANCHA');
-             const isPerna = nameUpper.includes('EXTENSORA') || nameUpper.includes('LEG PRESS') || nameUpper.includes('AGACHAMENTO') || nameUpper.includes('STIFF') || nameUpper.includes('EXTENSÃO DE QUADRIL') || nameUpper.includes('MESA FLEXORA') || nameUpper.includes('CADEIRA ABDUTORA');
-             const isSuperior = !isIso && !isPrancha && !isPerna;
-             
-             if (isSuperior) supCount++;
-             const isFirstTwoSup = isSuperior && supCount <= 2;
-
-             let finalReps = ex.reps;
-             let finalSets = ex.sets;
-             let finalRest = ex.rest;
-
-             if (isIso || isPrancha) {
-                 finalSets = isPrancha ? '3' : (nameUpper.includes('EXTENSORA') ? '5' : '3');
-                 finalReps = '30-45s';
-                 finalRest = '60s';
-             } else {
-                 if (curWk <= 2) {
-                     finalSets = '3'; finalReps = '12/10/8'; finalRest = '45s';
-                 } else if (curWk >= 3 && curWk <= 5) {
-                     finalSets = '3'; finalReps = '8-10'; finalRest = '60s';
-                 } else if (curWk >= 6 && curWk <= 7) {
-                     finalSets = '3'; finalReps = '10-12'; finalRest = '90s (Bi-set)';
-                 } else if (curWk >= 8 && curWk <= 9) {
-                     finalSets = '3'; 
-                     finalReps = isFirstTwoSup ? 'FALHA (Drop-set 2x)' : '10';
-                     finalRest = '90s';
-                 } else if (curWk === 10) {
-                     finalSets = '3'; finalReps = '12-15'; finalRest = '60s';
-                 } else if (curWk >= 11 && curWk <= 12) {
-                     finalSets = '3'; finalReps = isSuperior ? '6-8 (Explosiva)' : '10-12'; finalRest = isSuperior ? '90s' : '60s';
-                 } else if (curWk >= 13 && curWk <= 14) {
-                     finalSets = '3'; finalReps = '8-10 + 1 Iso(30s)'; finalRest = '75s';
-                 } else if (curWk >= 15) {
-                     finalSets = isSuperior ? '2(15) + 1(5RM)' : '3';
-                     finalReps = isSuperior ? '15 / 5RM' : '12';
-                     finalRest = '60s';
-                 }
-             }
-             
-             return { ...ex, reps: finalReps, sets: finalSets, rest: finalRest };
-          });
-          return { ...w, exercises: newExercises };
-        });
-        return { ...u, workouts: newWorkouts };
-     }
-  }
   return u;
 };
 
@@ -1306,14 +1249,16 @@ export default function App() {
               frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'a-a-1', name: 'SUPINO ABERTO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-2', name: 'CRUCIFIXO BANCO RETO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'DESENVOLVIMENTO BANCO 75° COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-4', name: 'TRÍCEPS TESTA BANCO RETO COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'CADEIRA EXTENSORA EM ISOMETRIA 60°', sets: '5', reps: '30-45s', rest: '60s', executionType: 'Simples' },
-                { id: 'a-a-6', name: 'LEG PRESS HORIZONTAL AMPLITUDE REDUZIDA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'AGACHAMENTO LIVRE AMPLITUDE REDUZIDA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-8', name: 'PRANCHA VENTRAL EM ISOMETRIA', sets: '3', reps: '30-45s', rest: '60s', executionType: 'Simples' }
+                { id: 'a-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-4', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'CADEIRA ADUTORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-6', name: 'SUPINO ABERTO NO BANCO RETO COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-7', name: 'CRUCIFIXO ABERTO BANCO INCLINADO COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'DESENVOLVIMENTO ABERTO BANCO 75º COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-9', name: 'TRÍCEPS FRANCÊS SIMULTÂNEO COM HBC EM PÉ', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-10', name: 'TRÍCEPS EM PÉ NO CROSS COM CORDA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
@@ -1323,14 +1268,16 @@ export default function App() {
               frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'a-b-1', name: 'PUXADA ABERTA NO PULLEY ALTO', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-2', name: 'REMADA ABERTA NA MÁQUINA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-3', name: 'CRUCIFIXO INVERSO BANCO 30° COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-4', name: 'BÍCEPS EM PÉ COM HALTERES (HBC) SUPINADA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-5', name: 'STIFF EM PÉ COM HALTERES (HBC)', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-6', name: 'EXTENSÃO DE QUADRIL EM PÉ COM CANELEIRA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-7', name: 'MESA FLEXORA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-8', name: 'CADEIRA ABDUTORA', sets: '3', reps: '12/10/8', rest: '45s', executionType: 'Simples' }
+                { id: 'a-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-2', name: 'CADEIRA ABDUTORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-3', name: 'CADEIRA FLEXORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-4', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-5', name: 'CADEIRA SOLEAR', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-6', name: 'REMADA FECHADA NA MÁQUINA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-7', name: 'PUXADA COM TRIÂNGULO NO PULLEY ALTO', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-8', name: 'PUXADA ABERTO NO PULLEY ALTO COM BARRA RETA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-9', name: 'BÍCEPS SUPINADO NO BANCO 60º COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-10', name: 'BÍCEPS NO CROSS COM CORDA EM PÉ', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
@@ -1372,7 +1319,62 @@ export default function App() {
               ]
             }
           ]
-        }, 
+        },
+        {
+          id: 'fixed-marcia',
+          nome: 'Marcia Brito',
+          email: 'andrademarcia.ucam@gmail.com',
+          photoUrl: 'https://image.pollinations.ai/prompt/Disney%20style%203d%20animation%20of%20a%20brazilian%20mature%20woman%20named%20Marcia%20Brito%2C%2060%20years%20old%2C%20wearing%20fitness%20clothes%2C%20standing%20in%20a%20colorful%20Brazilian%20colonial%20street?width=400&height=400&nologo=true',
+          age: 60,
+          weight: 70,
+          height: 160,
+          goal: 'health',
+          medicalHistory: '⚠️ Nada',
+          medications: 'Nada',
+          physicalAssessments: [],
+          workoutHistory: [],
+          analytics: {
+            sessionsCompleted: 0,
+            streakDays: 0,
+            exercises: {},
+            lastSessionDate: ''
+          },
+          sexo: 'Feminino',
+          periodization: {
+            id: 'per-marcia-01',
+            titulo: 'Adaptação e Fortalecimento Global',
+            startDate: '2026-07-07T10:00:00Z',
+            type: 'STRENGTH',
+            phaseTitle: 'Treino Único para o Corpo Todo',
+            generalStrategy: "Foco na melhoria da funcionalidade, ganho de força e condicionamento geral em uma rotina única a ser feita 3 vezes na semana.",
+            clinicalSafety: [
+                "Controle rigoroso da execução e postura.",
+                "Sempre manter cadência controlada.",
+                "Aumentar cargas gradativamente preservando as articulações."
+            ],
+            microciclos: []
+          },
+          trainingProgress: { completedCount: 0, targetCount: 36 },
+          workouts: [
+            {
+              id: 'treino-unico-marcia',
+              title: 'TREINO ÚNICO',
+              projectedSessions: 36,
+              frequencyWeekly: 3,
+              status: 'published',
+              exercises: [
+                { id: 'm-u-1', name: 'AGACHAMENTO LIVRE SEGURANDO NO ESPALDAR', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-2', name: 'LEVANTAR E SENTAR DO BANCO RETO COM HBC', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-3', name: 'CADEIRA EXTENSORA', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-4', name: 'CADEIRA FLEXORA', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-5', name: 'CRUCIFIXO ABERTO COM HBC NO BANCO INCLINADO 30º', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-6', name: 'DESENVOLVIMENTO FECHADO PEGADA NEUTRA COM HBC NO BANCO 75º', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-7', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' },
+                { id: 'm-u-8', name: 'TRÍCEPS EM PÉ NO CROSS COM BARRA RETA', sets: '3', reps: '15', rest: '45s', executionType: 'Simples' }
+              ]
+            }
+          ]
+        },
         { 
           id: 'fixed-marcelly', 
           nome: 'Marcelly Bispo', 
@@ -1576,47 +1578,47 @@ export default function App() {
           workouts: [
             {
               id: 'treino-a-marcelly',
-              title: 'TREINO A (segundas e quintas)',
+              title: 'TREINO A',
               projectedSessions: 20,
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'm-a-1', name: 'AGACHAMENTO LIVRE COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-a-2', name: 'AGACHAMENTO PASSADA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-a-3', name: 'AGACHAMENTO NO BANCO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-a-4', name: 'LEG PRESS HORIZONTAL', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-a-5', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-a-6', name: 'ABDOMINAL SUPRA NO SOLO', sets: '5', reps: '20', rest: '40s', executionType: 'Simples' }
+                { id: 'm-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-a-3', name: 'AGACHAMENTO LIVRE COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-a-4', name: 'AGACHAMENTO EM PASSADA COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-a-5', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-a-6', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-marcelly',
-              title: 'TREINO B (terças e sextas)',
+              title: 'TREINO B',
               projectedSessions: 20,
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'm-b-1', name: 'AGACHAMENTO SUMÔ COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-b-2', name: 'LEVANTAMENTO TERRA COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-b-3', name: 'STIFF EM PÉ COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-b-4', name: 'ELEVAÇÃO DE QUADRIL NO SOLO', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-b-6', name: 'ABDOMINAL SUPRA NO SOLO', sets: '5', reps: '20', rest: '40s', executionType: 'Simples' }
+                { id: 'm-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-b-2', name: 'LEVANTAMENTO TERRA COM HBM', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-b-3', name: 'AGACHAMENTO SUMÔ COM HBC ENTRE OS QUADRIS SEM STEP', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-b-4', name: 'AGACHAMENTO SUMÔ SEGURANDO HBC NA FRENTE DO TÓRAX', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-b-6', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-c-marcelly',
-              title: 'TREINO C (quartas e sábados)',
+              title: 'TREINO C',
               projectedSessions: 20,
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'm-c-1', name: 'SUPINO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-c-2', name: 'DESENVOLVIMENTO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-c-3', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-c-4', name: 'PUXADA NEUTRA NO PULLEY', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-c-5', name: 'TRÍCEPS EM PÉ NO CROSS COM BARRA RETA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples' },
-                { id: 'm-c-6', name: 'ABDOMINAL SUPRA NO SOLO', sets: '5', reps: '20', rest: '40s', executionType: 'Simples' }
+                { id: 'm-c-1', name: 'SUPINO ABERTO COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-c-2', name: 'CRUCIFIXO ABERTO COM HBC NO BANCO RETO', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-c-3', name: 'DESENVOLVIMENTO ABERTO COM HBC NO BANCO 75º', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-c-4', name: 'REMADA ABERTA NA MÁQUINA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-c-5', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
+                { id: 'm-c-6', name: 'PUXADA FECHADA COM TRIÂNGULO NO PULLEY ALTO', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             }
           ]
@@ -1794,7 +1796,7 @@ export default function App() {
                       hasCloudChanges = true;
                   }
 
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' && !(rawData as any)._resetJun22026H) {
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' && !(rawData as any)._resetJul72026) {
                       rawData.workouts = defaultProfile.workouts;
                       rawData.periodization = defaultProfile.periodization;
                       rawData.totalGlobalA = 0;
@@ -1807,7 +1809,32 @@ export default function App() {
                       
                       // Also reset history so it matches exactly
                       rawData.workoutHistory = [];
-                      (rawData as any)._resetJun22026H = true;
+                      (rawData as any)._resetJul72026 = true;
+                      hasCloudChanges = true;
+                  }
+
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com' && !(rawData as any)._resetJul72026_marcelly) {
+                      rawData.workouts = defaultProfile.workouts;
+                      rawData.periodization = defaultProfile.periodization;
+                      rawData.totalGlobalA = 0;
+                      rawData.totalGlobalB = 0;
+                      rawData.totalGlobalC = 0;
+                      rawData.faseAjusteA = 0;
+                      rawData.faseAjusteB = 0;
+                      rawData.faseAjusteC = 0;
+                      rawData.trainingProgress = { completedCount: 0, targetCount: 60 };
+                      
+                      rawData.workoutHistory = [];
+                      (rawData as any)._resetJul72026_marcelly = true;
+                      hasCloudChanges = true;
+                  }
+
+                  if (defaultProfile.email === 'andrademarcia.ucam@gmail.com' && !(rawData as any)._resetJul72026_marcia) {
+                      rawData.workouts = defaultProfile.workouts;
+                      rawData.periodization = defaultProfile.periodization;
+                      rawData.trainingProgress = { completedCount: 0, targetCount: 36 };
+                      rawData.workoutHistory = [];
+                      (rawData as any)._resetJul72026_marcia = true;
                       hasCloudChanges = true;
                   }
                   

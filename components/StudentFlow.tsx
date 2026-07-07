@@ -383,40 +383,40 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   };
 
   return (
-    <div className={`relative bg-card/10 border rounded-[2.5rem] overflow-hidden transition-all duration-500 ease-out mb-4 p-5 shadow-xl group/card 
+    <div className={`relative bg-card/10 border rounded-[1.5rem] overflow-hidden transition-all duration-500 ease-out mb-3 p-3 shadow-md group/card 
       ${allSetsCompleted 
-        ? 'border-emerald-500 border-2 shadow-[0_0_30px_rgba(16,185,129,0.2)] bg-emerald-950/10' 
-        : 'border-border hover:border-red-600/20 hover:shadow-[0_20px_50px_rgba(220,38,38,0.1)]'
+        ? 'border-emerald-500 border-2 shadow-[0_0_20px_rgba(16,185,129,0.15)] bg-emerald-950/10' 
+        : 'border-border hover:border-red-600/20'
       }`}
     >
-      <div className={`flex flex-col items-center text-center mb-4 p-3 border-2 rounded-[2rem] bg-background/20 ${getGroupBorderColor(ex.groupId)}`}>
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <span className={`text-[9px] font-black italic uppercase tracking-[0.3em] leading-none ${allSetsCompleted ? 'text-emerald-500' : 'text-red-600'}`}>
+      <div className={`flex flex-col items-center text-center mb-3 p-2 border-2 rounded-[1.25rem] bg-background/20 ${getGroupBorderColor(ex.groupId)}`}>
+        <div className="flex items-center justify-center gap-2 mb-0.5">
+          <span className={`text-[8px] font-black italic uppercase tracking-[0.2em] leading-none ${allSetsCompleted ? 'text-emerald-500' : 'text-red-600'}`}>
             {idx + 1}º Exercício
           </span>
-          {allSetsCompleted && <Check size={14} className="text-emerald-500" />}
+          {allSetsCompleted && <Check size={12} className="text-emerald-500" />}
         </div>
         
         <h4 className={`text-xl font-black italic uppercase tracking-tighter leading-tight transition-colors ${allSetsCompleted ? 'text-emerald-500' : 'text-foreground'}`}>
           {ex.name}
         </h4>
         {ex.method && (
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] italic mt-1">
+          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.1em] italic mt-0.5">
             {ex.method}
           </p>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <div className="col-span-2 bg-background/20 border border-border/50 rounded-2xl p-4 flex flex-col items-center">
-          <div className="flex flex-wrap justify-center gap-3">
+        <div className="col-span-2 bg-background/20 border border-border/50 rounded-xl p-2.5 flex flex-col items-center">
+          <div className="flex flex-wrap justify-center gap-2">
             {Array.from({ length: totalSets }).map((_, sIdx) => (
               <button 
                 key={sIdx}
                 onClick={() => onMarkSet(ex.id || '', sIdx, ex.rest || '30')}
-                className={`w-12 h-12 rounded-full flex items-center justify-center font-black italic text-base transition-all border-2 
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-black italic text-sm transition-all border-2 
                   ${progress.completedSets.includes(sIdx) 
-                    ? 'bg-red-600 border-red-600 text-white shadow-lg' 
+                    ? 'bg-red-600 border-red-600 text-white shadow-md' 
                     : 'bg-card border-border text-muted-foreground'
                   }`}
               >
@@ -424,26 +424,23 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
               </button>
             ))}
           </div>
-          <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-3 italic">
-            {allSetsCompleted ? <span className="text-emerald-500">SÉRIE CONCLUÍDA</span> : "Registro de Séries"}
-          </p>
         </div>
 
-        <div className="bg-background/20 border border-border/50 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[80px]">
-          <span className="text-2xl font-black text-foreground italic leading-none tracking-tighter">{totalReps}</span>
-          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1.5 italic">Reps Alvo</p>
+        <div className="bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
+          <span className="text-xl font-black text-foreground italic leading-none tracking-tighter">{totalReps}</span>
+          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Reps Alvo</p>
         </div>
 
-        <div className="bg-background/20 border border-border/50 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[80px]">
+        <div className="bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
           <div className="flex items-baseline gap-1">
-            <span className="text-xl font-black text-muted-foreground italic tracking-tighter">{displayLoad}</span>
-            <span className="text-[8px] font-black text-muted-foreground uppercase italic">KG</span>
+            <span className="text-lg font-black text-muted-foreground italic tracking-tighter">{displayLoad || '--'}</span>
+            <span className="text-[7px] font-black text-muted-foreground uppercase italic">KG</span>
           </div>
-          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Última Carga</p>
+          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Última Carga</p>
         </div>
 
-        <div className="col-span-2 bg-background/20 border border-border/50 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[80px]">
-          <div className="flex items-baseline gap-2">
+        <div className="col-span-2 bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
+          <div className="flex items-center gap-2">
             <input 
               type="number" 
               value={localLoad}
@@ -451,7 +448,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
               onChange={(e) => {
                 setLocalLoad(e.target.value);
               }}
-              className="bg-transparent border-none p-0 text-2xl font-black text-center text-foreground outline-none focus:ring-0 w-20 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button 
               onClick={() => {
@@ -462,22 +459,22 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                 const button = document.activeElement as HTMLElement;
                 button?.blur();
               }}
-              className="bg-emerald-600 rounded-full p-2 text-white hover:bg-emerald-700 transition-all font-black"
+              className="bg-emerald-600 rounded-full p-1.5 text-white hover:bg-emerald-700 transition-all font-black"
             >
-              <Check size={16} />
+              <Check size={14} />
             </button>
-            <span className="text-[9px] font-black text-red-600 uppercase italic">KG</span>
+            <span className="text-[8px] font-black text-red-600 uppercase italic">KG</span>
           </div>
-          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Carga Atual (Toque no ✅ para salvar)</p>
+          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Carga Atual (Salve no ✅)</p>
         </div>
         
         {onShowPrescreveAI && (
-          <div className="col-span-2 mt-2">
+          <div className="col-span-2 mt-1">
             <button 
               onClick={onShowPrescreveAI}
-              className="w-full py-3 bg-gradient-to-r from-red-600 to-orange-500 rounded-2xl font-black uppercase text-xs tracking-widest text-white shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+              className="w-full py-2 bg-gradient-to-r from-red-600 to-orange-500 rounded-xl font-black uppercase text-[10px] tracking-widest text-white shadow-sm flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
             >
-              <Sparkles size={16} /> Ver Biomecânica AI
+              <Sparkles size={14} /> Ver Biomecânica
             </button>
           </div>
         )}
