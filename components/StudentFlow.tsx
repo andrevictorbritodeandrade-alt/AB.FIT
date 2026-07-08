@@ -359,11 +359,10 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
     const saved = carregarCarga(ex.id || '');
     if (saved) {
       setLocalLoad(saved);
-      setDisplayLoad(saved);
     } else {
-      setLocalLoad(ex.load || '');
+      setLocalLoad(ex.load || lastLoad || '');
     }
-  }, [ex.load, ex.id]);
+  }, [ex.load, ex.id, lastLoad]);
 
   const totalSets = parseInt(ex.sets || '3') || 3;
   const totalReps = formatReps(currentReps || ex.reps || '15');

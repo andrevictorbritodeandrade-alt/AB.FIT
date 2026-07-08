@@ -1570,11 +1570,11 @@ export default function App() {
           },
           faseAjusteA: 2,
           faseAjusteB: 2,
-          faseAjusteC: 1,
+          faseAjusteC: 0,
           totalGlobalA: 2,
           totalGlobalB: 2,
-          totalGlobalC: 1,
-          trainingProgress: { completedCount: 5, targetCount: 60 },
+          totalGlobalC: 0,
+          trainingProgress: { completedCount: 5, targetCount: 40 },
           workouts: [
             {
               id: 'treino-a-marcelly',
@@ -1604,21 +1604,6 @@ export default function App() {
                 { id: 'm-b-4', name: 'AGACHAMENTO SUMÔ SEGURANDO HBC NA FRENTE DO TÓRAX', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
                 { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
                 { id: 'm-b-6', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
-              ]
-            },
-            {
-              id: 'treino-c-marcelly',
-              title: 'TREINO C',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
-              status: 'published',
-              exercises: [
-                { id: 'm-c-1', name: 'SUPINO ABERTO COM HBC', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
-                { id: 'm-c-2', name: 'CRUCIFIXO ABERTO COM HBC NO BANCO RETO', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
-                { id: 'm-c-3', name: 'DESENVOLVIMENTO ABERTO COM HBC NO BANCO 75º', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
-                { id: 'm-c-4', name: 'REMADA ABERTA NA MÁQUINA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
-                { id: 'm-c-5', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' },
-                { id: 'm-c-6', name: 'PUXADA FECHADA COM TRIÂNGULO NO PULLEY ALTO', sets: '3', reps: '13/11/9', rest: '45s', executionType: 'Simples' }
               ]
             }
           ]
@@ -1813,7 +1798,7 @@ export default function App() {
                       hasCloudChanges = true;
                   }
 
-                  if (defaultProfile.email === 'marcellybispo92@gmail.com' && !(rawData as any)._resetJul72026_marcelly) {
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com' && !(rawData as any)._resetJul82026_marcelly_v3) {
                       rawData.workouts = defaultProfile.workouts;
                       rawData.periodization = defaultProfile.periodization;
                       rawData.totalGlobalA = 0;
@@ -1822,10 +1807,10 @@ export default function App() {
                       rawData.faseAjusteA = 0;
                       rawData.faseAjusteB = 0;
                       rawData.faseAjusteC = 0;
-                      rawData.trainingProgress = { completedCount: 0, targetCount: 60 };
+                      rawData.trainingProgress = { completedCount: 0, targetCount: 40 };
                       
                       rawData.workoutHistory = [];
-                      (rawData as any)._resetJul72026_marcelly = true;
+                      (rawData as any)._resetJul82026_marcelly_v3 = true;
                       hasCloudChanges = true;
                   }
 
@@ -1887,6 +1872,12 @@ export default function App() {
                   // Force clean workouts for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com') {
                       currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
+                      workoutsModified = true;
+                  }
+                  
+                  // Force clean workouts for Marcelly
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com') {
+                      currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-marcelly');
                       workoutsModified = true;
                   }
                   
