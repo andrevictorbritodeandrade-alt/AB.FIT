@@ -365,8 +365,30 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   }, [ex.load, ex.id, lastLoad]);
 
   const totalSets = parseInt(ex.sets || '3') || 3;
-  const totalReps = formatReps(currentReps || ex.reps || '15');
+  const rawRepsStr = String(currentReps || ex.reps || '15').trim();
+  const repsParts = rawRepsStr.split('/');
+  const hasMultipleReps = repsParts.length > 1;
+
+  // Se tem repetições diferentes, totalReps exibe a sequência (ex: 13/11/9)
+  const displayRepsText = hasMultipleReps ? rawRepsStr : formatReps(rawRepsStr) || '15';
   const allSetsCompleted = progress.completedSets.length >= totalSets;
+
+  const getLoadForSet = (sIdx: number) => {
+    const parts = localLoad.split('/');
+    return parts[sIdx] || '';
+  };
+
+  const updateLoadForSet = (sIdx: number, val: string) => {
+    const parts = localLoad.split('/');
+    while (parts.length < repsParts.length) {
+      parts.push('');
+    }
+    parts[sIdx] = val;
+    const updated = parts.join('/');
+    setLocalLoad(updated);
+    onUpdateLoad(ex.id!, updated, true);
+    salvarCarga(ex.id!, updated);
+  };
 
   const getGroupBorderColor = (groupId?: string) => {
     if (!groupId) return 'border-orange-500';
@@ -426,7 +448,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
         </div>
 
         <div className="bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
-          <span className="text-xl font-black text-foreground italic leading-none tracking-tighter">{totalReps}</span>
+          <span className="text-xl font-black text-foreground italic leading-none tracking-tighter">{displayRepsText}</span>
           <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Reps Alvo</p>
         </div>
 
@@ -438,34 +460,88 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
           <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Última Carga</p>
         </div>
 
-        <div className="col-span-2 bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
-          <div className="flex items-center gap-2">
-            <input 
-              type="number" 
-              value={localLoad}
-              placeholder="--"
-              onChange={(e) => {
-                setLocalLoad(e.target.value);
-              }}
-              className="bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
-            <button 
-              onClick={() => {
-                onUpdateLoad(ex.id!, localLoad, false);
-                salvarCarga(ex.id!, localLoad);
-                setDisplayLoad(localLoad);
-                alert('Carga salva!');
-                const button = document.activeElement as HTMLElement;
-                button?.blur();
-              }}
-              className="bg-emerald-600 rounded-full p-1.5 text-white hover:bg-emerald-700 transition-all font-black"
-            >
-              <Check size={14} />
-            </button>
-            <span className="text-[8px] font-black text-red-600 uppercase italic">KG</span>
+        {hasMultipleReps ? (
+          <div className="col-span-2 bg-background/20 border border-border/50 rounded-xl p-3 flex flex-col gap-2.5">
+            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest text-center italic">Cargas por Série / Repetição</p>
+            <div className="grid grid-cols-1 gap-2">
+              {repsParts.map((rep, sIdx) => {
+                const repVal = rep.trim();
+                const currentSetLoad = getLoadForSet(sIdx);
+                const lastSetLoad = displayLoad.split('/')[sIdx] || '--';
+                return (
+                  <div key={sIdx} className="flex items-center justify-between bg-black/30 px-3 py-1.5 rounded-xl border border-white/5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-red-600/20 text-red-500 flex items-center justify-center font-black italic text-[10px]">
+                        {sIdx + 1}
+                      </span>
+                      <span className="text-xs font-black text-zinc-300 italic">{repVal} Reps</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] text-muted-foreground font-black italic">Última: {lastSetLoad} kg</span>
+                      <input 
+                        type="text" 
+                        value={currentSetLoad}
+                        placeholder="--"
+                        onChange={(e) => {
+                          updateLoadForSet(sIdx, e.target.value);
+                        }}
+                        className="bg-zinc-900 border border-white/10 rounded-md px-2 py-0.5 text-xs font-black text-center text-foreground outline-none focus:border-emerald-500 w-16 italic"
+                      />
+                      <span className="text-[8px] font-black text-emerald-500 italic">KG</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="flex justify-center mt-1">
+              <button 
+                onClick={() => {
+                  onUpdateLoad(ex.id!, localLoad, false);
+                  salvarCarga(ex.id!, localLoad);
+                  setDisplayLoad(localLoad);
+                  const button = document.activeElement as HTMLElement;
+                  button?.blur();
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black uppercase text-[10px] tracking-widest py-2 px-4 rounded-xl shadow-md flex items-center gap-2 transition-all w-full justify-center"
+              >
+                <Check size={14} /> Salvar Todas as Cargas
+              </button>
+            </div>
           </div>
-          <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Carga Atual (Salve no ✅)</p>
-        </div>
+        ) : (
+          <div className="col-span-2 bg-background/20 border border-border/50 rounded-xl p-2 flex flex-col items-center justify-center min-h-[60px]">
+            <div className="flex items-center gap-2">
+              <input 
+                type="number" 
+                value={localLoad}
+                placeholder="--"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setLocalLoad(val);
+                  onUpdateLoad(ex.id!, val, true);
+                  salvarCarga(ex.id!, val);
+                }}
+                className="bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <button 
+                onClick={() => {
+                  onUpdateLoad(ex.id!, localLoad, false);
+                  salvarCarga(ex.id!, localLoad);
+                  setDisplayLoad(localLoad);
+                  const button = document.activeElement as HTMLElement;
+                  button?.blur();
+                }}
+                className="bg-emerald-600 rounded-full p-1.5 text-white hover:bg-emerald-700 transition-all font-black"
+              >
+                <Check size={14} />
+              </button>
+              <span className="text-[8px] font-black text-red-600 uppercase italic">KG</span>
+            </div>
+            <p className="text-[8px] font-black text-muted-foreground uppercase tracking-widest mt-1 italic">Carga Atual (Salve no ✅)</p>
+          </div>
+        )}
         
         {onShowPrescreveAI && (
           <div className="col-span-2 mt-1">
@@ -987,8 +1063,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
   if (!activeWorkout) {
     return (
-      <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-background animate-in fade-in">
-        <header className="flex flex-col mb-10 sticky top-0 bg-background/90 backdrop-blur-md py-4 z-40 -mx-6 px-6 border-b border-border">
+      <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in">
+        <header className="flex flex-col mb-10 sticky top-0 bg-transparent backdrop-blur-md py-4 z-40 -mx-6 px-6 border-b border-border">
            <div className="flex items-center justify-between mb-4">
               <button onClick={onBack} className="p-2 bg-card rounded-full shadow-lg text-foreground hover:bg-red-600 transition-colors shadow-xl">
                 <ArrowLeft size={20}/>
@@ -1066,9 +1142,9 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }
 
   return (
-    <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-background animate-in fade-in duration-500">
+    <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in duration-500">
       <div className="max-w-xl mx-auto">
-        <header className="flex items-center justify-between mb-8 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 -mx-6 px-4 border-b border-border">
+        <header className="flex items-center justify-between mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-4 border-b border-border">
         <div className="flex-1 flex items-center gap-2 min-w-0">
            <button onClick={onBack} className="p-2 sm:p-3 bg-card rounded-xl sm:rounded-2xl text-muted-foreground hover:text-foreground transition-colors shadow-lg shrink-0">
               <LayoutGrid size={18}/>
@@ -1541,7 +1617,7 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
   if (isCreating) {
     return (
       <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-        <header className="flex items-center gap-4 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+        <header className="flex items-center gap-4 mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
           <button onClick={() => { setIsCreating(false); resetForm(); }} className="p-2 bg-zinc-900 rounded-full text-white hover:bg-zinc-800 transition-colors shadow-lg">
             <ArrowLeft size={20}/>
           </button>
@@ -1956,7 +2032,7 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
 
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center justify-between gap-4 mb-10 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+      <header className="flex items-center justify-between gap-4 mb-10 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
              {onToggleMenu && (
@@ -2144,7 +2220,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
     return (
       <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
 
-        <header className="flex items-center gap-4 mb-10 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+        <header className="flex items-center gap-4 mb-10 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
           <div className="flex items-center gap-3">
              {onToggleMenu && (
                <button onClick={onToggleMenu} className="p-2 bg-zinc-900 rounded-full text-zinc-500 hover:text-white transition-colors shadow-lg">
@@ -2169,7 +2245,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
 
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center gap-4 mb-8 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+      <header className="flex items-center gap-4 mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
         <div className="flex items-center gap-3">
            {onToggleMenu && (
              <button onClick={onToggleMenu} className="p-2 bg-zinc-900 rounded-full text-zinc-500 hover:text-white transition-colors shadow-lg">
@@ -2325,7 +2401,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
 export function AboutView({ onBack }: { onBack: () => void }) {
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center gap-4 mb-10 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+      <header className="flex items-center gap-4 mb-10 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
         <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-white hover:bg-red-600 transition-colors shadow-lg shadow-xl">
           <ArrowLeft size={20}/>
         </button>

@@ -270,10 +270,10 @@ export function BackgroundWrapper({ children }: { children?: React.ReactNode }) 
         <img 
           src="https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=2070&auto=format&fit=crop" 
           alt="Gym Background" 
-          className="w-full h-full object-cover opacity-20 grayscale blur-[2px] brightness-[0.7] scale-105"
+          className="w-full h-full object-cover opacity-65 grayscale blur-[1px] brightness-[0.7] scale-105"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-black/80" />
       </div>
       <div className="relative z-10 h-full">{children}</div>
     </div>

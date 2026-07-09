@@ -2402,10 +2402,15 @@ export default function App() {
       }
     }
 
+    const updatedWorkouts = (studentForView.workouts || []).map(w => 
+      w.id === post.workoutId ? { ...w, exercises: post.exercises } : w
+    );
+
     const updates: any = { 
       workoutHistory: updatedHistory,
       trainingProgress: updatedProgress,
-      analytics: updatedAnalytics
+      analytics: updatedAnalytics,
+      workouts: updatedWorkouts
     };
 
     if (title.includes('treino a')) {
