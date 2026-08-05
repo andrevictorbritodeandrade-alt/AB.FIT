@@ -86,6 +86,7 @@ export interface WorkoutHistoryEntry {
   runningStats?: RunningStats;
   type: 'STRENGTH' | 'RUNNING' | 'POST';
   exercises?: Exercise[]; // Adicionado campo de exercícios com cargas
+  periodization?: string;
 }
 
 export interface WorkoutCompletion {
@@ -217,6 +218,8 @@ export interface Student {
   totalGlobalA?: number;
   totalGlobalB?: number;
   totalGlobalC?: number;
+  periodizationProgress?: Record<string, { A: number; B: number; C: number }>;
   runAlertsEnabled?: boolean;
   _fixedHistoryApril2?: boolean;
+  _reset20260805?: boolean;
 }

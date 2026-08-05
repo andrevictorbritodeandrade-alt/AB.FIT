@@ -16,7 +16,10 @@ interface AnalyticsProps {
 export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsProps) {
   const [periodFilter, setPeriodFilter] = useState<'7d' | '30d' | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Treino A' | 'Treino B' | 'Treino C'>('all');
+  const [periodizationFilter, setPeriodizationFilter] = useState<string>('current');
   const [logs, setLogs] = useState<any[]>([]);
+
+  const currentPeriodizationKey = student.periodization?.phaseTitle || student.workouts?.[0]?.exercises?.[0]?.reps || '13/11/9';
 
   useEffect(() => {
     const logsRef = collection(db, 'alunos', student.id, 'logsTreino');
@@ -50,7 +53,8 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
                 date: new Date(timestamp).toLocaleDateString('pt-BR'),
                 duration: log.duracaoMinutos ? `${log.duracaoMinutos}:00` : '00:00',
                 type: 'STRENGTH',
-                exercises: log.exercises || []
+                exercises: log.exercises || [],
+                periodization: log.periodization
             });
         }
     });
@@ -74,8 +78,13 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
       filtered = filtered.filter(h => (now - h.timestamp) <= ms);
     }
 
+    // Filter by periodization
+    if (periodizationFilter === 'current') {
+        filtered = filtered.filter(h => h.periodization === currentPeriodizationKey);
+    }
+
     return filtered;
-  }, [rawHistory, typeFilter, periodFilter]);
+  }, [rawHistory, typeFilter, periodFilter, periodizationFilter, currentPeriodizationKey]);
 
   const analytics = useMemo(() => {
     if (periodFilter === 'all' && typeFilter === 'all') return student.analytics || { exercises: {}, sessionsCompleted: 0, streakDays: 0 };
@@ -330,6 +339,31 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
                 }`}
               >
                 {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <Layers size={12} className="text-red-500" />
+            <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest italic">Periodização</span>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { id: 'current', label: 'PERÍODO ATUAL' },
+              { id: 'all', label: 'HISTÓRICO COMPLETO' }
+            ].map(p => (
+              <button
+                key={p.id}
+                onClick={() => setPeriodizationFilter(p.id)}
+                className={`flex-1 py-3 text-[10px] font-black rounded-2xl border transition-all ${
+                  periodizationFilter === p.id 
+                    ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-900/30' 
+                    : 'bg-zinc-900/50 border-zinc-800 text-zinc-500'
+                }`}
+              >
+                {p.label}
               </button>
             ))}
           </div>

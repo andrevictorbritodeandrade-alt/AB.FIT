@@ -358,6 +358,37 @@ export default function App() {
     };
   }, []);
 
+  // One-time migration/reset for André and Marcelly (User request 2026-08-05)
+  useEffect(() => {
+    if (authReady && students.length > 0) {
+      const andre = students.find(s => s.nome?.includes('André Brito'));
+      const marcelly = students.find(s => s.nome?.includes('Marcelly Bispo'));
+      
+      const resetStudentData = async (student: Student, name: string) => {
+          console.log(`[MIGRATION] Resetting data for ${name}...`);
+          const updates: any = {
+              faseAjusteA: 0,
+              faseAjusteB: 1,
+              totalGlobalA: 0,
+              totalGlobalB: 1,
+              _reset20260805: true
+          };
+          
+          if (student.workouts) {
+              updates.workouts = student.workouts.map(w => ({
+                  ...w,
+                  exercises: w.exercises.map(ex => ({ ...ex, reps: '13/11/9' }))
+              }));
+          }
+          
+          await handleSaveData(student.id, updates);
+      };
+
+      if (andre && !andre._reset20260805) resetStudentData(andre, 'André');
+      if (marcelly && !marcelly._reset20260805) resetStudentData(marcelly, 'Marcelly');
+    }
+  }, [authReady, students.length]);
+
   // Removed strict auth redirect to allow offline/unauthenticated access to default data
   // useEffect(() => {
   //   if (!loading && !user && view !== 'LOGIN') {
@@ -2348,8 +2379,8 @@ export default function App() {
     
     const currentHistory = studentForView.workoutHistory || [];
     const updatedHistory = [post, ...currentHistory];
-    
-    // Calculate stats for logsTreino
+
+    // Calculate stats
     const duracaoMinutos = post.duration ? parseInt(post.duration.split(':')[0]) * 60 + parseInt(post.duration.split(':')[1]) : 0;
     const calorias = Math.ceil(duracaoMinutos / 60) * 7;
     const cargas = (post.exercises || []).map(ex => ({
@@ -2358,32 +2389,12 @@ export default function App() {
       unidade: ex.loadUnit || 'Kg'
     }));
 
-    // Save to logsTreino subcollection
-    const logsRef = collection(db, 'alunos', studentForView.id, 'logsTreino');
-    const newLog = {
-      treinoId: post.workoutId,
-      prescricaoId: post.workoutId, // assume they are same for now
-      nome: post.name,
-      dataHora: post.timestamp,
-      duracaoMinutos,
-      calorias,
-      cargas,
-      concluido: true
-    };
-
-    try {
-      await addDoc(logsRef, newLog);
-    } catch (e) {
-      console.warn("Falha ao salvar logTreino:", e);
-    }
-    
     const currentProgress = studentForView.trainingProgress || { completedCount: 0, targetCount: 60 };
     const updatedProgress = {
       ...currentProgress,
       completedCount: currentProgress.completedCount + 1
     };
 
-    // Update Analytics sessions
     const currentAnalytics = studentForView.analytics || { sessionsCompleted: 0, streakDays: 0, exercises: {} };
     const updatedAnalytics = {
       ...currentAnalytics,
@@ -2393,46 +2404,83 @@ export default function App() {
 
     const title = post.name.toLowerCase();
     
-    // Sync-up and update localStorage 'contagemTreinos'
-    const savedContagem = localStorage.getItem('contagemTreinos');
-    let contagem = { A: 5, B: 4, C: 3 };
-    if (savedContagem) {
-      try {
-        contagem = JSON.parse(savedContagem);
-      } catch (e) {
-        console.error("Erro ao parsear contagemTreinos no handleFinishWorkout", e);
-      }
-    }
+    // Periodization Key logic
+    const currentPeriodization = studentForView.periodization;
+    const currentReps = studentForView.workouts?.find(w => w.id === post.workoutId)?.exercises[0]?.reps || '13/11/9';
+    const periodKey = currentPeriodization?.phaseTitle || currentReps;
 
-    const updatedWorkouts = (studentForView.workouts || []).map(w => 
-      w.id === post.workoutId ? { ...w, exercises: post.exercises } : w
-    );
+    // Save to logsTreino subcollection
+    const logsRef = collection(db, 'alunos', studentForView.id, 'logsTreino');
+    const newLog = {
+      treinoId: post.workoutId,
+      prescricaoId: post.workoutId,
+      nome: post.name,
+      dataHora: post.timestamp,
+      duracaoMinutos,
+      calorias,
+      cargas,
+      concluido: true,
+      periodization: periodKey
+    };
+
+    try {
+      await addDoc(logsRef, newLog);
+    } catch (e) {
+      console.warn("Falha ao salvar logTreino:", e);
+    }
 
     const updates: any = { 
       workoutHistory: updatedHistory,
       trainingProgress: updatedProgress,
       analytics: updatedAnalytics,
-      workouts: updatedWorkouts
+      workouts: (studentForView.workouts || []).map(w => 
+        w.id === post.workoutId ? { ...w, exercises: post.exercises } : w
+      )
     };
+
+    // Periodization Aware Progress
+    const prog = studentForView.periodizationProgress || {};
+    const currentPeriodProg = { ...(prog[periodKey] || { A: 0, B: 0, C: 0 }) };
 
     if (title.includes('treino a')) {
       updates.faseAjusteA = (studentForView.faseAjusteA || 0) + 1;
       updates.totalGlobalA = (studentForView.totalGlobalA || 0) + 1;
-      contagem.A = (contagem.A || 0) + 1;
+      currentPeriodProg.A += 1;
     } else if (title.includes('treino b')) {
       updates.faseAjusteB = (studentForView.faseAjusteB || 0) + 1;
       updates.totalGlobalB = (studentForView.totalGlobalB || 0) + 1;
-      contagem.B = (contagem.B || 0) + 1;
+      currentPeriodProg.B += 1;
     } else if (title.includes('treino c')) {
       updates.faseAjusteC = (studentForView.faseAjusteC || 0) + 1;
       updates.totalGlobalC = (studentForView.totalGlobalC || 0) + 1;
-      contagem.C = (contagem.C || 0) + 1;
+      currentPeriodProg.C += 1;
     }
 
-    // Save updated contagem back to localStorage
-    localStorage.setItem('contagemTreinos', JSON.stringify(contagem));
+    updates.periodizationProgress = { ...prog, [periodKey]: currentPeriodProg };
 
-    console.log("Finishing workout for:", studentForView.id, "Current Progress:", studentForView.trainingProgress, "Updates:", updates);
+    // AUTOMATIC NEXT PERIOD Transition
+    const target = 20; 
+    if ((currentPeriodProg.A >= target || currentPeriodProg.B >= target) && currentPeriodization?.microciclos) {
+      const currentMicroIndex = currentPeriodization.microciclos.findIndex(m => m.titulo === currentPeriodization.phaseTitle);
+      if (currentMicroIndex !== -1 && currentMicroIndex < currentPeriodization.microciclos.length - 1) {
+        const nextMicro = currentPeriodization.microciclos[currentMicroIndex + 1];
+        updates.periodization = {
+          ...currentPeriodization,
+          phaseTitle: nextMicro.titulo,
+          startDate: new Date().toISOString()
+        };
+        // Update workout reps to match next microcycle volume if needed
+        if (nextMicro.volume && studentForView.workouts) {
+          const newReps = nextMicro.volume.includes('x') ? nextMicro.volume.split('x')[1].trim() : nextMicro.volume;
+          updates.workouts = studentForView.workouts.map(w => ({
+            ...w,
+            exercises: w.exercises.map(ex => ({ ...ex, reps: newReps }))
+          }));
+        }
+      }
+    }
+
+    console.log("Finishing workout for:", studentForView.id, "Updates:", updates);
     await handleSaveData(studentForView.id, updates);
 
     // Manually update local state immediately for faster UI feedback
@@ -2713,6 +2761,40 @@ export default function App() {
             
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
               <AssessmentAlert student={studentForView} />
+
+              {/* CURRENT PHASE PROGRESS (A/B Treinos) */}
+              {(studentForView.faseAjusteA !== undefined || studentForView.faseAjusteB !== undefined) && (
+                <div className="w-full bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
+                  <div className="flex items-center gap-2 mb-1 px-1">
+                    <Activity size={14} className="text-red-600" />
+                    <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic">Progresso da Fase Atual</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {studentForView.faseAjusteA !== undefined && (
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
+                          <span className="text-white">Treino A</span>
+                          <span className="text-red-600">{studentForView.faseAjusteA} / 20</span>
+                        </div>
+                        <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (studentForView.faseAjusteA / 20) * 100)}%` }} />
+                        </div>
+                      </div>
+                    )}
+                    {studentForView.faseAjusteB !== undefined && (
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
+                          <span className="text-white">Treino B</span>
+                          <span className="text-red-600">{studentForView.faseAjusteB} / 20</span>
+                        </div>
+                        <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (studentForView.faseAjusteB / 20) * 100)}%` }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <button 
                 onClick={() => setShowInstallPrompt(true)} 

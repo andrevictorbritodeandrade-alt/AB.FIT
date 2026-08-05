@@ -651,9 +651,14 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       });
     }
 
-    // Prioridade 2: Histórico (caso falte no profile)
+    const currentPeriodization = user.periodization?.phaseTitle || getCurrentRepsForStudent(user);
+
+    // Prioridade 2: Histórico (filtrado por periodização)
     if (user.workoutHistory) {
-      const history = [...user.workoutHistory].sort((a,b) => b.timestamp - a.timestamp);
+      const history = [...user.workoutHistory]
+        .filter(entry => !currentPeriodization || entry.periodization === currentPeriodization || entry.name.includes(currentPeriodization))
+        .sort((a,b) => b.timestamp - a.timestamp);
+      
       for (const entry of history) {
         if (entry.exercises) {
           for (const ex of entry.exercises) {
@@ -663,7 +668,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       }
     }
     return map;
-  }, [user.workoutHistory, user.analytics?.exercises]);
+  }, [user.workoutHistory, user.analytics?.exercises, user.periodization]);
 
   const timerRef = useRef<any>(null);
   const restTimerRef = useRef<any>(null);

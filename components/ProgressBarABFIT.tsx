@@ -11,28 +11,23 @@ const ProgressBarABFIT: React.FC<ProgressProps> = ({ label, atual, totalFase, to
   const porcentagem = Math.min((atual / totalFase) * 100, 100);
 
   return (
-    <div style={{ marginBottom: '20px', padding: '15px', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
-        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '18px' }}>{label}</span>
-        <span style={{ color: '#f1c40f', fontWeight: 'bold' }}>{atual} / {totalFase}</span>
+    <div className="bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
+      <div className="flex justify-between items-center px-1">
+        <span className="text-sm font-black uppercase italic tracking-wider text-white">{label}</span>
+        <span className="text-red-600 font-black italic tracking-widest text-sm">{atual} / {totalFase}</span>
       </div>
 
-      {/* Barra de Fundo */}
-      <div style={{ width: '100%', height: '12px', background: '#333', borderRadius: '10px', overflow: 'hidden' }}>
-        {/* Barra de Preenchimento Animada */}
-        <div style={{ 
-          width: `${porcentagem}%`, 
-          height: '100%', 
-          background: 'linear-gradient(90deg, #2ecc71, #27ae60)', 
-          transition: 'width 0.5s ease-in-out',
-          borderRadius: '10px'
-        }} />
+      <div className="w-full h-3 bg-black rounded-full overflow-hidden border border-zinc-800 p-0.5">
+        <div 
+          className="h-full bg-red-600 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+          style={{ width: `${porcentagem}%` }}
+        />
       </div>
 
-      <div style={{ marginTop: '6px', textAlign: 'right' }}>
-        <small style={{ color: '#888', fontSize: '12px' }}>
-          Histórico Total: <strong>{totalGlobal}</strong> treinos
-        </small>
+      <div className="flex justify-end px-1">
+        <span className="text-[9px] font-black uppercase italic tracking-[0.2em] text-zinc-600">
+          Histórico Total: <span className="text-zinc-400">{totalGlobal}</span> treinos
+        </span>
       </div>
     </div>
   );
