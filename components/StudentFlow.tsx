@@ -702,25 +702,26 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const workoutStats = useMemo(() => {
     if (!activeWorkout) return null;
     const title = activeWorkout.title.toLowerCase();
-    const history = user.workoutHistory || [];
     
-    let logCount = logs.filter(l => l.treinoId === activeWorkout.id || l.prescricaoId === activeWorkout.id).length;
-    let historyCount = history.filter(h => h.workoutId === activeWorkout.id).length;
-    let completed = Math.max(logCount, historyCount);
+    // Periodization Key logic
+    const currentPeriodization = user.periodization;
+    const currentReps = activeWorkout.exercises[0]?.reps || '13/11/9';
+    const periodKey = currentPeriodization?.phaseTitle || currentReps;
+    
+    const prog = user.periodizationProgress || {};
+    const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
+    
+    let completed = 0;
 
     if (title.includes('treino a')) {
-      const historyA = history.filter(h => h.name.toLowerCase().includes('treino a'));
-      const logsA = logs.filter(l => l.nome?.toLowerCase().includes('treino a'));
-      completed = localCounters.A > (user.totalGlobalA || 0) ? localCounters.A : Math.max(user.totalGlobalA || 0, historyA.length, logsA.length);
+      completed = Math.max(localCounters.A, periodProg.A, user.faseAjusteA || 0);
     } else if (title.includes('treino b')) {
-      const historyB = history.filter(h => h.name.toLowerCase().includes('treino b'));
-      const logsB = logs.filter(l => l.nome?.toLowerCase().includes('treino b'));
-      completed = localCounters.B > (user.totalGlobalB || 0) ? localCounters.B : Math.max(user.totalGlobalB || 0, historyB.length, logsB.length);
+      completed = Math.max(localCounters.B, periodProg.B, user.faseAjusteB || 0);
     } else if (title.includes('treino c')) {
-      const historyC = history.filter(h => h.name.toLowerCase().includes('treino c'));
-      const logsC = logs.filter(l => l.nome?.toLowerCase().includes('treino c'));
-      completed = localCounters.C > (user.totalGlobalC || 0) ? localCounters.C : Math.max(user.totalGlobalC || 0, historyC.length, logsC.length);
+      completed = Math.max(localCounters.C, periodProg.C, user.faseAjusteC || 0);
     } else {
+      const history = user.workoutHistory || [];
+      const logCount = logs.filter(l => l.treinoId === activeWorkout.id || l.prescricaoId === activeWorkout.id).length;
       completed = Math.max(logCount, history.filter(h => h.workoutId === activeWorkout.id || h.name === activeWorkout.title).length);
     }
 
@@ -1108,26 +1109,27 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           {(user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).length > 0 ? (
             (user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).map(w => {
               const title = w.title.toLowerCase();
-              const history = user.workoutHistory || [];
               
-              let logCount = logs.filter(l => l.treinoId === w.id || l.prescricaoId === w.id).length;
-              let historyCount = history.filter(h => h.workoutId === w.id).length;
-              let completed = Math.max(logCount, historyCount);
+              // Periodization Key logic
+              const currentPeriodization = user.periodization;
+              const currentReps = w.exercises[0]?.reps || '13/11/9';
+              const periodKey = currentPeriodization?.phaseTitle || currentReps;
               
+              const prog = user.periodizationProgress || {};
+              const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
+              
+              let completed = 0;
+
               if (title.includes('treino a')) {
-                const historyA = history.filter(h => h.name.toLowerCase().includes('treino a'));
-                const logsA = logs.filter(l => l.nome?.toLowerCase().includes('treino a'));
-                completed = Math.max(user.totalGlobalA || 0, historyA.length, logsA.length);
+                completed = Math.max(periodProg.A, user.faseAjusteA || 0);
               } else if (title.includes('treino b')) {
-                const historyB = history.filter(h => h.name.toLowerCase().includes('treino b'));
-                const logsB = logs.filter(l => l.nome?.toLowerCase().includes('treino b'));
-                completed = Math.max(user.totalGlobalB || 0, historyB.length, logsB.length);
+                completed = Math.max(periodProg.B, user.faseAjusteB || 0);
               } else if (title.includes('treino c')) {
-                const historyC = history.filter(h => h.name.toLowerCase().includes('treino c'));
-                const logsC = logs.filter(l => l.nome?.toLowerCase().includes('treino c'));
-                completed = Math.max(user.totalGlobalC || 0, historyC.length, logsC.length);
+                completed = Math.max(periodProg.C, user.faseAjusteC || 0);
               } else {
-                completed = history.filter(h => h.workoutId === w.id || h.name === w.title).length;
+                const historyCount = (user.workoutHistory || []).filter(h => h.workoutId === w.id || h.name === w.title).length;
+                const logCount = logs.filter(l => l.treinoId === w.id || l.prescricaoId === w.id).length;
+                completed = Math.max(historyCount, logCount);
               }
 
               const total = w.projectedSessions || 20;

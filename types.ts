@@ -222,4 +222,8 @@ export interface Student {
   runAlertsEnabled?: boolean;
   _fixedHistoryApril2?: boolean;
   _reset20260805?: boolean;
+  _reset20260805_v3?: boolean;
+  _reset20260805_v4?: boolean;
+  _reset20260805_v5?: boolean;
+  _reset20260805_v6?: boolean;
 }

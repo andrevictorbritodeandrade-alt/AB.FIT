@@ -361,31 +361,46 @@ export default function App() {
   // One-time migration/reset for André and Marcelly (User request 2026-08-05)
   useEffect(() => {
     if (authReady && students.length > 0) {
-      const andre = students.find(s => s.nome?.includes('André Brito'));
-      const marcelly = students.find(s => s.nome?.includes('Marcelly Bispo'));
+      const andre = students.find(s => s.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com');
+      const marcelly = students.find(s => s.nome?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('marcelly bispo'));
       
       const resetStudentData = async (student: Student, name: string) => {
-          console.log(`[MIGRATION] Resetting data for ${name}...`);
+          console.log(`[MIGRATION] Resetting data for ${name} (v6)...`);
+          const currentPeriodization = student.periodization?.phaseTitle || '13/11/9';
           const updates: any = {
               faseAjusteA: 0,
-              faseAjusteB: 1,
+              faseAjusteB: 0,
+              faseAjusteC: 0,
               totalGlobalA: 0,
-              totalGlobalB: 1,
-              _reset20260805: true
+              totalGlobalB: 0,
+              totalGlobalC: 0,
+              analytics: {
+                sessionsCompleted: 0,
+                exercises: {},
+                streakDays: 0
+              },
+              trainingProgress: {
+                completedCount: 0,
+                targetCount: 60
+              },
+              periodizationProgress: {
+                [currentPeriodization]: { A: 0, B: 0, C: 0 }
+              },
+              _reset20260805_v6: true
           };
           
           if (student.workouts) {
-              updates.workouts = student.workouts.map(w => ({
-                  ...w,
-                  exercises: w.exercises.map(ex => ({ ...ex, reps: '13/11/9' }))
-              }));
+            updates.workouts = student.workouts.map(w => ({
+              ...w,
+              exercises: w.exercises.map(ex => ({ ...ex, reps: '13/11/9' }))
+            }));
           }
           
           await handleSaveData(student.id, updates);
       };
 
-      if (andre && !andre._reset20260805) resetStudentData(andre, 'André');
-      if (marcelly && !marcelly._reset20260805) resetStudentData(marcelly, 'Marcelly');
+      if (andre && !andre._reset20260805_v6) resetStudentData(andre, 'André');
+      if (marcelly && !marcelly._reset20260805_v6) resetStudentData(marcelly, 'Marcelly');
     }
   }, [authReady, students.length]);
 
@@ -2763,38 +2778,47 @@ export default function App() {
               <AssessmentAlert student={studentForView} />
 
               {/* CURRENT PHASE PROGRESS (A/B Treinos) */}
-              {(studentForView.faseAjusteA !== undefined || studentForView.faseAjusteB !== undefined) && (
-                <div className="w-full bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
-                  <div className="flex items-center gap-2 mb-1 px-1">
-                    <Activity size={14} className="text-red-600" />
-                    <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic">Progresso da Fase Atual</h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {studentForView.faseAjusteA !== undefined && (
+              {(() => {
+                const currentPeriodization = studentForView.periodization;
+                const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13/11/9';
+                const periodKey = currentPeriodization?.phaseTitle || currentReps;
+                const prog = studentForView.periodizationProgress || {};
+                const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
+                const countA = Math.max(studentForView.faseAjusteA || 0, periodProg.A);
+                const countB = Math.max(studentForView.faseAjusteB || 0, periodProg.B);
+
+                return (
+                  <div className="w-full bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
+                    <div className="flex items-center gap-2 mb-1 px-1">
+                      <Activity size={14} className="text-red-600" />
+                      <div className="flex flex-col">
+                        <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic leading-none">Progresso da Fase Atual</h3>
+                        <span className="text-[8px] font-black uppercase text-red-600/60 tracking-widest italic mt-1">{periodKey}</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
                           <span className="text-white">Treino A</span>
-                          <span className="text-red-600">{studentForView.faseAjusteA} / 20</span>
+                          <span className="text-red-600">{countA} / 20</span>
                         </div>
                         <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (studentForView.faseAjusteA / 20) * 100)}%` }} />
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (countA / 20) * 100)}%` }} />
                         </div>
                       </div>
-                    )}
-                    {studentForView.faseAjusteB !== undefined && (
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
                           <span className="text-white">Treino B</span>
-                          <span className="text-red-600">{studentForView.faseAjusteB} / 20</span>
+                          <span className="text-red-600">{countB} / 20</span>
                         </div>
                         <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (studentForView.faseAjusteB / 20) * 100)}%` }} />
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (countB / 20) * 100)}%` }} />
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <button 
                 onClick={() => setShowInstallPrompt(true)} 
