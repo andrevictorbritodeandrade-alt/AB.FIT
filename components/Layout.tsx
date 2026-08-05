@@ -4,7 +4,7 @@ import {
   CloudRain, Sun, RefreshCw, Bell, Dumbbell, Wifi, WifiOff, 
   Mail, Phone, Loader2, MapPin, MessageCircle, Menu, X, 
   LayoutGrid, Bot, Settings2, User, Layout, Brain, Ruler, 
-  Footprints, BarChart3, Info, Cloud, Thermometer, Droplets, AlertTriangle
+  Footprints, BarChart3, Info, Cloud, Thermometer, Droplets, AlertTriangle, Smartphone
 } from 'lucide-react';
 import { AppNotification } from '../types';
 
@@ -131,6 +131,7 @@ export function SideNav({
     { id: 'CORRE_RJ', label: 'Corre RJ 2026', icon: MapPin, color: 'yellow' },
     { id: 'FEED', label: 'Feed Performance', icon: Layout, color: 'red' },
     { id: 'ANALYTICS', label: 'Análise de Dados', icon: BarChart3, color: 'blue' },
+    { id: 'INSTALL_APP', label: 'Instalar App / APK', icon: Smartphone, color: 'red' },
     { id: 'ABOUT_ABFIT', label: 'Sobre a ABFIT', icon: Info, color: 'zinc' },
     { id: 'SETTINGS', label: 'Configurações', icon: Settings2, color: 'zinc' },
   ];
@@ -138,6 +139,7 @@ export function SideNav({
   const professorItems: NavItem[] = [
     { id: 'PROFESSOR_DASH', label: 'Gestão de Alunos', icon: LayoutGrid, color: 'zinc' },
     { id: 'COACH_AI', label: 'Assistente IA', icon: Bot, color: 'red' },
+    { id: 'INSTALL_APP', label: 'Instalar App / APK', icon: Smartphone, color: 'red' },
     { id: 'SETTINGS', label: 'Configurações', icon: Settings2, color: 'zinc' },
   ];
 

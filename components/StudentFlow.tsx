@@ -350,6 +350,14 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
 }) {
   const [localLoad, setLocalLoad] = useState(ex.load || '');
   const [displayLoad, setDisplayLoad] = useState(lastLoad || '--');
+  const [showSaved, setShowSaved] = useState(false);
+
+  useEffect(() => {
+    if (showSaved) {
+      const timer = setTimeout(() => setShowSaved(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSaved]);
 
   useEffect(() => {
     setDisplayLoad(lastLoad || '--');
@@ -388,6 +396,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
     setLocalLoad(updated);
     onUpdateLoad(ex.id!, updated, true);
     salvarCarga(ex.id!, updated);
+    setShowSaved(true);
   };
 
   const getGroupBorderColor = (groupId?: string) => {
@@ -486,9 +495,9 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                         onChange={(e) => {
                           updateLoadForSet(sIdx, e.target.value);
                         }}
-                        className="bg-zinc-900 border border-white/10 rounded-md px-2 py-0.5 text-xs font-black text-center text-foreground outline-none focus:border-emerald-500 w-16 italic"
+                        className={`bg-zinc-900 border rounded-md px-2 py-0.5 text-xs font-black text-center text-foreground outline-none w-16 italic transition-all ${showSaved ? 'border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]' : 'border-white/10 focus:border-emerald-500'}`}
                       />
-                      <span className="text-[8px] font-black text-emerald-500 italic">KG</span>
+                      <span className={`text-[8px] font-black italic transition-colors ${showSaved ? 'text-emerald-400' : 'text-emerald-500'}`}>KG</span>
                     </div>
                   </div>
                 );
@@ -501,12 +510,13 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                   onUpdateLoad(ex.id!, localLoad, false);
                   salvarCarga(ex.id!, localLoad);
                   setDisplayLoad(localLoad);
+                  setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
                   button?.blur();
                 }}
-                className="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black uppercase text-[10px] tracking-widest py-2 px-4 rounded-xl shadow-md flex items-center gap-2 transition-all w-full justify-center"
+                className={`active:scale-95 text-white font-black uppercase text-[10px] tracking-widest py-2 px-4 rounded-xl shadow-md flex items-center gap-2 transition-all w-full justify-center ${showSaved ? 'bg-emerald-500' : 'bg-emerald-600 hover:bg-emerald-700'}`}
               >
-                <Check size={14} /> Salvar Todas as Cargas
+                {showSaved ? <CheckCircle2 size={14} /> : <Check size={14} />} {showSaved ? 'Cargas Salvas!' : 'Salvar Todas as Cargas'}
               </button>
             </div>
           </div>
@@ -523,19 +533,20 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                   onUpdateLoad(ex.id!, val, true);
                   salvarCarga(ex.id!, val);
                 }}
-                className="bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className={`bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors ${showSaved ? 'text-emerald-500' : 'text-foreground'}`}
               />
               <button 
                 onClick={() => {
                   onUpdateLoad(ex.id!, localLoad, false);
                   salvarCarga(ex.id!, localLoad);
                   setDisplayLoad(localLoad);
+                  setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
                   button?.blur();
                 }}
-                className="bg-emerald-600 rounded-full p-1.5 text-white hover:bg-emerald-700 transition-all font-black"
+                className={`rounded-full p-1.5 text-white transition-all font-black ${showSaved ? 'bg-emerald-500 scale-110' : 'bg-emerald-600 hover:bg-emerald-700'}`}
               >
-                <Check size={14} />
+                {showSaved ? <CheckCircle2 size={14} /> : <Check size={14} />}
               </button>
               <span className="text-[8px] font-black text-red-600 uppercase italic">KG</span>
             </div>
@@ -632,17 +643,27 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
   const lastLoads = useMemo(() => {
     const map: Record<string, string> = {};
-    if (!user.workoutHistory) return map;
-    const history = [...user.workoutHistory].sort((a,b) => b.timestamp - a.timestamp);
-    for (const entry of history) {
-      if (entry.exercises) {
-        for (const ex of entry.exercises) {
-          if (!map[ex.name] && ex.load) map[ex.name] = ex.load;
+    
+    // Prioridade 1: Cargas salvas diretamente no perfil (nuvem)
+    if (user.analytics?.exercises) {
+      Object.entries(user.analytics.exercises).forEach(([name, data]: [string, any]) => {
+        if (data.lastLoad) map[name] = data.lastLoad;
+      });
+    }
+
+    // Prioridade 2: Histórico (caso falte no profile)
+    if (user.workoutHistory) {
+      const history = [...user.workoutHistory].sort((a,b) => b.timestamp - a.timestamp);
+      for (const entry of history) {
+        if (entry.exercises) {
+          for (const ex of entry.exercises) {
+            if (!map[ex.name] && ex.load) map[ex.name] = ex.load;
+          }
         }
       }
     }
     return map;
-  }, [user.workoutHistory]);
+  }, [user.workoutHistory, user.analytics?.exercises]);
 
   const timerRef = useRef<any>(null);
   const restTimerRef = useRef<any>(null);
@@ -1244,15 +1265,36 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               }}
               onUpdateLoad={async (id, val, skipSave = false) => {
                 if (!activeWorkout) return;
+                const ex = activeWorkout.exercises.find(e => e.id === id);
+                if (!ex) return;
+
                 const updatedExercises = activeWorkout.exercises.map(e => e.id === id ? { ...e, load: val } : e);
                 const updatedWorkouts = user.workouts?.map(w => w.id === activeWorkout.id ? { ...w, exercises: updatedExercises } : w);
                 
-                // Update local state first for instant feedback (the user asked for "appearing to save")
+                // Update local state first
                 setActiveWorkout({ ...activeWorkout, exercises: updatedExercises });
                 
                 if (!skipSave) {
-                  await onSave(user.id, { workouts: updatedWorkouts });
-                  alert('Carga salva com sucesso!');
+                  // Save to cloud - updating both the workout and the analytics for persistent "last load"
+                  const analyticsUpdate = {
+                    exercises: {
+                      ...(user.analytics?.exercises || {}),
+                      [ex.name]: {
+                        ...(user.analytics?.exercises?.[ex.name] || {}),
+                        lastLoad: val,
+                        lastUpdate: Date.now()
+                      }
+                    }
+                  };
+
+                  await onSave(user.id, { 
+                    workouts: updatedWorkouts,
+                    analytics: {
+                      ...(user.analytics || {}),
+                      ...analyticsUpdate
+                    }
+                  });
+                  // REMOVED: alert('Carga salva com sucesso!');
                 }
               }}
               onUpdateUnit={(id, unit) => {

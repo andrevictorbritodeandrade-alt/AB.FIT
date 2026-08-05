@@ -5,7 +5,7 @@ import {
   Camera, Brain, Ruler, Footprints,
   Info, LogOut, Layout, Bell,
   BarChart3, ChevronRight, Activity, Settings2, Bot, ArrowLeft, Menu, MapPin,
-  AlertTriangle, Sparkles, Calendar
+  AlertTriangle, Sparkles, Calendar, Smartphone
 } from 'lucide-react';
 import { Logo, BackgroundWrapper, AppFooter, WeatherWidget, GlobalSyncIndicator, Card, NotificationBadge, SideNav, HeaderTitle } from './components/Layout';
 import { ProfessorDashboard, StudentManagement, WorkoutEditorView, CoachAssessmentView, PeriodizationView, RunTrackManager, StudentWorkoutHistoryView } from './components/CoachFlow';
@@ -15,6 +15,7 @@ import { WorkoutFeed } from './components/WorkoutFeed';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import AICoach from './components/AICoach';
 import { CorreRJView } from './components/CorreRJ';
+import { InstallPrompt } from './components/InstallPrompt';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { auth, db, appId, handleFirestoreError, OperationType, collection, query, onSnapshot, doc, setDoc, addDoc } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
@@ -187,6 +188,7 @@ export default function App() {
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   const studentForView = useMemo(() => {
     if (!selectedStudent) return null;
@@ -2711,6 +2713,22 @@ export default function App() {
             
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
               <AssessmentAlert student={studentForView} />
+
+              <button 
+                onClick={() => setShowInstallPrompt(true)} 
+                className="w-full py-3.5 px-5 bg-gradient-to-r from-red-950/80 via-zinc-900 to-black border border-red-600/40 rounded-3xl flex items-center justify-between text-white hover:border-red-600 transition-all active:scale-95 shadow-xl group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-red-600/20 rounded-2xl text-red-500 border border-red-500/20">
+                    <Smartphone size={20} />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-black uppercase italic tracking-wider">Instalar App ABFIT no Celular</p>
+                    <p className="text-[10px] text-zinc-400 font-medium">Instalação direta no celular ou geração de APK</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform" />
+              </button>
               
               {visibleDashboardItems.map(item => {
                 const isPeriodization = item.id === 'STUDENT_PERIODIZATION';
@@ -2787,6 +2805,9 @@ export default function App() {
         {view === 'ANALYTICS_COACH' && selectedStudent && <AnalyticsDashboard student={selectedStudent} onBack={() => setView('STUDENT_MGMT')} onToggleMenu={undefined} />}
         {view === 'WORKOUT_HISTORY' && selectedStudent && <StudentWorkoutHistoryView student={selectedStudent} onBack={() => setView('STUDENT_MGMT')} />}
         {view === 'PRESCREVE_AI' && <GeraAi onBack={() => setView(isCoach ? 'PROFESSOR_DASH' : 'DASHBOARD')} />}
+        {(showInstallPrompt || view === 'INSTALL_APP') && (
+          <InstallPrompt onClose={() => { setShowInstallPrompt(false); if (view === 'INSTALL_APP') setView(isCoach ? 'PROFESSOR_DASH' : 'DASHBOARD'); }} />
+        )}
       </main>
     </BackgroundWrapper>
   </ErrorBoundary>
