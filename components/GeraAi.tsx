@@ -266,22 +266,10 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
 
     // 2. Try Image Generation API
     try {
-      const imgRes = await callAI({
-        model: IMAGEN_MODEL,
-        prompt: imgPrompt,
-        isImageGeneration: true
-      });
-      if (imgRes && imgRes.imageUrl) {
-        setGeneratedImage(imgRes.imageUrl);
-      } else {
-        throw new Error("No image URL returned");
-      }
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imgPrompt)}?width=800&height=450&nologo=true`;
+      setGeneratedImage(pollinationsUrl);
     } catch (err: any) {
-      console.warn("Image generation failed or quota reached. Applying elegant Stock fallback:", err);
-      const errMsg = err.message || String(err);
-      if (!aiWarning && (errMsg.includes("chave") || errMsg.includes("Gemini") || errMsg.includes("cota") || errMsg.includes("Limite") || errMsg.includes("vazada") || errMsg.includes("API"))) {
-        setAiWarning(errMsg);
-      }
+      console.warn("Image generation failed. Applying elegant Stock fallback:", err);
       setGeneratedImage(getFallbackImage(muscle, exerciseName));
       setIsImageFallback(true);
     } finally {

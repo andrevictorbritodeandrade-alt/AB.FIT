@@ -294,8 +294,8 @@ function getContagemTreinos(): { A: number, B: number, C: number } {
             console.error("Erro ao parsear contagemTreinos", e);
         }
     }
-    // Valores iniciais para André Brito ou padrão
-    return { A: 5, B: 4, C: 3 };
+    // Valores iniciais zerados
+    return { A: 0, B: 0, C: 0 };
 }
 
 function salvarContagemTreinos(contagem: { A: number, B: number, C: number }) {
@@ -332,7 +332,7 @@ function carregarCarga(exercicioId: string): string {
     return cargas[exercicioId] || '';
 }
 
-function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish, onMarkSet, onUpdateLoad, onUpdateUnit, onShowDetail, onShowPrescreveAI, currentReps, onSkip }: { 
+function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish, onMarkSet, onUpdateLoad, onUpdateUnit, onShowDetail, onShowPrescreveAI, currentReps, currentMethod, onSkip }: { 
   ex: Exercise, 
   dbExercise?: any,
   lastLoad?: string,
@@ -345,6 +345,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   onShowDetail: (ex: Exercise) => void,
   onShowPrescreveAI?: () => void,
   currentReps?: string | null,
+  currentMethod?: string | null,
   onSkip?: (id: string) => void,
   key?: React.Key
 }) {
@@ -430,9 +431,9 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
         <h4 className={`text-xl font-black italic uppercase tracking-tighter leading-tight transition-colors ${allSetsCompleted ? 'text-emerald-500' : 'text-foreground'}`}>
           {ex.name}
         </h4>
-        {ex.method && (
-          <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.1em] italic mt-0.5">
-            {ex.method}
+        {(ex.method || currentMethod) && (
+          <p className="text-[9px] font-bold text-red-500 uppercase tracking-[0.1em] italic mt-0.5">
+            Método: {ex.method || currentMethod}
           </p>
         )}
       </div>
@@ -569,16 +570,22 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   );
 }
 
-// Helper para calcular reps dinâmicas
-function getCurrentRepsForStudent(student: Student): string | null {
-  if (!student.periodization || !student.periodization.microciclos) return null;
+// Helper para calcular microciclo e método ativo dinâmico
+export function getCurrentMicrocycleForStudent(student: Student): any {
+  if (!student.periodization || !student.periodization.microciclos || student.periodization.microciclos.length === 0) return null;
   
-  const startDate = student.protocolStartDate || student.periodization.startDate;
-  if (!startDate) return null;
-  
-  const start = new Date(startDate).getTime();
-  const now = Date.now();
-  const diffWeeks = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  if (student.periodization.phaseTitle) {
+    const matched = student.periodization.microciclos.find((m: any) => 
+      m.titulo?.toLowerCase().trim() === student.periodization?.phaseTitle?.toLowerCase().trim() ||
+      m.focus?.toLowerCase().trim() === student.periodization?.phaseTitle?.toLowerCase().trim()
+    );
+    if (matched) return matched;
+  }
+
+  const startDate = student.periodization.startDate || student.protocolStartDate;
+  const start = startDate ? new Date(startDate).getTime() : Date.now();
+  const diffDays = Math.floor(Math.max(0, Date.now() - start) / (24 * 60 * 60 * 1000));
+  const diffWeeks = Math.floor(diffDays / 7) + 1;
   
   const currentMicro = student.periodization.microciclos.find((m: any) => {
     const range = String(m.range || m.semanas || "");
@@ -590,12 +597,23 @@ function getCurrentRepsForStudent(student: Student): string | null {
     return diffWeeks >= startWeek && diffWeeks <= endWeek;
   });
   
-  if (!currentMicro) return null;
-  if (currentMicro.reps) return formatReps(currentMicro.reps);
+  return currentMicro || student.periodization.microciclos[0];
+}
+
+function getCurrentRepsForStudent(student: Student): string | null {
+  const micro = getCurrentMicrocycleForStudent(student);
+  if (!micro) return null;
+  if (micro.reps) return formatReps(micro.reps);
   
-  const volume = String(currentMicro.volume || currentMicro.volume_semanal || "");
-  const repsMatch = volume.match(/(\d+-\d+|\d+)\s*REPETIÇÕES/i) || volume.match(/(\d+-\d+|\d+)\s*reps/i);
+  const volume = String(micro.volume || micro.volume_semanal || "");
+  const repsMatch = volume.match(/(\d+-\d+|\d+)\s*REPETIÇÕES/i) || volume.match(/(\d+-\d+|\d+)\s*reps/i) || volume.match(/(\d+\/\d+\/\d+)/);
   return repsMatch ? formatReps(repsMatch[1]) : null;
+}
+
+function getCurrentMethodForStudent(student: Student): string | null {
+  const micro = getCurrentMicrocycleForStudent(student);
+  if (!micro) return null;
+  return micro.metodo || micro.method || null;
 }
 
 export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCoach = false }: { 
@@ -637,9 +655,33 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     return () => unsubscribe();
   }, [user.id]);
 
-  const tProgress = user.trainingProgress || { completedCount: 0, targetCount: 60 };
-  const totalCompleted = Math.max(totalExecuted, tProgress.completedCount || 0, (user.workoutHistory || []).length);
+  const currentMicro = useMemo(() => getCurrentMicrocycleForStudent(user), [user]);
   const currentReps = useMemo(() => getCurrentRepsForStudent(user), [user]);
+  const currentMethod = useMemo(() => getCurrentMethodForStudent(user), [user]);
+
+  const currentPeriodizationObj = user.periodization;
+  const periodKey = currentPeriodizationObj?.phaseTitle || currentReps || '13/11/9';
+  const prog = user.periodizationProgress || {};
+  const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
+  
+  const historyCounts = useMemo(() => {
+    let a = 0, b = 0, c = 0;
+    (user.workoutHistory || []).forEach(entry => {
+      if (entry.type === 'STRENGTH' && (!entry.periodization || entry.periodization === periodKey)) {
+        const title = entry.name.toLowerCase();
+        if (title.includes('treino a')) a++;
+        else if (title.includes('treino b')) b++;
+        else if (title.includes('treino c')) c++;
+      }
+    });
+    return { a, b, c };
+  }, [user.workoutHistory, periodKey]);
+
+  const countA = historyCounts.a;
+  const countB = historyCounts.b;
+  const countC = historyCounts.c;
+
+  const totalCompleted = countA + countB + countC;
 
   const lastLoads = useMemo(() => {
     const map: Record<string, string> = {};
@@ -703,32 +745,22 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     if (!activeWorkout) return null;
     const title = activeWorkout.title.toLowerCase();
     
-    // Periodization Key logic
-    const currentPeriodization = user.periodization;
-    const currentReps = activeWorkout.exercises[0]?.reps || '13/11/9';
-    const periodKey = currentPeriodization?.phaseTitle || currentReps;
-    
-    const prog = user.periodizationProgress || {};
-    const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
-    
     let completed = 0;
 
     if (title.includes('treino a')) {
-      completed = Math.max(localCounters.A, periodProg.A, user.faseAjusteA || 0);
+      completed = countA;
     } else if (title.includes('treino b')) {
-      completed = Math.max(localCounters.B, periodProg.B, user.faseAjusteB || 0);
+      completed = countB;
     } else if (title.includes('treino c')) {
-      completed = Math.max(localCounters.C, periodProg.C, user.faseAjusteC || 0);
+      completed = countC;
     } else {
-      const history = user.workoutHistory || [];
-      const logCount = logs.filter(l => l.treinoId === activeWorkout.id || l.prescricaoId === activeWorkout.id).length;
-      completed = Math.max(logCount, history.filter(h => h.workoutId === activeWorkout.id || h.name === activeWorkout.title).length);
+      completed = (periodProg as any)[activeWorkout.id] || 0;
     }
 
     const total = activeWorkout.projectedSessions || 20;
     const startDateDisplay = user.protocolStartDate ? new Date(user.protocolStartDate).toLocaleDateString('pt-BR') : 'Aguardando 1º Treino';
     return { completed, total, totalGlobal: totalCompleted, startDate: startDateDisplay, rawStartDate: user.protocolStartDate };
-  }, [activeWorkout, user.workoutHistory, user.protocolStartDate, user.totalGlobalA, user.totalGlobalB, user.totalGlobalC, logs, totalCompleted]);
+  }, [activeWorkout, user.protocolStartDate, countA, countB, countC, periodProg, totalCompleted]);
 
   const allExercisesCompleted = useMemo(() => {
     if (!activeWorkout) return false;
@@ -1098,7 +1130,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               </button>
               <div className="bg-card border border-border px-4 py-2 rounded-full flex items-center gap-2">
                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {tProgress.targetCount || 60}</span>
+                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {user.trainingProgress?.targetCount || 40}</span>
               </div>
            </div>
            <h2 className="text-xl font-black italic uppercase tracking-tighter">
@@ -1110,26 +1142,16 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
             (user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).map(w => {
               const title = w.title.toLowerCase();
               
-              // Periodization Key logic
-              const currentPeriodization = user.periodization;
-              const currentReps = w.exercises[0]?.reps || '13/11/9';
-              const periodKey = currentPeriodization?.phaseTitle || currentReps;
-              
-              const prog = user.periodizationProgress || {};
-              const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
-              
               let completed = 0;
 
               if (title.includes('treino a')) {
-                completed = Math.max(periodProg.A, user.faseAjusteA || 0);
+                completed = countA;
               } else if (title.includes('treino b')) {
-                completed = Math.max(periodProg.B, user.faseAjusteB || 0);
+                completed = countB;
               } else if (title.includes('treino c')) {
-                completed = Math.max(periodProg.C, user.faseAjusteC || 0);
+                completed = countC;
               } else {
-                const historyCount = (user.workoutHistory || []).filter(h => h.workoutId === w.id || h.name === w.title).length;
-                const logCount = logs.filter(l => l.treinoId === w.id || l.prescricaoId === w.id).length;
-                completed = Math.max(historyCount, logCount);
+                completed = (periodProg as any)[w.id] || 0;
               }
 
               const total = w.projectedSessions || 20;
@@ -1140,14 +1162,21 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                     <Play size={24} fill="currentColor" />
                   </div>
                   <div className="text-left flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1 pr-10">
-                      <h4 className="text-xl font-black italic uppercase text-foreground tracking-tighter group-hover:text-red-600 transition-colors leading-none truncate pr-2">{w.title}</h4>
+                    <div className="flex justify-between items-start mb-1 pr-2 gap-2">
+                      <h4 className="text-xl font-black italic uppercase text-foreground tracking-tighter group-hover:text-red-600 transition-colors leading-tight">{w.title}</h4>
                       <div className="flex flex-col items-end shrink-0">
                         <span className="text-xs font-black italic text-red-600 uppercase tracking-tighter leading-none">{completed} Executados</span>
                         <span className="text-[9px] font-black italic text-muted-foreground uppercase tracking-tighter leading-none mt-1">{Math.max(0, total - completed)} Faltam</span>
                       </div>
                     </div>
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.1em] mb-3">{w.exercises.length} Exercícios Prescritos</p>
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.1em]">{w.exercises.length} Exercícios Prescritos</p>
+                      {currentMethod && (
+                        <span className="text-[9px] font-black uppercase tracking-wider bg-red-600/10 text-red-500 px-2 py-0.5 rounded-full border border-red-600/20 italic">
+                          Método: {currentMethod}
+                        </span>
+                      )}
+                    </div>
                     <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden shadow-inner">
                       <div 
                         className="h-full bg-red-600 transition-all duration-1000 shadow-[0_0_10px_rgba(220,38,38,0.5)]" 
@@ -1205,6 +1234,19 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         </div>
       </header>
 
+      {currentMicro && (
+        <div className="mb-4 p-3.5 bg-red-950/20 border border-red-600/30 rounded-2xl flex items-center justify-between shadow-lg">
+          <div>
+            <span className="text-[9px] font-black uppercase text-red-500 tracking-widest italic block">MÉTODO DE TREINO ATIVO</span>
+            <span className="text-xs sm:text-sm font-black italic text-foreground uppercase tracking-tight">{currentMicro.metodo || currentMicro.method || 'Pirâmide decrescente'}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest italic block">PRESCRIÇÃO</span>
+            <span className="text-xs font-black italic text-red-500">{currentReps || currentMicro.reps || '13/11/9'}</span>
+          </div>
+        </div>
+      )}
+
       {workoutStats && (
         <div className="mb-8 animate-in slide-in-from-top-4 duration-700">
            <Card className="bg-card/40 border-border p-4 flex items-center justify-between backdrop-blur-xl rounded-[2.5rem] shadow-3xl">
@@ -1254,7 +1296,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               lastLoad={lastLoads[ex.name]}
               idx={idx} 
               progress={progress} 
-              currentReps={currentReps}
+              currentReps={['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(ex.name.toUpperCase()) ? ex.reps : currentReps}
+              currentMethod={currentMethod}
               onToggleFinish={(id) => setExerciseProgress(p => ({ ...p, [id]: { ...p[id], isFinished: !p[id].isFinished } }))}
               onMarkSet={(id, sIdx, rest) => {
                  setExerciseProgress(p => {
@@ -2313,8 +2356,11 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
       {/* Barra de Progresso do Macrociclo */}
       {(() => {
         const totalWks = plan.phaseTitle?.includes('16 Semanas') ? 16 : 12;
-        const curWk = Math.min(totalWks, Math.max(1, Math.ceil((Date.now() - new Date(plan.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000))));
-        const progPct = Math.min(100, Math.round(((Date.now() - new Date(plan.startDate).getTime()) / (totalWks * 7 * 24 * 60 * 60 * 1000)) * 100));
+        const startDate = plan.startDate ? new Date(plan.startDate).getTime() : Date.now();
+        const diffMs = Math.max(0, Date.now() - startDate);
+        const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+        const curWk = Math.min(totalWks, Math.max(1, Math.floor(diffDays / 7) + 1));
+        const progPct = Math.min(100, Math.max(1, Math.round((curWk / totalWks) * 100)));
 
         return (
           <div className="mb-8 p-6 rounded-3xl bg-zinc-900/50 border border-white/5">

@@ -226,4 +226,8 @@ export interface Student {
   _reset20260805_v4?: boolean;
   _reset20260805_v5?: boolean;
   _reset20260805_v6?: boolean;
+  _reset20260805_v7?: boolean;
+  _reset20260805_v8?: boolean;
+  _reset20260805_v9?: boolean;
+  _reset20260805_v10?: boolean;
 }
