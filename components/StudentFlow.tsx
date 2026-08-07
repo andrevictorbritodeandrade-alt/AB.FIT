@@ -1056,7 +1056,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }
 
   if (prescreveAIExercise) {
-    return <GeraAi onBack={() => setPrescreveAIExercise(null)} initialExerciseName={prescreveAIExercise} />;
+    return <GeraAi onBack={() => setPrescreveAIExercise(null)} initialExerciseName={prescreveAIExercise} workoutName={activeWorkout?.title} />;
   }
 
   if (showCompletionModal) {
@@ -1199,8 +1199,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }
 
   return (
-    <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in duration-500">
-      <div className="max-w-xl mx-auto">
+    <div className="p-6 pb-20 text-foreground overflow-y-auto h-[100dvh] text-left custom-scrollbar bg-transparent animate-in fade-in duration-500">
+      <div className="max-w-xl mx-auto flex flex-col min-h-full">
         <header className="flex items-center justify-between mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-4 border-b border-border">
         <div className="flex-1 flex items-center gap-2 min-w-0">
            <button onClick={onBack} className="p-2 sm:p-3 bg-card rounded-xl sm:rounded-2xl text-muted-foreground hover:text-foreground transition-colors shadow-lg shrink-0">
@@ -1209,7 +1209,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
            <button onClick={cancelSession} className="p-2 sm:p-3 bg-muted rounded-xl sm:rounded-2xl text-muted-foreground hover:text-foreground transition-colors shadow-lg shrink-0">
               <ArrowLeft size={18}/>
            </button>
-           <div className="flex flex-col hidden sm:flex min-w-0">
+           <div className="flex flex-col min-w-0 flex-1">
               <span className="text-[9px] font-black text-red-600 uppercase tracking-[0.3em] italic leading-none mb-1">Status Ativo</span>
               <h2 className="text-sm font-black italic uppercase tracking-tighter text-foreground leading-none truncate">{activeWorkout.title}</h2>
            </div>
@@ -1242,7 +1242,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           </div>
           <div className="text-right">
             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest italic block">PRESCRIÇÃO</span>
-            <span className="text-xs font-black italic text-red-500">{currentReps || currentMicro.reps || '13/11/9'}</span>
+            <span className="text-xs font-black italic text-red-500">{((currentMicro.metodo || currentMicro.method || 'Pirâmide decrescente').toUpperCase().includes('PIRÂMIDE DECRESCENTE') || (currentMicro.metodo || currentMicro.method || 'Pirâmide decrescente').toUpperCase().includes('PIRAMIDE DECRESCENTE')) ? '13/11/9' : (currentReps || currentMicro.reps || '13/11/9')}</span>
           </div>
         </div>
       )}
@@ -1296,7 +1296,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               lastLoad={lastLoads[ex.name]}
               idx={idx} 
               progress={progress} 
-              currentReps={['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(ex.name.toUpperCase()) ? ex.reps : currentReps}
+              currentReps={['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(ex.name.toUpperCase()) || (ex.method || currentMethod)?.toUpperCase().includes('PIRÂMIDE DECRESCENTE') || (ex.method || currentMethod)?.toUpperCase().includes('PIRAMIDE DECRESCENTE') ? (ex.reps && ex.reps.includes('/') ? ex.reps : '13/11/9') : currentReps}
               currentMethod={currentMethod}
               onToggleFinish={(id) => setExerciseProgress(p => ({ ...p, [id]: { ...p[id], isFinished: !p[id].isFinished } }))}
               onMarkSet={(id, sIdx, rest) => {

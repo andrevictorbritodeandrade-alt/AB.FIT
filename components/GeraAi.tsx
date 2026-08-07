@@ -108,7 +108,7 @@ const detectMuscleGroup = (name: string): string => {
   return "PEITORAL"; // Default to Peitoral if nothing detected
 };
 
-export default function GeraAi({ onBack, initialExerciseName }: { onBack?: () => void, initialExerciseName?: string }) {
+export default function GeraAi({ onBack, initialExerciseName, workoutName }: { onBack?: () => void, initialExerciseName?: string, workoutName?: string }) {
   const [selectedMuscle, setSelectedMuscle] = useState<string>("PEITORAL");
   const [searchQuery, setSearchQuery] = useState(initialExerciseName || "");
   
@@ -194,6 +194,8 @@ export default function GeraAi({ onBack, initialExerciseName }: { onBack?: () =>
       positionInstructions = "CRITICAL POSTURE REQUIREMENT: This is a flat chest press exercise (Supino Reto). The athlete is lying completely flat on their back on a horizontal flat gym bench, pressing the barbell or dumbbells straight up over their chest. Their feet are flat on the floor.";
     } else if (upperName.includes("ELEVAÇÃO DE QUADRIL") || upperName.includes("HIP THRUST") || upperName.includes("PONTE")) {
       positionInstructions = "CRITICAL POSTURE REQUIREMENT: This is a glute HIP THRUST / ELEVAÇÃO DE QUADRIL exercise! The athlete's body is in a horizontal bridge-like position. Their upper back and shoulder blades are resting securely across the side of a horizontal flat gym bench. Their feet are flat on the gym floor with knees bent at a 90-degree angle. A loaded barbell with round weight plates resides across the athlete's hips/lap, gripped and stabilized by both hands. Hips are raised in full extension parallel to the floor, squeezing the glutes. DO NOT draw a standing athlete! DO NOT draw a deadlift, overhead bar, or standard squat! The posture must show support from the shoulder blades on the bench, feet flat on the floor, and weight on the lap.";
+    } else if (upperName.includes("LEG PRESS HORIZONTAL")) {
+      positionInstructions = "CRITICAL POSTURE REQUIREMENT: This is a Seated Horizontal Leg Press (Leg Press Horizontal). The athlete is seated upright with a slight recline on a padded gym machine seat. Their feet are placed flat on a large vertical push-plate in front of them, pushing it away horizontally. Their knees are bent towards their chest or extending horizontally to push the weight. Their hands are gripping the support handles by the sides of the seat. Do NOT draw a 45-degree angle leg press where the athlete is lying on their back.";
     } else if (upperName.includes("AGACHAMENTO") || upperName.includes("HACK") || upperName.includes("AFUNDO") || upperName.includes("BÚLGARO") || upperName.includes("PASSADA") || upperName.includes("AVANÇO") || upperName.includes("SQUAT") || upperName.includes("SISSY")) {
       positionInstructions = "CRITICAL POSTURE REQUIREMENT: This is a lower body Squat/Agachamento or Lunge/Passada. The athlete's hips are lowered with knees bent at approximately 90 degrees in a powerful, stable stance. Torso is strong, upright, and feet are planted flat on the rubber gym flooring, showing perfect hip and knee flexion. For squats, a bar is placed on their upper back.";
     } else if (upperName.includes("REMADA UNILATERAL") || upperName.includes("SERRUCHO") || upperName.includes("SERROTE")) {
@@ -222,13 +224,7 @@ export default function GeraAi({ onBack, initialExerciseName }: { onBack?: () =>
       positionInstructions = "CRITICAL POSTURE REQUIREMENT: This is a bird dog (Perdigueiro) exercise. The athlete is on all fours, extending one arm straight forward and the opposite leg straight backward, keeping their spine aligned and flat.";
     }
 
-    const imgPrompt = `A highly detailed, professional fitness photography of a muscular Black athlete (either male or female, dark skin complexion) perfectly demonstrating the gym exercise: "${exerciseName}". 
-Target muscle group: ${muscle}. 
-The athlete is wearing the official South Africa national soccer team jersey for the World Cup, styled with a vibrant golden-yellow base, deep emerald-green sleeve cuffs and green neck collar, with dark green sublimated line patterns on the chest and body.
-The athlete is also wearing long black Adidas workout training pants with the signature three parallel white vertical stripes going down the sides, and clean white Adidas athletic superstar sneakers with three black stripes on the sides.
-Ensure the athlete's feet are positioned naturally and anatomically correctly, facing forward or slightly outward, flat on the ground or appropriately positioned on the machine, without any awkward twisting or backward rotation.
-${positionInstructions}
-The image should show peak muscle contraction with perfect biomechanical form. Professional modern gym environment, dramatic cinematic lighting, 8k resolution, ultra-realistic, photorealistic.`;
+    const imgPrompt = `A highly detailed, professional fitness photography of a tall, athletic Black man with curly hair, perfectly demonstrating the gym exercise: "${exerciseName}". Target muscle group: ${muscle}. The athlete is wearing a black Adidas shirt, black Adidas shorts with the signature three white stripes, and white Adidas Superstar sneakers. Ensure the athlete's body positioning and equipment are strictly accurate for the requested exercise, avoiding any awkward twisting or physically impossible postures. ${positionInstructions}The image should show peak muscle contraction with perfect biomechanical form. Professional modern gym environment, dramatic cinematic lighting, 8k resolution, ultra-realistic, photorealistic.`;
 
     const textPrompt = `Atue como um especialista em biomecânica esportiva. Faça a análise biomecânica do exercício "${exerciseName}" focado no músculo "${muscle}". 
 Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. Use este formato exato:
@@ -264,20 +260,14 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
       });
     }
 
-    // 2. Try Image Generation API
-    try {
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imgPrompt)}?width=800&height=450&nologo=true`;
-      setGeneratedImage(pollinationsUrl);
-    } catch (err: any) {
-      console.warn("Image generation failed. Applying elegant Stock fallback:", err);
-      setGeneratedImage(getFallbackImage(muscle, exerciseName));
-      setIsImageFallback(true);
-    } finally {
-      setIsGenerating(false);
-    }
+    setIsGenerating(false);
   };
 
   const closeModal = () => {
+    if (initialExerciseName && onBack) {
+      onBack();
+      return;
+    }
     setSelectedExercise(null);
     setGeneratedImage(null);
     setAnalysis(null);
@@ -308,10 +298,17 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
             <div className="w-10 h-10 rounded bg-red-600 flex items-center justify-center transform -skew-x-12 shadow-[0_0_15px_-3px_rgba(239,68,68,0.5)]">
               <Dumbbell className="w-6 h-6 text-white transform skew-x-12" />
             </div>
-            <h1 className="text-3xl font-black font-display tracking-tighter italic uppercase flex items-center">
-              <span className="text-white">GER</span>
-              <span className="text-red-500">AÍ</span>
-            </h1>
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-black font-display tracking-tighter italic uppercase flex items-center leading-none">
+                <span className="text-white">GER</span>
+                <span className="text-red-500">AÍ</span>
+              </h1>
+              {workoutName && (
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1 truncate max-w-[150px] sm:max-w-none">
+                  {workoutName}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="relative group w-48 md:w-80 hidden sm:block">
@@ -466,7 +463,7 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
                     <div className="w-16 h-16 relative flex items-center justify-center mb-6">
                       <div className="absolute inset-0 border-t-2 border-red-500 rounded-full animate-spin"></div>
                       <div className="absolute inset-2 border-r-2 border-white/20 rounded-full animate-[spin_1.5s_reverse_infinite]"></div>
-                      <ImageIcon className="w-6 h-6 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                      <Zap className="w-6 h-6 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                     </div>
                     <h4 className="text-base text-white font-medium mb-2 uppercase tracking-widest">Processando Visão Biomecânica</h4>
                     <p className="text-sm text-zinc-500 leading-relaxed font-mono">
@@ -476,21 +473,6 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
                 </div>
               ) : (
                 <>
-                  <div className="relative w-full aspect-video sm:aspect-[21/9] bg-zinc-900 border-b border-white/5">
-                    {generatedImage ? (
-                      <img src={generatedImage} alt={selectedExercise.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600">
-                        <ImageIcon className="w-12 h-12 mb-4 opacity-50" />
-                        <p>Não foi possível gerar a imagem.</p>
-                      </div>
-                    )}
-                    <div className="absolute top-6 left-6 flex items-center gap-2 bg-black/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full z-20">
-                      <div className="w-2 h-2 rounded-full bg-red-500 animate-[pulse_1s_ease-in-out_infinite]" />
-                      <span className="text-[10px] font-bold tracking-widest text-white uppercase">Live Biomechanic Feed</span>
-                    </div>
-                  </div>
-
                   <div className="p-6 sm:p-10 flex flex-col gap-8">
                     <div>
                       <h2 className="text-3xl sm:text-5xl font-black font-display italic tracking-tight text-white max-w-4xl uppercase leading-[1.1]">
