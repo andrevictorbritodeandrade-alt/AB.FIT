@@ -41,8 +41,25 @@ type Mode = 'indoor' | 'outdoor';
 function MapUpdater({ center }: { center: [number, number] }) {
     const map = useMap();
     useEffect(() => {
-        map.setView(center, map.getZoom());
+        if (map) {
+            try {
+                map.invalidateSize();
+                map.setView(center, map.getZoom());
+            } catch (e) {}
+        }
     }, [center, map]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (map) {
+                try {
+                    map.invalidateSize();
+                } catch (e) {}
+            }
+        }, 200);
+        return () => clearTimeout(timer);
+    }, [map]);
+
     return null;
 }
 
@@ -118,6 +135,47 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
     const [countdownNum, setCountdownNum] = useState<number | string>(3);
     const [lastPosition, setLastPosition] = useState<GeolocationPosition | null>(null);
     
+    // Web Audio Beep generator for 0ms latency audio feedback
+    const playBeep = useCallback((freq = 440, type: OscillatorType = 'sine', duration = 0.15) => {
+        try {
+            if (!soundEnabled) return;
+            const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + duration);
+        } catch (e) {}
+    }, [soundEnabled]);
+
+    // Fast initial location check on mount so map renders immediately without waiting for GPS lock
+    useEffect(() => {
+        if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    setLastPosition(prev => prev || pos);
+                    lastPositionRef.current = lastPositionRef.current || pos;
+                },
+                (err) => console.log("Fast GPS fallback:", err),
+                { enableHighAccuracy: false, timeout: 3000, maximumAge: 60000 }
+            );
+        }
+    }, []);
+
+    const mapCenter = useMemo<[number, number]>(() => {
+        if (lastPosition?.coords) {
+            return [lastPosition.coords.latitude, lastPosition.coords.longitude];
+        }
+        return [-22.9068, -43.1729]; // Rio de Janeiro fallback center
+    }, [lastPosition]);
+    
     // Performance Sensors
     const [steps, setSteps] = useState(0);
     const [cadence, setCadence] = useState(0);
@@ -156,6 +214,7 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
     const isSpeakingRef = useRef(false);
     const activeUtterancesRef = useRef<SpeechSynthesisUtterance[]>([]);
     const wakeLockRef = useRef<any>(null);
+    const silentAudioRef = useRef<HTMLAudioElement | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const lastAnnouncedKmRef = useRef<number>(0);
 
@@ -671,25 +730,148 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
         }
     }, [distance, isRunning, isAutoPaused, pace, totalTimeElapsed]);
 
-    // Wake Lock to prevent screen sleep
+    // Initialize silent audio element for background execution keep-alive
     useEffect(() => {
-        let wakeLock: any = null;
+        // 1-second silent WAV audio track data URI
+        const SILENT_WAV = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==";
+        const audio = new Audio(SILENT_WAV);
+        audio.loop = true;
+        audio.volume = 0.01; // subtle audio stream so browser keeps JS execution and GPS active in background
+        silentAudioRef.current = audio;
+
+        return () => {
+            if (silentAudioRef.current) {
+                silentAudioRef.current.pause();
+                silentAudioRef.current = null;
+            }
+        };
+    }, []);
+
+    // Wake Lock & MediaSession to prevent screen sleep and maintain background execution
+    useEffect(() => {
         const requestWakeLock = async () => {
             try {
                 if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
-                    wakeLock = await (navigator as any).wakeLock.request('screen');
+                    wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
                 }
             } catch (err: any) {
-                // Silently drop permission errors in iframe preview to keep console clean
                 if (err.name !== 'NotAllowedError') {
                     console.error("Wake Lock Error:", err);
                 }
             }
         };
 
-        if (isRunning) requestWakeLock();
-        return () => { if (wakeLock) { try { wakeLock.release(); } catch(e) {} } };
-    }, [isRunning]);
+        if (isRunning && !isFinished) {
+            requestWakeLock();
+
+            // Play silent background audio to keep process alive on lock screen
+            if (silentAudioRef.current) {
+                silentAudioRef.current.play().catch(e => console.log("Background audio play notice:", e));
+            }
+
+            // Register MediaSession metadata for lock screen & background persistence
+            if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+                try {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: workoutTitle || 'Treino ABFIT RUN',
+                        artist: 'ABFIT RUN',
+                        album: 'Rastreamento em 2º Plano (GPS & Cronômetro Ativo)'
+                    });
+                    navigator.mediaSession.playbackState = 'playing';
+                    navigator.mediaSession.setActionHandler('pause', () => setIsRunning(false));
+                    navigator.mediaSession.setActionHandler('play', () => setIsRunning(true));
+                } catch (e) {}
+            }
+        } else {
+            if (wakeLockRef.current) {
+                try { wakeLockRef.current.release(); } catch(e) {}
+                wakeLockRef.current = null;
+            }
+            if (silentAudioRef.current) {
+                silentAudioRef.current.pause();
+            }
+            if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+                try { navigator.mediaSession.playbackState = 'paused'; } catch (e) {}
+            }
+        }
+
+        return () => {
+            if (wakeLockRef.current) {
+                try { wakeLockRef.current.release(); } catch(e) {}
+            }
+        };
+    }, [isRunning, isFinished, workoutTitle]);
+
+    // Handle visibilitychange to restore Wake Lock and recalculate real-time clock deltas
+    useEffect(() => {
+        const handleVisibilityChange = async () => {
+            if (document.visibilityState === 'visible' && isRunning && !isFinished) {
+                // Re-request wake lock if released on screen lock
+                if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+                    try {
+                        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+                    } catch (e) {}
+                }
+
+                // Recalculate exact total time elapsed from start timestamp
+                if (sessionStartRef.current !== null) {
+                    const now = Date.now();
+                    const sessionDelta = Math.floor((now - sessionStartRef.current) / 1000);
+                    setTotalTimeElapsed(accumulatedTimeRef.current + sessionDelta);
+                }
+
+                // Force a fast GPS check to wake up location chip
+                if (mode === 'outdoor' && 'geolocation' in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            if (pos.coords.accuracy <= 65) {
+                                setLastPosition(pos);
+                                lastPositionRef.current = pos;
+                            }
+                        },
+                        (err) => console.log("Visibility GPS refresh notice:", err),
+                        { enableHighAccuracy: true, timeout: 3000, maximumAge: 0 }
+                    );
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [isRunning, isFinished, mode]);
+
+    // Background GPS Watchdog: Ensures geolocation stream is auto-reconnected if stalled by OS
+    useEffect(() => {
+        if (!isRunning || mode !== 'outdoor' || isFinished) return;
+
+        const watchdog = setInterval(() => {
+            const lastPos = lastPositionRef.current;
+            const now = Date.now();
+            // If no GPS coordinate received in over 15 seconds while workout is active
+            if (!lastPos || (now - lastPos.timestamp) > 15000) {
+                if ('geolocation' in navigator) {
+                    console.log("Reviving GPS watchPosition stream...");
+                    if (watchIdRef.current !== null) {
+                        navigator.geolocation.clearWatch(watchIdRef.current);
+                    }
+                    watchIdRef.current = window.navigator.geolocation.watchPosition(
+                        (position) => {
+                            if (position.coords.accuracy <= 65) {
+                                lastPositionRef.current = position;
+                                setLastPosition(position);
+                            }
+                        },
+                        (error) => console.error("GPS Watchdog Error:", error),
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                }
+            }
+        }, 10000);
+
+        return () => clearInterval(watchdog);
+    }, [isRunning, mode, isFinished]);
 
     const handleHealthImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -812,16 +994,20 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
         setIsCountingDown(true);
         let count = 3;
         setCountdownNum(count);
-        speak("Atenção, preparando...", true);
-        speak("Três", false);
+        
+        playBeep(440, 'sine', 0.12);
+        speak("Três", true);
+        
         const interval = setInterval(() => {
             count--;
             if (count > 0) {
                 setCountdownNum(count);
-                speak(count === 2 ? "Dois" : "Um", false);
+                playBeep(440, 'sine', 0.12);
+                speak(count === 2 ? "Dois" : "Um", true);
             } else if (count === 0) {
                 setCountdownNum("JÁ!");
-                speak("Já!", false);
+                playBeep(880, 'triangle', 0.25);
+                speak("Já!", true);
             } else {
                 clearInterval(interval);
                 setIsCountingDown(false);
@@ -835,18 +1021,21 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
     const startRunCountdown = () => {
         setIsCountingDown(true);
         setCountdownNum(3);
-        speak("Atenção, preparando para iniciar.", true);
-        speak("Três", false);
+        
+        playBeep(440, 'sine', 0.12);
+        speak("Três", true);
         
         let count = 3;
         const interval = setInterval(() => {
             count--;
             if (count > 0) {
                 setCountdownNum(count);
-                speak(count === 2 ? "Dois" : "Um", false);
+                playBeep(440, 'sine', 0.12);
+                speak(count === 2 ? "Dois" : "Um", true);
             } else if (count === 0) {
                  setCountdownNum("JÁ!");
-                 speak("Já!", false);
+                 playBeep(880, 'triangle', 0.25);
+                 speak("Já!", true);
             } else {
                 clearInterval(interval);
                 setIsCountingDown(false);
@@ -971,9 +1160,9 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                         <MapIcon size={32} />
                     </button>
                     {mode === 'outdoor' && (
-                        <div className="p-4 bg-red-600/10 border border-red-600/30 rounded-2xl animate-in slide-in-from-top-4">
-                            <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest leading-relaxed">
-                                <Zap size={10} className="inline mr-1" /> ATENÇÃO: Mantenha a tela ligada e o GPS ativo para não travar o tempo.
+                        <div className="p-4 bg-emerald-600/10 border border-emerald-600/30 rounded-2xl animate-in slide-in-from-top-4">
+                            <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest leading-relaxed">
+                                <Zap size={10} className="inline mr-1" /> RASTREAMENTO EM 2º PLANO ATIVO: O GPS e o Cronômetro continuam funcionando mesmo com a tela do celular bloqueada, apagada ou em segundo plano.
                             </p>
                         </div>
                     )}
@@ -1021,7 +1210,11 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                 <div className="w-full h-64 rounded-3xl bg-[#1a1a1a] mb-8 overflow-hidden relative border border-white/5 shadow-2xl">
                     {mode === 'outdoor' && path.length > 0 ? (
                         <MapContainer center={[path[0].lat, path[0].lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false} touchZoom={false}>
-                            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                            <TileLayer 
+                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+                                subdomains="abcd"
+                                maxZoom={20}
+                            />
                             <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={5} />
                         </MapContainer>
                     ) : (
@@ -1250,20 +1443,19 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
             </header>
 
             {viewMode === 'map' && mode === 'outdoor' ? (
-                <div className="flex-1 relative mx-6 mb-28 rounded-3xl overflow-hidden border-2 border-zinc-800">
-                    {lastPosition ? (
-                        <MapContainer center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} zoom={17} style={{ height: '100%', width: '100%' }}>
-                            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-                            <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={5} />
+                <div className="flex-1 relative mx-6 mb-28 rounded-3xl overflow-hidden border-2 border-zinc-800 min-h-[300px]">
+                    <MapContainer center={mapCenter} zoom={17} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer 
+                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+                            subdomains="abcd"
+                            maxZoom={20}
+                        />
+                        <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={5} />
+                        {lastPosition && (
                             <Marker position={[lastPosition.coords.latitude, lastPosition.coords.longitude]} />
-                            <MapUpdater center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} />
-                        </MapContainer>
-                    ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900/50">
-                            <Loader2 size={32} className="animate-spin text-[#e2ff00] mb-4" />
-                            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Buscando Sinal de GPS...</p>
-                        </div>
-                    )}
+                        )}
+                        <MapUpdater center={mapCenter} />
+                    </MapContainer>
                     
                     {/* Floating Info on Map */}
                     <div className="absolute top-4 left-4 right-4 z-[400] grid grid-cols-2 gap-2">
@@ -1335,13 +1527,19 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                 </div>
                 
                 {/* Background Map Overlay if Outdoor */}
-                {mode === 'outdoor' && lastPosition && viewMode === 'stats' && (
-                    <div className="absolute inset-0 z-[0] opacity-20 pointer-events-none">
-                        <MapContainer center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} zoom={18} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false}>
-                            <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                {mode === 'outdoor' && viewMode === 'stats' && (
+                    <div className="absolute inset-0 z-[0] opacity-30 pointer-events-none rounded-3xl overflow-hidden">
+                        <MapContainer center={mapCenter} zoom={18} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false}>
+                            <TileLayer 
+                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+                                subdomains="abcd"
+                                maxZoom={20}
+                            />
                             <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={4} />
-                            <Circle center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} radius={5} pathOptions={{ color: '#e2ff00' }} />
-                            <MapUpdater center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} />
+                            {lastPosition && (
+                                <Circle center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} radius={5} pathOptions={{ color: '#e2ff00' }} />
+                            )}
+                            <MapUpdater center={mapCenter} />
                         </MapContainer>
                     </div>
                 )}

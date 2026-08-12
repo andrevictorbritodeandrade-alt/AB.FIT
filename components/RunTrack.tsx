@@ -626,7 +626,11 @@ const WorkoutCard: React.FC<{ workout: WorkoutModel, onDelete?: () => void, onEd
                                 scrollWheelZoom={false}
                                 doubleClickZoom={false}
                             >
-                                <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+                                <TileLayer 
+                                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+                                    subdomains="abcd"
+                                    maxZoom={20}
+                                />
                                 <Polyline positions={stats.path.map((p: any) => [p.lat !== undefined ? p.lat : p[0], p.lng !== undefined ? p.lng : p[1]])} color="#e2ff00" weight={4} />
                             </MapContainer>
                         </div>
@@ -1075,11 +1079,11 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
     
     useEffect(() => {
         if (!student.id) return;
-        const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v9`);
+        const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
         if (!hasSeeded) {
             const checkAndSeed = async () => {
                 try {
-                    await new Promise(r => setTimeout(r, 2000));
+                    await new Promise(r => setTimeout(r, 1000));
                     
                     // Query firestore directly to avoid closure stale state
                     const path = `artifacts/${RUN_COLLECTION}/workouts`;
@@ -1096,7 +1100,7 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
                         }
                         await seedWorkouts(student.id);
                     }
-                    localStorage.setItem(`seeded_${student.id}_run_v9`, 'true');
+                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
                 } catch (err) {
                     const path = `artifacts/${RUN_COLLECTION}/workouts`;
                     try {
@@ -1104,7 +1108,7 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
                     } catch (e) {
                         console.error(e);
                     }
-                    localStorage.setItem(`seeded_${student.id}_run_v9`, 'true');
+                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
                 }
             };
             checkAndSeed();
@@ -1320,6 +1324,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         
         const checkAndSeed = async () => {
             try {
+                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
                 const path = `artifacts/${RUN_COLLECTION}/workouts`;
                 const q = collection(db, path);
                 const querySnapshot = await getDocs(q);
@@ -1327,10 +1332,16 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                     .map(d => ({id: d.id, ...d.data()} as WorkoutModel))
                     .filter(w => w.studentId === student.id);
 
-                // Only seed if there are NO workouts for this student
-                if (currentWorkouts.length === 0 && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
+                if ((!hasSeeded || currentWorkouts.length === 0) && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
                     console.log(`Seeding initial workouts for ${student.nome}...`);
+                    if (student.id === 'fixed-andre') {
+                        for (const w of currentWorkouts) {
+                            const docPath = `artifacts/${RUN_COLLECTION}/workouts/${w.id}`;
+                            await deleteDoc(doc(db, docPath));
+                        }
+                    }
                     await seedWorkouts(student.id);
+                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
                 }
             } catch (err) {
                 console.error("Error during workout check/seed:", err);
@@ -1535,6 +1546,65 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
             <div className={`flex-1 overflow-y-auto custom-scrollbar p-6 ${isWatch ? 'space-y-6' : 'space-y-12'}`}>
                 {activeTab === 'OVERVIEW' ? (
                 <>
+                {/* CLINICAL PROTOCOL BANNER (FOR TENDINOPATHY & WEIGHT LOSS) */}
+                {!isWatch && (student.id === 'fixed-andre' || student.nome?.toLowerCase().includes('andré') || student.nome?.toLowerCase().includes('andre')) && (
+                    <div className="bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-red-950/40 border-2 border-red-600/30 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden text-left space-y-4">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-red-600/10 blur-3xl -mr-12 -mt-12 pointer-events-none" />
+                        <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-red-600/20 text-red-500 rounded-2xl border border-red-500/30">
+                                    <Activity size={22} />
+                                </div>
+                                <div>
+                                    <span className="text-[8px] font-black uppercase text-red-500 tracking-[0.25em] italic block">Prescrição Aeróbica & Perda de Peso</span>
+                                    <h3 className="text-sm sm:text-base font-black uppercase italic text-white tracking-wider leading-none">Protocolo Tendinopatia no Joelho</h3>
+                                </div>
+                            </div>
+                            <span className="bg-red-600/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest italic shrink-0">
+                                150 min/sem
+                            </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
+                            <div className="bg-black/50 p-3 rounded-2xl border border-white/5">
+                                <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider block mb-0.5">Modalidade</span>
+                                <span className="text-[11px] font-black text-white italic block leading-tight">Caminhada Plana</span>
+                                <span className="text-[8px] text-zinc-400 block mt-0.5">Beira da Lagoa de Jacaroá</span>
+                            </div>
+                            <div className="bg-black/50 p-3 rounded-2xl border border-white/5">
+                                <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider block mb-0.5">Frequência</span>
+                                <span className="text-[11px] font-black text-white italic block leading-tight">4x por Semana</span>
+                                <span className="text-[8px] text-zinc-400 block mt-0.5">Quarta, Quinta, Sábado, Domingo</span>
+                            </div>
+                            <div className="bg-black/50 p-3 rounded-2xl border border-white/5">
+                                <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider block mb-0.5">Intensidade</span>
+                                <span className="text-[11px] font-black text-red-400 italic block leading-tight">Moderada (RPE 4–5)</span>
+                                <span className="text-[8px] text-zinc-400 block mt-0.5">Fala frases, sem cantar</span>
+                            </div>
+                            <div className="bg-black/50 p-3 rounded-2xl border border-white/5">
+                                <span className="text-[8px] font-black uppercase text-zinc-500 tracking-wider block mb-0.5">Regra da Dor</span>
+                                <span className="text-[11px] font-black text-amber-400 italic block leading-tight">Máximo 3 / 10</span>
+                                <span className="text-[8px] text-zinc-400 block mt-0.5">Se passar, reduza ou pare</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-black/40 rounded-2xl p-4 border border-white/5 space-y-2 text-[10px] text-zinc-300 relative z-10">
+                            <div className="flex items-start gap-2">
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0 mt-0.5" />
+                                <p><strong className="text-white">Estrutura de Cada Sessão:</strong> 5 min de Aquecimento (caminhada lenta + mobilidade de tornozelo/quadril) + Parte Principal contínua RPE 4-5 + 5 min de Desaquecimento (caminhada lenta + alongamentos de quadríceps, posteriores e panturrilha).</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <TrendingUp size={14} className="text-red-500 shrink-0 mt-0.5" />
+                                <p><strong className="text-white">Regra de Progressão:</strong> A cada 2 semanas sem aumento de dor, adicione 5–10 min na sessão de quarta ou sábado até atingir 200–250 min/semana.</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <Info size={14} className="text-blue-400 shrink-0 mt-0.5" />
+                                <p><strong className="text-white">Cuidados e Recomendações:</strong> Tênis com bom amortecimento, hidratação a cada 15–20 min. Evite subidas/descidas íngremes, terrenos irregulares ou qualquer tipo de impacto (sem corrida e sem saltos).</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* WEEKLY VOLUME SUMMARY - NRC STYLE */}
                 <div className={`${isWatch ? 'p-4 rounded-3xl' : 'p-8 rounded-[2.5rem]'} bg-zinc-900 border border-white/5 shadow-2xl relative overflow-hidden group`}>
                     <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/10 blur-3xl -mr-16 -mt-16 group-hover:bg-red-600/20 transition-all" />
@@ -2080,11 +2150,82 @@ const seedWorkouts = async (studentId: string) => {
 
     const payloadMap: Record<string, any[]> = {
         'fixed-andre': [
-            { studentId: 'fixed-andre', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
-            { studentId: 'fixed-andre', dayOfWeek: 'Terça', ...rodagem },
-            { studentId: 'fixed-andre', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
-            { studentId: 'fixed-andre', dayOfWeek: 'Quinta', ...rodagem },
-            { studentId: 'fixed-andre', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Quarta',
+                type: 'Caminhada Moderada (Jacaroá)',
+                warmupTime: '5',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '20',
+                recoveryTime: '0',
+                cooldownTime: '5',
+                speed: '5.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">20\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
+                description: '30 min Total. Beira da Lagoa de Jacaroá (piso plano). Intensidade moderada (RPE 4-5). Dor no joelho máx 3/10.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
+                    { type: 'stimulus', duration: 1200, title: 'Parte Principal (20 min caminhada contínua RPE 4-5)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Quinta',
+                type: 'Caminhada Pós-Fortalecimento',
+                warmupTime: '3',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '14',
+                recoveryTime: '0',
+                cooldownTime: '3',
+                speed: '5.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">3\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">14\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">3\' DES</span>',
+                description: '20 min Total. Realizar após treino de fortalecimento. Sem impacto nem corrida.',
+                segments: [
+                    { type: 'warmup', duration: 180, title: 'Aquecimento (3 min caminhada leve)' },
+                    { type: 'stimulus', duration: 840, title: 'Parte Principal (14 min caminhada RPE 4-5)' },
+                    { type: 'cooldown', duration: 180, title: 'Desaquecimento (3 min caminhada leve + alongamentos)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Sábado',
+                type: 'Caminhada Longa (Jacaroá)',
+                warmupTime: '5',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '40',
+                recoveryTime: '0',
+                cooldownTime: '5',
+                speed: '5.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
+                description: '50 min Total. Lagoa de Jacaroá (piso plano). Mantenha RPE 4-5. Beba pequenos goles de água a cada 15-20 min.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
+                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Domingo',
+                type: 'Caminhada Longa (Jacaroá)',
+                warmupTime: '5',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '40',
+                recoveryTime: '0',
+                cooldownTime: '5',
+                speed: '5.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
+                description: '50 min Total. Lagoa de Jacaroá (piso plano). RPE 4-5. Se dor no joelho passar de 3/10, reduza o ritmo.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
+                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                ]
+            }
         ],
         'fixed-liliane': [
             { studentId: 'fixed-liliane', dayOfWeek: 'Segunda', ...intervaladoConfortavel },

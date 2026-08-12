@@ -21,6 +21,22 @@ import { auth, db, appId, handleFirestoreError, OperationType, collection, query
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
 import { useTheme } from './components/ThemeContext';
 
+const removeUndefined = (obj: any): any => {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  if (Array.isArray(obj)) {
+    return obj
+      .map(item => removeUndefined(item))
+      .filter(item => item !== undefined);
+  }
+  const newObj: any = {};
+  Object.keys(obj).forEach(key => {
+    if (obj[key] !== undefined) {
+      newObj[key] = removeUndefined(obj[key]);
+    }
+  });
+  return newObj;
+};
+
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any }> {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -1987,7 +2003,7 @@ export default function App() {
                       const docRefSave = doc(db, path);
                       try {
                         console.log(`Sincronizando dados base de ${rawData.nome} para a nuvem...`);
-                        await setDoc(docRefSave, { 
+                        await setDoc(docRefSave, removeUndefined({ 
                             nome: rawData.nome, 
                             email: rawData.email,
                             workouts: rawData.workouts,
@@ -2003,18 +2019,18 @@ export default function App() {
                             faseAjusteC: rawData.faseAjusteC,
                             physicalAssessments: rawData.physicalAssessments,
                             _fixedAssessmentsApril28: (rawData as any)._fixedAssessmentsApril28
-                        }, { merge: true });
+                        }), { merge: true });
 
                         // Also sync to prescricoes subcollection for server-side endpoints
                         if (rawData.workouts && Array.isArray(rawData.workouts)) {
                             for (const w of rawData.workouts) {
                                 const pRef = doc(db, `alunos/${targetId}/prescricoes`, w.id);
-                                await setDoc(pRef, {
+                                await setDoc(pRef, removeUndefined({
                                     nome: w.title,
                                     totalSessoes: w.projectedSessions || 20,
                                     ativo: true,
                                     lastUpdate: Date.now()
-                                }, { merge: true });
+                                }), { merge: true });
                             }
                         }
                       } catch (e: any) {

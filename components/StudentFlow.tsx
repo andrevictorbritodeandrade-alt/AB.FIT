@@ -1199,10 +1199,10 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }
 
   return (
-    <div className="p-6 pb-20 text-foreground overflow-y-auto h-[100dvh] text-left custom-scrollbar bg-transparent animate-in fade-in duration-500">
-      <div className="max-w-xl mx-auto flex flex-col min-h-full">
-        <header className="flex items-center justify-between mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-4 border-b border-border">
-        <div className="flex-1 flex items-center gap-2 min-w-0">
+    <div className="p-4 sm:p-6 pb-4 text-foreground overflow-y-auto h-[100dvh] text-left custom-scrollbar bg-transparent animate-in fade-in duration-500">
+      <div className="max-w-xl mx-auto flex flex-col min-h-full justify-between">
+        <header className="flex items-center justify-between mb-8 sticky top-0 bg-background/95 backdrop-blur-md z-40 py-3 -mx-4 sm:-mx-6 px-4 border-b border-border gap-2">
+        <div className="flex-1 flex items-center gap-1.5 sm:gap-2 min-w-0">
            <button onClick={onBack} className="p-2 sm:p-3 bg-card rounded-xl sm:rounded-2xl text-muted-foreground hover:text-foreground transition-colors shadow-lg shrink-0">
               <LayoutGrid size={18}/>
            </button>
@@ -1210,22 +1210,22 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               <ArrowLeft size={18}/>
            </button>
            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-[9px] font-black text-red-600 uppercase tracking-[0.3em] italic leading-none mb-1">Status Ativo</span>
-              <h2 className="text-sm font-black italic uppercase tracking-tighter text-foreground leading-none truncate">{activeWorkout.title}</h2>
+              <span className="text-[9px] font-black text-red-600 uppercase tracking-[0.2em] italic leading-none mb-1 truncate">Status Ativo</span>
+              <h2 className="text-sm sm:text-base font-black italic uppercase tracking-tighter text-foreground leading-none truncate">{activeWorkout.title}</h2>
            </div>
         </div>
 
-        <div className={`flex flex-col items-center shrink-0 mx-2 ${allExercisesCompleted ? 'hidden sm:flex' : ''}`}>
+        <div className={`flex flex-col items-center shrink-0 mx-1 sm:mx-2 ${allExercisesCompleted ? 'hidden sm:flex' : ''}`}>
            <div className="flex items-center gap-1.5">
              <Clock size={16} className="text-red-600 animate-pulse sm:w-6 sm:h-6" />
-             <span className="text-xl sm:text-3xl font-black text-foreground italic tracking-tighter tabular-nums leading-none">{formatTime(elapsedTime)}</span>
+             <span className="text-lg sm:text-3xl font-black text-foreground italic tracking-tighter tabular-nums leading-none">{formatTime(elapsedTime)}</span>
            </div>
-           <span className="text-[8px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest mt-1">Tempo</span>
+           <span className="text-[8px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest mt-0.5">Tempo</span>
         </div>
 
-        <div className="flex-1 flex flex-col items-end">
+        <div className={`${allExercisesCompleted ? 'flex-1' : 'shrink-0 sm:flex-1'} flex flex-col items-end min-w-0`}>
            {allExercisesCompleted ? (
-             <button onClick={() => setShowCompletionModal(true)} className="bg-emerald-600 px-4 sm:px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg shadow-emerald-900/30 text-white tracking-widest sm:animate-pulse hover:bg-emerald-700 transition-all shrink-0">
+             <button onClick={() => setShowCompletionModal(true)} className="bg-emerald-600 px-3 sm:px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg shadow-emerald-900/30 text-white tracking-widest sm:animate-pulse hover:bg-emerald-700 transition-all shrink-0">
                 SALVAR
              </button>
            ) : (
