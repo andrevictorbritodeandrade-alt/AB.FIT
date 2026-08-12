@@ -1351,6 +1351,63 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         checkAndSeed();
     }, [student.id]);
 
+    // Ensure Galaxy Watch 7 workout (3,12 km - 12/08/2026) is always persisted in history
+    useEffect(() => {
+        if (!student.id) return;
+        const currentHistory = student.workoutHistory || [];
+        const hasGW7 = currentHistory.some(h => 
+            h.id === 'gw7-walk-12082026' || 
+            (h.date === '12/08/2026' && h.runningStats?.distance === 3.12)
+        );
+
+        if (!hasGW7) {
+            const gw7Entry: WorkoutHistoryEntry = {
+                id: 'gw7-walk-12082026',
+                workoutId: 'fixed-andre-quarta-1208',
+                name: 'Caminhada (Galaxy Watch7)',
+                date: '12/08/2026',
+                timestamp: new Date('2026-08-12T16:28:00').getTime(),
+                type: 'RUNNING',
+                duration: '35:29',
+                runningStats: {
+                    distance: 3.12,
+                    totalTime: 2129,
+                    timeFormatted: '35:29',
+                    pace: "11'22\"",
+                    calories: 274,
+                    elevationGain: 33,
+                    avgHeartRate: 114,
+                    maxHeartRate: 140,
+                    avgSpeed: 5.2,
+                    steps: 3851,
+                    vo2Max: 37.0,
+                    sweatLoss: '245 ml',
+                    source: 'Galaxy Watch7',
+                    splits: [
+                        { lap: 1, time: '11:33', distance: 1.00, pace: "11'33\"", speed: 5.1 },
+                        { lap: 2, time: '11:17', distance: 1.00, pace: "11'17\"", speed: 5.3 },
+                        { lap: 3, time: '11:15', distance: 1.00, pace: "11'15\"", speed: 5.3 },
+                        { lap: 4, time: '01:23', distance: 0.12, pace: "11'32\"", speed: 5.3 }
+                    ],
+                    hrZones: [
+                        { zone: '1 Baixa intensidade', range: '89-106 bpm', percentage: 15 },
+                        { zone: '2 Controle de peso', range: '107-124 bpm', percentage: 70 },
+                        { zone: '3 Aeróbico', range: '125-142 bpm', percentage: 15 },
+                        { zone: '4 Anaeróbico', range: '143-160 bpm', percentage: 0 },
+                        { zone: '5 Máximo', range: '161-178 bpm', percentage: 0 }
+                    ]
+                }
+            };
+            const updatedHistory = [gw7Entry, ...currentHistory];
+            const updatedAnalytics = {
+                ...(student.analytics || { sessionsCompleted: 0, streakDays: 1, exercises: {} }),
+                sessionsCompleted: (student.analytics?.sessionsCompleted || 0) + 1,
+                lastSessionDate: '12/08/2026'
+            };
+            onSave(student.id, { workoutHistory: updatedHistory, analytics: updatedAnalytics });
+        }
+    }, [student.id, student.workoutHistory]);
+
     useEffect(() => {
         if (!student.id) return;
         const path = `artifacts/${RUN_COLLECTION}/workouts`;
@@ -1761,14 +1818,14 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                                     <BarChart3 size={24} className="text-red-600"/>
                                     <h3 className="text-2xl font-black italic uppercase text-zinc-400 tracking-tighter">Atividades Recentes</h3>
                                 </div>
-                                <button className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Ver Tudo</button>
+                                <button onClick={() => setActiveTab('HISTORY')} className="text-[10px] font-black uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Ver Tudo</button>
                             </div>
                             
                             <div className="space-y-6">
                                 {[...(student.workoutHistory || [])]
                                     .sort((a, b) => b.timestamp - a.timestamp)
                                     .filter(h => h.type === 'RUNNING')
-                                    .slice(0, 1)
+                                    .slice(0, 5)
                                     .map(h => {
                                         const workout = workouts.find(w => w.id === h.workoutId);
                                         return (

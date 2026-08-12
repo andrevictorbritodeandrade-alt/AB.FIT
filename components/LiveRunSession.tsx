@@ -873,6 +873,29 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
         return () => clearInterval(watchdog);
     }, [isRunning, mode, isFinished]);
 
+    const startMarkerIcon = useMemo(() => {
+        if (typeof window === 'undefined') return undefined;
+        return L.divIcon({
+            className: 'custom-start-marker',
+            html: `<div style="background-color: #10b981; color: white; border-radius: 9999px; padding: 4px 8px; font-weight: 900; font-size: 9px; border: 2.5px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.4); text-transform: uppercase; white-space: nowrap; display: flex; items-center; gap: 3px;">🚩 INÍCIO</div>`,
+            iconSize: [64, 26],
+            iconAnchor: [32, 13]
+        });
+    }, []);
+
+    const runnerMarkerIcon = useMemo(() => {
+        if (typeof window === 'undefined') return undefined;
+        return L.divIcon({
+            className: 'custom-runner-marker',
+            html: `<div style="position: relative; display: flex; align-items: center; justify-content: center;">
+                <div style="position: absolute; width: 38px; height: 38px; background: rgba(37, 99, 235, 0.4); border-radius: 50%; animation: ping 1.5s infinite;"></div>
+                <div style="background-color: #2563eb; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px; border: 2.5px solid white; box-shadow: 0 4px 14px rgba(0,0,0,0.5);">🏃</div>
+            </div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+    }, []);
+
     const handleHealthImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -1207,15 +1230,25 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                     </div>
                 </div>
 
-                <div className="w-full h-64 rounded-3xl bg-[#1a1a1a] mb-8 overflow-hidden relative border border-white/5 shadow-2xl">
+                <div className="w-full h-72 rounded-3xl bg-[#1a1a1a] mb-8 overflow-hidden relative border border-white/10 shadow-2xl">
                     {mode === 'outdoor' && path.length > 0 ? (
-                        <MapContainer center={[path[0].lat, path[0].lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false} touchZoom={false}>
+                        <MapContainer center={[path[0].lat, path[0].lng]} zoom={15} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={true} scrollWheelZoom={true} touchZoom={true}>
                             <TileLayer 
-                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
+                                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" 
                                 subdomains="abcd"
-                                maxZoom={20}
+                                maxZoom={19}
                             />
-                            <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={5} />
+                            {/* Trace History Polyline */}
+                            <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#000000" weight={8} opacity={0.3} />
+                            <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#2563eb" weight={5} dashArray="8, 12" />
+                            {/* Start Marker */}
+                            {path.length > 0 && startMarkerIcon && (
+                                <Marker position={[path[0].lat, path[0].lng]} icon={startMarkerIcon} />
+                            )}
+                            {/* Final Location Marker */}
+                            {path.length > 1 && runnerMarkerIcon && (
+                                <Marker position={[path[path.length - 1].lat, path[path.length - 1].lng]} icon={runnerMarkerIcon} />
+                            )}
                         </MapContainer>
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-zinc-700 gap-3 bg-zinc-950/50">
@@ -1421,148 +1454,145 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                 )}
             </AnimatePresence>
 
-            {/* HEADER */}
-            <header className="px-6 py-6 flex justify-between items-center z-[1050] bg-black">
-                <div className="bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800 flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${isRunning && mode === 'outdoor' ? 'bg-[#e2ff00]' : 'bg-zinc-500'}`} />
-                    <span className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400">
-                        {mode === 'outdoor' ? 'GPS' : 'Indoor'}
+            {/* FULL-SCREEN BACKGROUND MAP FOR OUTDOOR WORKOUTS */}
+            {mode === 'outdoor' && (
+                <div className="absolute inset-0 z-0">
+                    <MapContainer center={mapCenter} zoom={17} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        <TileLayer 
+                            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" 
+                            subdomains="abcd"
+                            maxZoom={19}
+                        />
+                        {/* Route Trace Shadow & Dashed History Line */}
+                        <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#000000" weight={8} opacity={0.35} />
+                        <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#2563eb" weight={5} dashArray="8, 12" />
+                        
+                        {/* Start Pin */}
+                        {path.length > 0 && startMarkerIcon && (
+                            <Marker position={[path[0].lat, path[0].lng]} icon={startMarkerIcon} />
+                        )}
+                        
+                        {/* Current Runner Marker */}
+                        {lastPosition && runnerMarkerIcon && (
+                            <Marker position={[lastPosition.coords.latitude, lastPosition.coords.longitude]} icon={runnerMarkerIcon} />
+                        )}
+                        
+                        <MapUpdater center={mapCenter} />
+                    </MapContainer>
+                </div>
+            )}
+
+            {/* HEADER OVERLAY */}
+            <header className="px-6 py-4 flex justify-between items-center z-[1050] bg-black/60 backdrop-blur-md border-b border-white/10">
+                <div className="bg-black/80 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 backdrop-blur-md">
+                    <div className={`w-2.5 h-2.5 rounded-full ${isRunning && mode === 'outdoor' ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-300">
+                        {mode === 'outdoor' ? 'GPS ATIVO' : 'Indoor'}
                     </span>
                 </div>
                 {mode === 'outdoor' && (
                     <button 
                         onClick={() => setViewMode(prev => prev === 'stats' ? 'map' : 'stats')}
-                        className="bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-400 hover:text-white transition-all flex items-center gap-2"
+                        className="bg-black/80 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-300 hover:text-white backdrop-blur-md transition-all flex items-center gap-2 active:scale-95"
                     >
-                        {viewMode === 'stats' ? <><MapIcon size={12}/> Ver Mapa</> : <><Activity size={12}/> Ver Dados</>}
+                        {viewMode === 'stats' ? <><MapIcon size={12}/> Expandir Mapa</> : <><Activity size={12}/> Ver Dados Cheios</>}
                     </button>
                 )}
-                <div className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] border border-zinc-800 px-3 py-1 rounded-lg">
-                    Atleta: <span className="text-white">{(PROFILES as any)[selectedProfile]?.name.split(' ')[0]}</span>
+                <div className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] bg-black/80 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-md">
+                    Atleta: <span className="text-white font-black">{(PROFILES as any)[selectedProfile]?.name.split(' ')[0]}</span>
                 </div>
             </header>
 
+            {/* MAP EXPANDED MODE WITH COMPACT HUD */}
             {viewMode === 'map' && mode === 'outdoor' ? (
-                <div className="flex-1 relative mx-6 mb-28 rounded-3xl overflow-hidden border-2 border-zinc-800 min-h-[300px]">
-                    <MapContainer center={mapCenter} zoom={17} style={{ height: '100%', width: '100%' }}>
-                        <TileLayer 
-                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
-                            subdomains="abcd"
-                            maxZoom={20}
-                        />
-                        <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={5} />
-                        {lastPosition && (
-                            <Marker position={[lastPosition.coords.latitude, lastPosition.coords.longitude]} />
-                        )}
-                        <MapUpdater center={mapCenter} />
-                    </MapContainer>
-                    
-                    {/* Floating Info on Map */}
-                    <div className="absolute top-4 left-4 right-4 z-[400] grid grid-cols-2 gap-2">
-                        <div className="bg-black/80 backdrop-blur p-3 rounded-2xl border border-white/10">
-                            <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Distância</p>
-                            <p className="text-xl font-black text-white">{distance.toFixed(2)}km</p>
+                <div className="flex-1 relative z-10 flex flex-col justify-between p-6 pointer-events-none pb-32">
+                    {/* Compact Floating HUD Bar */}
+                    <div className="grid grid-cols-2 gap-3 pointer-events-auto">
+                        <div className="bg-zinc-950/90 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-2xl">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-1">Distância Percorrida</span>
+                            <p className="text-3xl font-black italic text-[#e2ff00] tracking-tighter">{distance.toFixed(2)} <span className="text-xs text-white">KM</span></p>
                         </div>
-                        <div className="bg-black/80 backdrop-blur p-3 rounded-2xl border border-white/10">
-                            <p className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Ritmo Atual</p>
-                            <p className="text-xl font-black text-white">{currentSpeed > 1 ? pace : "0'00"}</p>
+                        <div className="bg-zinc-950/90 backdrop-blur-md p-4 rounded-3xl border border-white/10 shadow-2xl">
+                            <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400 block mb-1">Ritmo Atual</span>
+                            <p className="text-3xl font-black italic text-white tracking-tighter">{currentSpeed > 1 ? pace : "0'00"} <span className="text-xs text-zinc-400">/KM</span></p>
                         </div>
                     </div>
                 </div>
             ) : (
-                <>
-                    {/* GRID SUPERIOR DE DADOS */}
-            <div className="px-6 grid grid-cols-3 gap-2 mb-4">
-                <div className="bg-zinc-900/40 p-3 rounded-[20px] border border-zinc-800 flex flex-col items-center justify-center text-center">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Velocidade</span>
-                    <p className="text-lg font-black text-[#e2ff00]">{currentSpeed.toFixed(1)}<span className="text-[8px] ml-0.5 text-zinc-500 italic">km/h</span></p>
-                </div>
-                <div className="bg-zinc-900/40 p-3 rounded-[20px] border border-zinc-800 flex flex-col items-center justify-center text-center">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Passos</span>
-                    <p className="text-lg font-black text-blue-400">{steps}</p>
-                </div>
-                <div className="bg-zinc-900/40 p-3 rounded-[20px] border border-zinc-800 flex flex-col items-center justify-center text-center">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-500 mb-1">Elevação</span>
-                    <p className="text-lg font-black text-emerald-400">{elevationGain.toFixed(0)}<span className="text-[8px] ml-0.5 text-zinc-500">m</span></p>
-                </div>
-            </div>
+                <div className="flex-1 relative z-10 flex flex-col justify-between p-6 overflow-y-auto custom-scrollbar pb-36">
+                    {/* TOP SECONDARY STATS ROW */}
+                    <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-zinc-950/85 backdrop-blur-md p-3 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center shadow-lg">
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">Velocidade</span>
+                            <p className="text-lg font-black text-[#e2ff00]">{currentSpeed.toFixed(1)}<span className="text-[8px] ml-0.5 text-zinc-400 italic">km/h</span></p>
+                        </div>
+                        <div className="bg-zinc-950/85 backdrop-blur-md p-3 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center shadow-lg">
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">Passos</span>
+                            <p className="text-lg font-black text-blue-400">{steps}</p>
+                        </div>
+                        <div className="bg-zinc-950/85 backdrop-blur-md p-3 rounded-2xl border border-white/10 flex flex-col items-center justify-center text-center shadow-lg">
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-400 mb-0.5">Elevação</span>
+                            <p className="text-lg font-black text-emerald-400">{elevationGain.toFixed(0)}<span className="text-[8px] ml-0.5 text-zinc-400">m</span></p>
+                        </div>
+                    </div>
 
-            <div className="px-6 grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-zinc-900/40 p-5 rounded-3xl border border-zinc-800 flex flex-col items-center">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <MapPin size={14} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Distância</span>
-                    </div>
-                    <p className="text-3xl font-black tracking-tighter">{distance.toFixed(2)}<span className="text-xs ml-1 text-zinc-500 italic">KM</span></p>
-                </div>
+                    {/* MAIN DISTANCE & PACE METRICS */}
+                    <div className="grid grid-cols-2 gap-3 my-3">
+                        <div className="bg-zinc-950/90 backdrop-blur-md p-4 rounded-3xl border border-white/10 flex flex-col items-center shadow-2xl">
+                            <div className="flex items-center gap-1.5 text-zinc-400 mb-1">
+                                <MapPin size={14} className="text-[#e2ff00]" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Distância</span>
+                            </div>
+                            <p className="text-4xl font-black italic text-white tracking-tighter">{distance.toFixed(2)}<span className="text-xs ml-1 text-zinc-400 italic">KM</span></p>
+                        </div>
 
-                <div className="bg-zinc-900/40 p-5 rounded-3xl border border-zinc-800 flex flex-col items-center">
-                    <div className="flex items-center gap-2 text-zinc-500 mb-1">
-                        <Timer size={14} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest">Ritmo</span>
+                        <div className="bg-zinc-950/90 backdrop-blur-md p-4 rounded-3xl border border-white/10 flex flex-col items-center shadow-2xl">
+                            <div className="flex items-center gap-1.5 text-zinc-400 mb-1">
+                                <Timer size={14} className="text-blue-400" />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Ritmo</span>
+                            </div>
+                            <p className="text-4xl font-black italic text-white tracking-tighter">
+                                {currentSpeed > 1 ? pace : "0'00"}
+                                <span className="text-xs ml-1 text-zinc-400 italic">/KM</span>
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-3xl font-black tracking-tighter">
-                        {currentSpeed > 1 ? pace : "0'00"}
-                        <span className="text-xs ml-1 text-zinc-500 italic">/KM</span>
-                    </p>
-                </div>
-            </div>
 
-            {/* PAINEL CENTRAL REGRESSIVO */}
-            <div className="mx-6 flex-1 flex flex-col items-center justify-center bg-zinc-900/30 rounded-3xl border border-zinc-800/50 shadow-2xl p-8 mb-4 relative overflow-hidden">
-                <div 
-                    className="absolute bottom-0 left-0 h-1.5 bg-[#e2ff00] transition-all duration-1000 shadow-[0_0_15px_rgba(226,255,0,0.5)]"
-                    style={{ width: `${(isFreeMode ? 100 : (segmentTimeLeft / (currentSegment?.duration || 1)) * 100)}%` }}
-                />
-                <div className="text-center w-full z-10 px-2">
-                    <p className="text-lg md:text-xl font-black uppercase italic tracking-tighter mb-2 text-[#e2ff00] w-full truncate">
-                        {isFreeMode ? 'TREINO LIVRE' : currentSegment?.title}
-                    </p>
-                    <h2 className="text-[90px] leading-none font-black tabular-nums tracking-tighter" style={{textShadow: "0 0 20px rgba(226, 255, 0, 0.2)"}}>
-                        {isFreeMode ? formatTime(totalTimeElapsed) : formatTime(segmentTimeLeft)}
-                    </h2>
-                    <p className="text-zinc-500 font-bold uppercase text-[10px] mt-4 tracking-[0.4em]">
-                        {isFreeMode ? 'EM EXECUÇÃO' : `Etapa ${currentSegmentIndex + 1} de ${segments.length}`}
-                    </p>
-                </div>
-                
-                {/* Background Map Overlay if Outdoor */}
-                {mode === 'outdoor' && viewMode === 'stats' && (
-                    <div className="absolute inset-0 z-[0] opacity-30 pointer-events-none rounded-3xl overflow-hidden">
-                        <MapContainer center={mapCenter} zoom={18} style={{ height: '100%', width: '100%' }} zoomControl={false} dragging={false} scrollWheelZoom={false}>
-                            <TileLayer 
-                                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" 
-                                subdomains="abcd"
-                                maxZoom={20}
-                            />
-                            <Polyline positions={path.map(p => [p.lat, p.lng] as [number, number])} color="#e2ff00" weight={4} />
-                            {lastPosition && (
-                                <Circle center={[lastPosition.coords.latitude, lastPosition.coords.longitude]} radius={5} pathOptions={{ color: '#e2ff00' }} />
-                            )}
-                            <MapUpdater center={mapCenter} />
-                        </MapContainer>
+                    {/* CENTRAL COUNTDOWN TIMER CARD */}
+                    <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl p-6 relative overflow-hidden my-2 min-h-[180px]">
+                        <div 
+                            className="absolute bottom-0 left-0 h-2 bg-[#e2ff00] transition-all duration-1000 shadow-[0_0_20px_rgba(226,255,0,0.8)]"
+                            style={{ width: `${(isFreeMode ? 100 : (segmentTimeLeft / (currentSegment?.duration || 1)) * 100)}%` }}
+                        />
+                        <div className="text-center w-full z-10 px-2">
+                            <p className="text-base md:text-lg font-black uppercase italic tracking-tighter mb-1 text-[#e2ff00] w-full truncate">
+                                {isFreeMode ? 'TREINO LIVRE' : currentSegment?.title}
+                            </p>
+                            <h2 className="text-[72px] sm:text-[84px] leading-none font-black tabular-nums tracking-tighter text-white" style={{textShadow: "0 0 25px rgba(226, 255, 0, 0.3)"}}>
+                                {isFreeMode ? formatTime(totalTimeElapsed) : formatTime(segmentTimeLeft)}
+                            </h2>
+                            <p className="text-zinc-400 font-bold uppercase text-[9px] mt-2 tracking-[0.3em]">
+                                {isFreeMode ? 'EM EXECUÇÃO' : `Etapa ${currentSegmentIndex + 1} de ${segments.length}`}
+                            </p>
+                        </div>
                     </div>
-                )}
-            </div>
 
-            {/* CONTROLES DE AÇÃO - Trocando o footer de posição quando estiver no painel stats */}
-            {viewMode === 'stats' && (
-                <div className="px-6 grid grid-cols-2 gap-4 mb-28">
-                    <div className="text-center bg-zinc-900/20 p-4 rounded-3xl">
-                        <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-[0.3em] mb-1">Tempo Total</p>
-                        <h1 className="text-2xl font-black tabular-nums tracking-tighter italic">
-                            {formatTime(totalTimeElapsed)}
-                        </h1>
-                    </div>
-                    <div className="text-center bg-zinc-900/20 p-4 rounded-3xl">
-                        <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-[0.3em] mb-1">Calorias</p>
-                        <h1 className="text-2xl font-black tabular-nums tracking-tighter italic text-orange-500">
-                            {Math.round(calories)} <span className="text-xs text-zinc-600">KCAL</span>
-                        </h1>
+                    {/* BOTTOM SUMMARY ROW */}
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="text-center bg-zinc-950/85 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+                            <p className="text-zinc-400 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5">Tempo Total</p>
+                            <h1 className="text-xl font-black tabular-nums italic text-white">
+                                {formatTime(totalTimeElapsed)}
+                            </h1>
+                        </div>
+                        <div className="text-center bg-zinc-950/85 backdrop-blur-md p-3 rounded-2xl border border-white/10">
+                            <p className="text-zinc-400 text-[9px] font-bold uppercase tracking-[0.2em] mb-0.5">Calorias</p>
+                            <h1 className="text-xl font-black tabular-nums italic text-orange-400">
+                                {Math.round(calories)} <span className="text-xs text-zinc-500">KCAL</span>
+                            </h1>
+                        </div>
                     </div>
                 </div>
-            )}
-                </>
             )}
 
             {/* CONTROLES DE AÇÃO / BOTOES */}
