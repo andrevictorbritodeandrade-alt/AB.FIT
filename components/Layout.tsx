@@ -298,7 +298,10 @@ export function GlobalSyncIndicator({ status }: { status: 'synced' | 'syncing' |
   return (
     <div className="fixed top-4 right-4 z-[100] animate-in fade-in slide-in-from-top-4 duration-1000 pointer-events-none select-none flex items-center justify-center">
        {!online || status === 'offline' ? (
-         <WifiOff size={24} className="text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" />
+         <div className="flex items-center gap-2 bg-red-950/90 border border-red-500/50 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md text-red-200">
+           <WifiOff size={14} className="text-red-400 animate-pulse" />
+           <span className="text-[10px] font-black uppercase italic tracking-wider">Modo Offline (Salvo Localmente)</span>
+         </div>
        ) : status === 'syncing' ? (
          <RefreshCw size={24} className="text-orange-500 animate-spin drop-shadow-[0_0_10px_rgba(249,115,22,0.6)]" />
        ) : (

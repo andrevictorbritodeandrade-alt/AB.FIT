@@ -61,6 +61,7 @@ export interface RunningStats {
   };
   sweatLoss?: number;
   hydrationRecomendation?: number;
+  source?: string;
   weather?: { temp: number; condition: string; humidity: number; wind: number };
   hrZones?: {
     max?: string;

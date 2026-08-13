@@ -1,6 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, 
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  enableIndexedDbPersistence,
   doc, 
   getDocFromServer,
   collection,
@@ -11,8 +15,7 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
-  getDocs,
-  enableIndexedDbPersistence
+  getDocs
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
@@ -31,20 +34,26 @@ const app = initializeApp(firebaseConfig);
 const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
 console.log(`Inicializando Firestore com Database ID: ${dbId}`);
 
-export const db = getFirestore(app, dbId);
-
-// Habilitar persistência offline
-if (typeof window !== 'undefined') {
-  enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-          // Multiple tabs open, persistence can only be enabled in one tab at a time.
-          console.warn('Firestore persistence failed-precondition: Multiple tabs open');
-      } else if (err.code === 'unimplemented') {
-          // The current browser does not support all of the features required to enable persistence
-          console.warn('Firestore persistence unimplemented: Browser not supported');
-      }
-  });
+// Initialize Firestore with offline persistence enabled
+let dbInstance;
+try {
+  dbInstance = initializeFirestore(app, {
+    localCache: persistentLocalCache({
+      tabManager: persistentMultipleTabManager()
+    })
+  }, dbId);
+  console.log("Firestore initialized with multi-tab persistent cache.");
+} catch (e) {
+  console.warn("Falling back to standard getFirestore and enableIndexedDbPersistence:", e);
+  dbInstance = getFirestore(app, dbId);
+  if (typeof window !== 'undefined') {
+    enableIndexedDbPersistence(dbInstance).catch((err) => {
+      console.warn('Firestore persistence notice:', err.code);
+    });
+  }
 }
+
+export const db = dbInstance;
 
 // Export firestore functions to ensure they are from the same module instance
 export {
