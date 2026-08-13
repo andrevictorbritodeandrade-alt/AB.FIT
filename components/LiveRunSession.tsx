@@ -75,6 +75,8 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
     const [weight, setWeight] = useState(studentWeight || 70);
     const [height, setHeight] = useState(studentHeight || 170);
     const [viewMode, setViewMode] = useState<'stats' | 'map'>('stats');
+    const [showBlocksModal, setShowBlocksModal] = useState(false);
+    const [isOvertime, setIsOvertime] = useState(false);
     
     // Profiles for the "Athlete" selection step
     const PROFILES: Record<string, { id: string, name: string }> = {
@@ -667,7 +669,7 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                     if (newTotal !== totalTimeElapsed) {
                         setTotalTimeElapsed(newTotal);
                         
-                        if (!isFreeMode) {
+                        if (!isFreeMode && !isOvertime) {
                             const tickDelta = newTotal - totalTimeElapsed;
                             const next = segmentTimeLeftRef.current - tickDelta;
                             
@@ -982,10 +984,16 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
     };
 
     const handleNextSegment = (forceFinish = false) => {
-        if (forceFinish || currentSegmentIndex + 1 >= segments.length) {
-            speak(forceFinish ? "Treino encerrado." : "FINAL DE TREINO!", true);
+        if (forceFinish) {
+            speak("Treino encerrado.", true);
             setIsRunning(false);
             setIsFinished(true);
+        } else if (currentSegmentIndex + 1 >= segments.length) {
+            if (!isOvertime) {
+                setIsOvertime(true);
+                speak("Parabéns! Planilha de treino concluída com sucesso. Continuando a marcar o tempo extra até você finalizar.", true);
+                playBeep(880, 'triangle', 0.25);
+            }
         } else {
             const nextIndex = currentSegmentIndex + 1;
             const nextSegment = segments[nextIndex];
@@ -1194,10 +1202,109 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                 <div className="flex gap-4 mt-12">
                      <button onClick={() => setSetupStep(1)} className="py-5 px-6 bg-zinc-900 text-zinc-500 font-black uppercase text-xs tracking-widest rounded-2xl">Voltar</button>
                      <button 
-                        onClick={startWorkout}
+                        onClick={() => setSetupStep(3)}
                         className="flex-1 py-5 bg-white text-black font-black uppercase text-sm tracking-[0.2em] rounded-2xl active:scale-95 transition-all"
                     >
                         Próximo
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (setupStep === 3) {
+        const totalDurationSecs = segments.reduce((acc, s) => acc + (s.duration || 0), 0);
+        const totalMins = Math.round(totalDurationSecs / 60);
+
+        return (
+            <div className="fixed inset-0 z-[1100] bg-black text-white p-6 font-sans flex flex-col justify-between max-w-md mx-auto overflow-y-auto custom-scrollbar">
+                <div className="space-y-6 my-auto py-4">
+                    <div className="text-center">
+                        <span className="inline-flex items-center gap-1.5 bg-[#e2ff00]/10 border border-[#e2ff00]/30 px-3.5 py-1.5 rounded-full text-[#e2ff00] text-[10px] font-black uppercase tracking-widest mb-3">
+                            <Activity size={12} /> Planilha Prescrita
+                        </span>
+                        <h2 className="text-3xl sm:text-4xl font-black italic uppercase tracking-tighter text-white leading-tight">
+                            {workoutTitle || 'Treino Aeróbico'}
+                        </h2>
+                        <div className="flex items-center justify-center gap-3 mt-3">
+                            <span className="text-xs font-black italic text-zinc-300 uppercase tracking-wider bg-zinc-900 border border-white/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                                <Timer size={14} className="text-[#e2ff00]" /> {totalMins > 0 ? `${totalMins} MIN TOTAL` : 'LIVRE'}
+                            </span>
+                            <span className="text-xs font-black italic text-zinc-300 uppercase tracking-wider bg-zinc-900 border border-white/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
+                                <LayoutGrid size={14} className="text-blue-400" /> {segments.length} BLOCOS
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-zinc-900/90 border border-white/10 rounded-3xl p-5 space-y-3 shadow-2xl">
+                        <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Sequência de Blocos do Treino</span>
+                            <span className="text-[9px] font-bold text-zinc-500 uppercase">Velocidades & Tempos</span>
+                        </div>
+
+                        <div className="space-y-2.5 max-h-[48vh] overflow-y-auto custom-scrollbar pr-1">
+                            {segments.map((seg, idx) => {
+                                const mins = Math.round(seg.duration / 60);
+                                const isWarm = seg.type === 'warmup';
+                                const isCool = seg.type === 'cooldown';
+                                const isStim = seg.type === 'stimulus' || seg.type === 'continuous';
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 ${
+                                            isWarm
+                                                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                                                : isCool
+                                                ? 'bg-blue-950/20 border-blue-500/30 text-blue-300'
+                                                : isStim
+                                                ? 'bg-red-950/20 border-red-500/30 text-white'
+                                                : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                                                isWarm ? 'bg-emerald-500/20 text-emerald-400' :
+                                                isCool ? 'bg-blue-500/20 text-blue-400' :
+                                                isStim ? 'bg-red-600/20 text-red-500' : 'bg-zinc-800 text-zinc-400'
+                                            }`}>
+                                                {idx + 1}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <span className="text-xs font-black uppercase italic tracking-wide block truncate">
+                                                    {seg.title}
+                                                </span>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] font-bold text-zinc-400 italic">
+                                                        ⏱️ {mins > 0 ? `${mins} min` : `${seg.duration}s`}
+                                                    </span>
+                                                    {seg.speed && (
+                                                        <span className="text-[10px] font-black text-[#e2ff00] italic">
+                                                            ⚡ {seg.speed} km/h
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-black uppercase tracking-wider opacity-60 shrink-0">
+                                            {isWarm ? 'Warmup' : isCool ? 'Cooldown' : isStim ? 'Estímulo' : 'Recup'}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-white/10 shrink-0">
+                    <button onClick={() => setSetupStep(2)} className="py-5 px-6 bg-zinc-900 text-zinc-400 font-black uppercase text-xs tracking-widest rounded-2xl border border-white/5">
+                        Voltar
+                    </button>
+                    <button 
+                        onClick={startWorkout}
+                        className="flex-1 py-5 bg-[#e2ff00] text-black font-black uppercase text-sm tracking-[0.2em] rounded-2xl active:scale-95 transition-all shadow-xl shadow-[#e2ff00]/20 flex items-center justify-center gap-2"
+                    >
+                        <Play size={18} className="fill-black" /> Iniciar Treino
                     </button>
                 </div>
             </div>
@@ -1483,19 +1590,27 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
             )}
 
             {/* HEADER OVERLAY */}
-            <header className="px-6 py-4 flex justify-between items-center z-[1050] bg-black/60 backdrop-blur-md border-b border-white/10">
-                <div className="bg-black/80 px-4 py-2 rounded-full border border-white/10 flex items-center gap-2 backdrop-blur-md">
+            <header className="px-6 py-4 flex justify-between items-center z-[1050] bg-black/60 backdrop-blur-md border-b border-white/10 gap-2">
+                <div className="bg-black/80 px-3.5 py-2 rounded-full border border-white/10 flex items-center gap-2 backdrop-blur-md">
                     <div className={`w-2.5 h-2.5 rounded-full ${isRunning && mode === 'outdoor' ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
                     <span className="text-[10px] font-black uppercase tracking-[0.1em] text-zinc-300">
                         {mode === 'outdoor' ? 'GPS ATIVO' : 'Indoor'}
                     </span>
                 </div>
+
+                <button 
+                    onClick={() => setShowBlocksModal(true)}
+                    className="bg-black/80 px-3.5 py-2 rounded-full border border-[#e2ff00]/40 text-[10px] font-black uppercase tracking-wider text-[#e2ff00] hover:bg-zinc-800 backdrop-blur-md transition-all flex items-center gap-1.5 active:scale-95 shadow-lg shadow-[#e2ff00]/10"
+                >
+                    <LayoutGrid size={12} /> Planilha ({segments.length})
+                </button>
+
                 {mode === 'outdoor' && (
                     <button 
                         onClick={() => setViewMode(prev => prev === 'stats' ? 'map' : 'stats')}
-                        className="bg-black/80 px-4 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-300 hover:text-white backdrop-blur-md transition-all flex items-center gap-2 active:scale-95"
+                        className="bg-black/80 px-3 py-2 rounded-full border border-white/10 text-[10px] font-black uppercase tracking-[0.1em] text-zinc-300 hover:text-white backdrop-blur-md transition-all flex items-center gap-1.5 active:scale-95"
                     >
-                        {viewMode === 'stats' ? <><MapIcon size={12}/> Expandir Mapa</> : <><Activity size={12}/> Ver Dados Cheios</>}
+                        {viewMode === 'stats' ? <><MapIcon size={12}/> Mapa</> : <><Activity size={12}/> Dados</>}
                     </button>
                 )}
                 <div className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] bg-black/80 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-md">
@@ -1562,17 +1677,17 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                     <div className="flex-1 flex flex-col items-center justify-center bg-zinc-950/90 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl p-6 relative overflow-hidden my-2 min-h-[180px]">
                         <div 
                             className="absolute bottom-0 left-0 h-2 bg-[#e2ff00] transition-all duration-1000 shadow-[0_0_20px_rgba(226,255,0,0.8)]"
-                            style={{ width: `${(isFreeMode ? 100 : (segmentTimeLeft / (currentSegment?.duration || 1)) * 100)}%` }}
+                            style={{ width: `${((isFreeMode || isOvertime) ? 100 : (segmentTimeLeft / (currentSegment?.duration || 1)) * 100)}%` }}
                         />
                         <div className="text-center w-full z-10 px-2">
                             <p className="text-base md:text-lg font-black uppercase italic tracking-tighter mb-1 text-[#e2ff00] w-full truncate">
-                                {isFreeMode ? 'TREINO LIVRE' : currentSegment?.title}
+                                {isOvertime ? '✨ TEMPO EXTRA / LIVRE' : isFreeMode ? 'TREINO LIVRE' : currentSegment?.title}
                             </p>
                             <h2 className="text-[72px] sm:text-[84px] leading-none font-black tabular-nums tracking-tighter text-white" style={{textShadow: "0 0 25px rgba(226, 255, 0, 0.3)"}}>
-                                {isFreeMode ? formatTime(totalTimeElapsed) : formatTime(segmentTimeLeft)}
+                                {(isFreeMode || isOvertime) ? formatTime(totalTimeElapsed) : formatTime(segmentTimeLeft)}
                             </h2>
                             <p className="text-zinc-400 font-bold uppercase text-[9px] mt-2 tracking-[0.3em]">
-                                {isFreeMode ? 'EM EXECUÇÃO' : `Etapa ${currentSegmentIndex + 1} de ${segments.length}`}
+                                {isOvertime ? 'PLANILHA CONCLUÍDA • TEMPO EXTRA' : isFreeMode ? 'EM EXECUÇÃO' : `Etapa ${currentSegmentIndex + 1} de ${segments.length}`}
                             </p>
                         </div>
                     </div>
@@ -1648,6 +1763,125 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                     </button>
                 )}
             </div>
+
+            {/* IN-SESSION BLOCKS INSPECTOR MODAL */}
+            <AnimatePresence>
+                {showBlocksModal && (
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[1600] bg-black/90 backdrop-blur-md flex items-center justify-center p-6"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="bg-zinc-900 border border-white/10 rounded-3xl p-6 shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col"
+                        >
+                            <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                                <div>
+                                    <span className="text-[9px] font-black uppercase tracking-widest text-[#e2ff00] block italic">Evolução do Treino</span>
+                                    <h3 className="text-xl font-black italic uppercase text-white leading-tight">
+                                        Planilha do Treino
+                                    </h3>
+                                </div>
+                                <button onClick={() => setShowBlocksModal(false)} className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded-full text-zinc-400 hover:text-white transition-colors">
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-2.5 overflow-y-auto custom-scrollbar flex-1 pr-1">
+                                {segments.map((seg, idx) => {
+                                    const mins = Math.round(seg.duration / 60);
+                                    const isCurrent = idx === currentSegmentIndex;
+                                    const isDone = idx < currentSegmentIndex;
+                                    const isWarm = seg.type === 'warmup';
+                                    const isCool = seg.type === 'cooldown';
+                                    const isStim = seg.type === 'stimulus' || seg.type === 'continuous';
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 transition-all ${
+                                                isCurrent
+                                                    ? 'bg-[#e2ff00]/10 border-[#e2ff00] text-white shadow-lg shadow-[#e2ff00]/10 ring-1 ring-[#e2ff00]'
+                                                    : isDone
+                                                    ? 'bg-zinc-950/60 border-zinc-800/80 text-zinc-500 opacity-60'
+                                                    : isWarm
+                                                    ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300'
+                                                    : isCool
+                                                    ? 'bg-blue-950/20 border-blue-500/30 text-blue-300'
+                                                    : isStim
+                                                    ? 'bg-red-950/20 border-red-500/30 text-white'
+                                                    : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                                                    isCurrent
+                                                        ? 'bg-[#e2ff00] text-black font-extrabold animate-pulse'
+                                                        : isDone
+                                                        ? 'bg-zinc-800 text-zinc-500'
+                                                        : isWarm ? 'bg-emerald-500/20 text-emerald-400'
+                                                        : isCool ? 'bg-blue-500/20 text-blue-400'
+                                                        : isStim ? 'bg-red-600/20 text-red-500' : 'bg-zinc-800 text-zinc-400'
+                                                }`}>
+                                                    {isDone ? <Check size={14} /> : idx + 1}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-black uppercase italic tracking-wide block truncate">
+                                                            {seg.title}
+                                                        </span>
+                                                        {isCurrent && (
+                                                            <span className="bg-[#e2ff00] text-black px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider animate-pulse shrink-0">
+                                                                EM ANDAMENTO
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1">
+                                                        <span className="text-[10px] font-bold text-zinc-400 italic">
+                                                            ⏱️ {mins > 0 ? `${mins} min` : `${seg.duration}s`}
+                                                        </span>
+                                                        {seg.speed && (
+                                                            <span className="text-[10px] font-black text-[#e2ff00] italic">
+                                                                ⚡ {seg.speed} km/h
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {isOvertime && (
+                                    <div className="p-4 rounded-2xl border bg-[#e2ff00]/10 border-[#e2ff00] text-white flex items-center gap-3 animate-pulse">
+                                        <div className="w-8 h-8 rounded-xl bg-[#e2ff00] text-black font-extrabold flex items-center justify-center shrink-0 text-xs">
+                                            ✨
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-black uppercase italic tracking-wide text-[#e2ff00] block">
+                                                Tempo Extra / Livre Ativo
+                                            </span>
+                                            <span className="text-[10px] font-bold text-zinc-400 italic">
+                                                Planilha concluída! Os dados continuam sendo registrados normalmente.
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <button 
+                                onClick={() => setShowBlocksModal(false)}
+                                className="w-full mt-4 py-4 bg-zinc-800 hover:bg-zinc-700 text-white rounded-2xl font-black italic uppercase tracking-wider text-xs transition-colors"
+                            >
+                                Voltar ao Painel
+                            </button>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

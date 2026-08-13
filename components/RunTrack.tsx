@@ -1324,7 +1324,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         
         const checkAndSeed = async () => {
             try {
-                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
+                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v16`);
                 const path = `artifacts/${RUN_COLLECTION}/workouts`;
                 const q = collection(db, path);
                 const querySnapshot = await getDocs(q);
@@ -1341,7 +1341,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                         }
                     }
                     await seedWorkouts(student.id);
-                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
+                    localStorage.setItem(`seeded_${student.id}_run_v16`, 'true');
                 }
             } catch (err) {
                 console.error("Error during workout check/seed:", err);
@@ -2203,83 +2203,98 @@ const seedWorkouts = async (studentId: string) => {
         description: 'Caminhada Contínua a 5,5 km/h'
     };
 
+    const createQuintaDomingoSegments = (): WorkoutSegment[] => {
+        const segs: WorkoutSegment[] = [
+            { type: 'warmup', duration: 600, title: 'Aquecimento (10 min @ < 5,0 km/h)', speed: '4.8' }
+        ];
+        for (let i = 1; i <= 6; i++) {
+            segs.push({
+                type: 'stimulus',
+                duration: 180,
+                title: `Caminhada 5,0 km/h (3 min) [${i}/6]`,
+                speed: '5.0'
+            });
+            segs.push({
+                type: 'stimulus',
+                duration: 120,
+                title: `Acelerada 6,0 km/h (2 min) [${i}/6]`,
+                speed: '6.0'
+            });
+        }
+        segs.push({
+            type: 'cooldown',
+            duration: 600,
+            title: 'Desaquecimento (10 min @ < 5,0 km/h)',
+            speed: '4.8'
+        });
+        return segs;
+    };
+
     const payloadMap: Record<string, any[]> = {
         'fixed-andre': [
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Quarta',
-                type: 'Caminhada Moderada (Jacaroá)',
-                warmupTime: '5',
+                type: 'Caminhada Contínua',
+                warmupTime: '0',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '20',
+                stimulusTime: '50',
                 recoveryTime: '0',
-                cooldownTime: '5',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">20\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '30 min Total. Beira da Lagoa de Jacaroá (piso plano). Intensidade moderada (RPE 4-5). Dor no joelho máx 3/10.',
+                cooldownTime: '0',
+                speed: '5.5',
+                customDisplay: '<span class="text-[#e2ff00] font-black">50\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
+                description: '50 min Total. Caminhada contínua em ritmo constante de 5,5 km/h.',
                 segments: [
-                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 1200, title: 'Parte Principal (20 min caminhada contínua RPE 4-5)' },
-                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                    { type: 'continuous', duration: 3000, title: 'Caminhada Contínua (50 min @ 5,5 km/h)', speed: '5.5' }
                 ]
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Quinta',
-                type: 'Caminhada Pós-Fortalecimento',
-                warmupTime: '3',
-                sets: '1',
+                type: 'Caminhada Intervalada',
+                warmupTime: '10',
+                sets: '6',
                 reps: '1',
-                stimulusTime: '14',
+                stimulusTime: '30',
                 recoveryTime: '0',
-                cooldownTime: '3',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">3\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">14\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">3\' DES</span>',
-                description: '20 min Total. Realizar após treino de fortalecimento. Sem impacto nem corrida.',
-                segments: [
-                    { type: 'warmup', duration: 180, title: 'Aquecimento (3 min caminhada leve)' },
-                    { type: 'stimulus', duration: 840, title: 'Parte Principal (14 min caminhada RPE 4-5)' },
-                    { type: 'cooldown', duration: 180, title: 'Desaquecimento (3 min caminhada leve + alongamentos)' }
-                ]
+                cooldownTime: '10',
+                speed: '5.0 - 6.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">10\' AQ (&lt;5km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-[#e2ff00] font-black">6x (3\' 5km/h : 2\' 6km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">10\' DES</span>',
+                description: '50 min Total. 10 min caminhada confortável (<5km/h) + 30 min (6 ciclos de 3 min a 5km/h e 2 min a 6km/h) + 10 min desaquecimento.',
+                segments: createQuintaDomingoSegments()
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Sábado',
-                type: 'Caminhada Longa (Jacaroá)',
-                warmupTime: '5',
+                type: 'Caminhada Contínua',
+                warmupTime: '0',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '40',
+                stimulusTime: '50',
                 recoveryTime: '0',
-                cooldownTime: '5',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '50 min Total. Lagoa de Jacaroá (piso plano). Mantenha RPE 4-5. Beba pequenos goles de água a cada 15-20 min.',
+                cooldownTime: '0',
+                speed: '5.5',
+                customDisplay: '<span class="text-[#e2ff00] font-black">50\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
+                description: '50 min Total. Caminhada contínua em ritmo constante de 5,5 km/h.',
                 segments: [
-                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
-                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                    { type: 'continuous', duration: 3000, title: 'Caminhada Contínua (50 min @ 5,5 km/h)', speed: '5.5' }
                 ]
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Domingo',
-                type: 'Caminhada Longa (Jacaroá)',
-                warmupTime: '5',
-                sets: '1',
+                type: 'Caminhada Intervalada',
+                warmupTime: '10',
+                sets: '6',
                 reps: '1',
-                stimulusTime: '40',
+                stimulusTime: '30',
                 recoveryTime: '0',
-                cooldownTime: '5',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '50 min Total. Lagoa de Jacaroá (piso plano). RPE 4-5. Se dor no joelho passar de 3/10, reduza o ritmo.',
-                segments: [
-                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
-                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
-                ]
+                cooldownTime: '10',
+                speed: '5.0 - 6.0',
+                customDisplay: '<span class="text-emerald-400 font-bold">10\' AQ (&lt;5km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-[#e2ff00] font-black">6x (3\' 5km/h : 2\' 6km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">10\' DES</span>',
+                description: '50 min Total. 10 min caminhada confortável (<5km/h) + 30 min (6 ciclos de 3 min a 5km/h e 2 min a 6km/h) + 10 min desaquecimento.',
+                segments: createQuintaDomingoSegments()
             }
         ],
         'fixed-liliane': [
