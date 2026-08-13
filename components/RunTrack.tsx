@@ -1079,7 +1079,7 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
     
     useEffect(() => {
         if (!student.id) return;
-        const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
+        const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v20`);
         if (!hasSeeded) {
             const checkAndSeed = async () => {
                 try {
@@ -1100,7 +1100,7 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
                         }
                         await seedWorkouts(student.id);
                     }
-                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
+                    localStorage.setItem(`seeded_${student.id}_run_v20`, 'true');
                 } catch (err) {
                     const path = `artifacts/${RUN_COLLECTION}/workouts`;
                     try {
@@ -1324,7 +1324,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         
         const checkAndSeed = async () => {
             try {
-                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
+                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v20`);
                 const path = `artifacts/${RUN_COLLECTION}/workouts`;
                 const q = collection(db, path);
                 const querySnapshot = await getDocs(q);
@@ -1341,7 +1341,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                         }
                     }
                     await seedWorkouts(student.id);
-                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
+                    localStorage.setItem(`seeded_${student.id}_run_v20`, 'true');
                 }
             } catch (err) {
                 console.error("Error during workout check/seed:", err);
@@ -2209,78 +2209,147 @@ const seedWorkouts = async (studentId: string) => {
         'fixed-andre': [
             {
                 studentId: 'fixed-andre',
-                dayOfWeek: 'Quarta',
-                type: 'Caminhada Moderada (Jacaroá)',
+                dayOfWeek: 'Segunda',
+                type: 'Caminhada Contínua de Endurance',
                 warmupTime: '5',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '20',
+                stimulusTime: '35',
                 recoveryTime: '0',
                 cooldownTime: '5',
                 speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">20\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '30 min Total. Beira da Lagoa de Jacaroá (piso plano). Intensidade moderada (RPE 4-5). Dor no joelho máx 3/10.',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">35\' Contínuo (5.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '45 min Total. Ritmo constante e sustentável a 5,0 km/h. Excelente para construção de base aeróbica.',
                 segments: [
-                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 1200, title: 'Parte Principal (20 min caminhada contínua RPE 4-5)' },
-                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    { type: 'stimulus', duration: 2100, title: 'Parte Principal (35 min caminhada contínua a 5,0 km/h)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamento)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Terça',
+                type: 'Caminhada Intervalada (5 km/h ↔ 6 km/h)',
+                warmupTime: '5',
+                sets: '7',
+                reps: '1',
+                stimulusTime: '2',
+                recoveryTime: '3',
+                cooldownTime: '5',
+                speed: '5.5',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-amber-400 font-black">7x (3\' @ 5.0 km/h + 2\' @ 6.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '45 min Total. Alternância de ritmos: 3 min base a 5,0 km/h e 2 min moderado/vivo a 6,0 km/h. Variação de intensidade para otimizar o condicionamento.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    ...Array(7).fill(null).flatMap((_, i) => [
+                        { type: 'recovery', duration: 180, title: `Base ${i+1}/7 (3 min a 5,0 km/h)` },
+                        { type: 'stimulus', duration: 120, title: `Ritmo Vivo ${i+1}/7 (2 min a 6,0 km/h)` }
+                    ]),
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamento)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Quarta',
+                type: 'Caminhada Progressiva de Ritmo',
+                warmupTime: '5',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '35',
+                recoveryTime: '0',
+                cooldownTime: '5',
+                speed: '5.2',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-purple-400 font-black">Progressivo (10\' @ 4.8 ➔ 15\' @ 5.2 ➔ 10\' @ 6.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '45 min Total. Progressão suave de velocidade a cada bloco: inicia confortável a 4,8 km/h, estabiliza a 5,2 km/h e finaliza forte a 6,0 km/h.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    { type: 'recovery', duration: 600, title: 'Bloco 1 (10 min leve a 4,8 km/h)' },
+                    { type: 'stimulus', duration: 900, title: 'Bloco 2 (15 min moderado a 5,2 km/h)' },
+                    { type: 'stimulus', duration: 600, title: 'Bloco 3 (10 min firme a 6,0 km/h)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamento)' }
                 ]
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Quinta',
-                type: 'Caminhada Pós-Fortalecimento',
-                warmupTime: '3',
+                type: 'Caminhada Pirâmide Fartlek',
+                warmupTime: '5',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '14',
+                stimulusTime: '30',
                 recoveryTime: '0',
-                cooldownTime: '3',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">3\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">14\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">3\' DES</span>',
-                description: '20 min Total. Realizar após treino de fortalecimento. Sem impacto nem corrida.',
+                cooldownTime: '5',
+                speed: '5.5',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-cyan-400 font-black">Pirâmide 30\' (5.0 ➔ 5.5 ➔ 6.0 ➔ 5.5 ➔ 5.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '40 min Total. Blocos de 6 min variando velocidade em pirâmide: subindo de 5,0 a 6,0 km/h e descendo gradualmente.',
                 segments: [
-                    { type: 'warmup', duration: 180, title: 'Aquecimento (3 min caminhada leve)' },
-                    { type: 'stimulus', duration: 840, title: 'Parte Principal (14 min caminhada RPE 4-5)' },
-                    { type: 'cooldown', duration: 180, title: 'Desaquecimento (3 min caminhada leve + alongamentos)' }
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    { type: 'recovery', duration: 360, title: 'Pirâmide Etapa 1 (6 min a 5,0 km/h)' },
+                    { type: 'stimulus', duration: 360, title: 'Pirâmide Etapa 2 (6 min a 5,5 km/h)' },
+                    { type: 'stimulus', duration: 360, title: 'Pirâmide Etapa 3 Apex (6 min a 6,0 km/h)' },
+                    { type: 'stimulus', duration: 360, title: 'Pirâmide Etapa 4 (6 min a 5,5 km/h)' },
+                    { type: 'recovery', duration: 360, title: 'Pirâmide Etapa 5 (6 min a 5,0 km/h)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamento)' }
+                ]
+            },
+            {
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Sexta',
+                type: 'Caminhada com Tiros Vivos (6.0 km/h)',
+                warmupTime: '5',
+                sets: '10',
+                reps: '1',
+                stimulusTime: '1',
+                recoveryTime: '2.5',
+                cooldownTime: '5',
+                speed: '5.3',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-orange-500 font-black">10x Tiros Vivos (1\' @ 6.0 km/h / 2\'30" @ 5.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '45 min Total. 10 tiros curtos de 1 min em caminhada vigorosa a 6,0 km/h, intercalados com 2,5 min de caminhada de apoio a 5,0 km/h.',
+                segments: [
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    ...Array(10).fill(null).flatMap((_, i) => [
+                        { type: 'stimulus', duration: 60, title: `Tiro Vivo ${i+1}/10 (1 min a 6,0 km/h)` },
+                        { type: 'recovery', duration: 150, title: `Recuperação Ativa ${i+1}/10 (2,5 min a 5,0 km/h)` }
+                    ]),
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamento)' }
                 ]
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Sábado',
-                type: 'Caminhada Longa (Jacaroá)',
+                type: 'Caminhada Longa de Rodagem (Jacaroá)',
                 warmupTime: '5',
                 sets: '1',
                 reps: '1',
                 stimulusTime: '40',
                 recoveryTime: '0',
                 cooldownTime: '5',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '50 min Total. Lagoa de Jacaroá (piso plano). Mantenha RPE 4-5. Beba pequenos goles de água a cada 15-20 min.',
+                speed: '5.2',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Rodagem Contínua (5.2 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
+                description: '50 min Total. Maior volume aeróbico da semana na Orla da Lagoa de Jacaroá (piso plano). Mantenha ritmo constante a 5,2 km/h.',
                 segments: [
                     { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
+                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua a 5,2 km/h)' },
                     { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
                 ]
             },
             {
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Domingo',
-                type: 'Caminhada Longa (Jacaroá)',
+                type: 'Caminhada Regenerativa Ativa',
                 warmupTime: '5',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '40',
+                stimulusTime: '30',
                 recoveryTime: '0',
                 cooldownTime: '5',
-                speed: '5.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ + Mob</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-red-500 font-black">40\' Caminhada RPE 4-5</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES + Along</span>',
-                description: '50 min Total. Lagoa de Jacaroá (piso plano). RPE 4-5. Se dor no joelho passar de 3/10, reduza o ritmo.',
+                speed: '4.8',
+                customDisplay: '<span class="text-emerald-400 font-bold">5\' AQ</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-emerald-500 font-black">30\' Regenerativo Solto (4.8 - 5.0 km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">5\' DES</span>',
+                description: '40 min Total. Caminhada suave de recuperação ativa para irrigação sanguínea, soltura articular e relaxamento.',
                 segments: [
-                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada lenta + mobilidade)' },
-                    { type: 'stimulus', duration: 2400, title: 'Parte Principal (40 min caminhada contínua RPE 4-5)' },
-                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada lenta + alongamentos)' }
+                    { type: 'warmup', duration: 300, title: 'Aquecimento (5 min caminhada leve)' },
+                    { type: 'stimulus', duration: 1800, title: 'Parte Principal (30 min caminhada leve solta)' },
+                    { type: 'cooldown', duration: 300, title: 'Desaquecimento (5 min caminhada leve + alongamentos)' }
                 ]
             }
         ],
@@ -2320,5 +2389,5 @@ const seedWorkouts = async (studentId: string) => {
         }
     }));
     
-    localStorage.setItem(`seeded_${studentId}_run_v9`, 'true');
+    localStorage.setItem(`seeded_${studentId}_run_v20`, 'true');
 };
