@@ -1367,7 +1367,7 @@ export default function App() {
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'ex-rod-1', name: 'Caminhada Contínua a 5,5 km/h', sets: '1', reps: '50 min', rest: '0s', executionType: 'Simples' }
+                { id: 'ex-rod-1', name: 'Caminhada Contínua a 5,5 km/h', sets: '1', reps: '60 min', rest: '0s', executionType: 'Simples' }
               ]
             }
           ]
@@ -2338,20 +2338,29 @@ export default function App() {
     setSyncStatus('syncing');
     const path = `alunos/${sid}`;
     
-    // Robustly remove undefined values to prevent Firestore errors
-    const removeUndefined = (obj: any): any => {
+    // Robustly remove undefined values and prevent circular references to prevent Firestore errors
+    const removeUndefined = (obj: any, seen = new WeakSet()): any => {
       if (typeof obj !== 'object' || obj === null) return obj;
+      
+      // Handle circular references
+      if (seen.has(obj)) {
+        return undefined; // Drop circular references
+      }
+      seen.add(obj);
       
       if (Array.isArray(obj)) {
         return obj
-          .map(item => removeUndefined(item))
+          .map(item => removeUndefined(item, seen))
           .filter(item => item !== undefined);
       }
       
       const newObj: any = {};
       Object.keys(obj).forEach(key => {
         if (obj[key] !== undefined) {
-          newObj[key] = removeUndefined(obj[key]);
+          const val = removeUndefined(obj[key], seen);
+          if (val !== undefined) {
+            newObj[key] = val;
+          }
         }
       });
       return newObj;
@@ -2503,10 +2512,12 @@ export default function App() {
     await handleSaveData(studentForView.id, updates);
 
     // Manually update local state immediately for faster UI feedback
-    setSelectedStudent({
+    const updatedStudent = {
         ...studentForView,
         ...updates
-    });
+    };
+    
+    setSelectedStudent(updatedStudent);
   };
 
   const handleAddPost = async (post: WorkoutHistoryEntry) => {

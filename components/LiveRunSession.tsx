@@ -280,16 +280,25 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
 
     const saveSessionState = useCallback(() => {
         if (!isRunning) return;
-        const state = {
-            totalTimeElapsed,
-            distance,
-            steps: stepsRef.current,
-            path,
-            segments,
-            currentSegmentIndex,
-            timestamp: Date.now()
-        };
-        localStorage.setItem('abfit_run_active_session', JSON.stringify(state));
+        try {
+            const state = {
+                totalTimeElapsed,
+                distance,
+                steps: stepsRef.current,
+                path: Array.isArray(path) ? path.map(p => ({ lat: Number(p.lat), lng: Number(p.lng) })) : [],
+                segments: Array.isArray(segments) ? segments.map(s => ({ 
+                    type: s.type, 
+                    duration: Number(s.duration), 
+                    title: String(s.title), 
+                    speed: s.speed ? String(s.speed) : undefined 
+                })) : [],
+                currentSegmentIndex,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('abfit_run_active_session', JSON.stringify(state));
+        } catch (e) {
+            console.warn("Failed to save session state:", e);
+        }
     }, [totalTimeElapsed, distance, path, segments, currentSegmentIndex, isRunning]);
 
     useEffect(() => {
@@ -471,8 +480,8 @@ export function LiveRunSession({ segments, workoutTitle, onClose, onFinish, stud
                                     speak("Treino retomado.", true);
                                 }
                                 setDistance(prev => {
-                                    const correctionFactor = 1.25; // User had ~33% difference, 1.25 is a safe boost
-                                    const next = prev + (d * correctionFactor);
+                                    // Remove the 1.25 correction factor that was causing overestimation
+                                    const next = prev + d;
                                     updateCalories(next);
                                     return next;
                                 });

@@ -1072,47 +1072,45 @@ const RunCalendar = ({ workouts, history, onCheckIn, studentId }: { workouts: Wo
 // --- COACH VIEW ---
 
 export function RunTrackCoachView({ student, onBack }: { student: Student, onBack: () => void }) {
-    const [workouts, setWorkouts] = useState<WorkoutModel[]>([]);
+    const [workouts, setWorkouts] = useState<WorkoutModel[]>(() => getDefaultWorkouts(student.id));
     const [runnerCount, setRunnerCount] = useState(1);
     const [isCreating, setIsCreating] = useState(false);
     const [editingWorkout, setEditingWorkout] = useState<WorkoutModel | null>(null);
     
     useEffect(() => {
         if (!student.id) return;
-        const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v15`);
-        if (!hasSeeded) {
-            const checkAndSeed = async () => {
-                try {
-                    await new Promise(r => setTimeout(r, 1000));
-                    
-                    // Query firestore directly to avoid closure stale state
-                    const path = `artifacts/${RUN_COLLECTION}/workouts`;
-                    const q = collection(db, path);
-                    const snap = await getDocs(q);
-                    const currentWorkouts = snap.docs
-                        .map(d => ({id: d.id, ...d.data()} as WorkoutModel))
-                        .filter(w => w.studentId === student.id);
+        const seedKey = `seeded_${student.id}_run_v30`;
+        if (localStorage.getItem(seedKey) === 'true') return;
 
-                    if (['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
-                        for (const w of currentWorkouts) {
+        const checkAndSeed = async () => {
+            try {
+                localStorage.setItem(seedKey, 'true');
+                const path = `artifacts/${RUN_COLLECTION}/workouts`;
+                const q = collection(db, path);
+                const snap = await getDocs(q);
+                const currentWorkouts = snap.docs
+                    .map(d => ({id: d.id, ...d.data()} as WorkoutModel))
+                    .filter(w => w.studentId === student.id);
+
+                const needsReSeed = currentWorkouts.length === 0 || 
+                    (student.id === 'fixed-andre' && currentWorkouts.some(w => w.stimulusTime !== '60' || w.customDisplay?.includes('50\'') || w.customDisplay?.includes('70\'')));
+
+                if (needsReSeed && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
+                    for (const w of currentWorkouts) {
+                        try {
                             const docPath = `artifacts/${RUN_COLLECTION}/workouts/${w.id}`;
                             await deleteDoc(doc(db, docPath));
+                        } catch (e) {
+                            console.warn("Could not delete old workout:", e);
                         }
-                        await seedWorkouts(student.id);
                     }
-                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
-                } catch (err) {
-                    const path = `artifacts/${RUN_COLLECTION}/workouts`;
-                    try {
-                        handleFirestoreError(err, OperationType.GET, path);
-                    } catch (e) {
-                        console.error(e);
-                    }
-                    localStorage.setItem(`seeded_${student.id}_run_v15`, 'true');
+                    await seedWorkouts(student.id);
                 }
-            };
-            checkAndSeed();
-        }
+            } catch (err) {
+                console.warn("Firestore checkAndSeed note (using local defaults):", err);
+            }
+        };
+        checkAndSeed();
     }, [student.id]);
 
     useEffect(() => {
@@ -1120,17 +1118,40 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
         const q = collection(db, path);
         const unsub = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({id: d.id, ...d.data()} as WorkoutModel));
-            setWorkouts(data.filter(w => w.studentId === student.id));
+            const filtered: WorkoutModel[] = data.filter(w => w.studentId === student.id).map(w => {
+                if (w.studentId === 'fixed-andre' || student.id === 'fixed-andre') {
+                    const isProgressive = w.type?.toLowerCase().includes('progressiva') || w.dayOfWeek === 'Quarta' || w.dayOfWeek === 'Domingo' || w.speed === '6.0';
+                    const spd = isProgressive ? '6.0' : '5.5';
+                    const typeName = isProgressive ? 'Caminhada Progressiva' : 'Caminhada Adaptativa';
+                    const segs: WorkoutSegment[] = [
+                        { type: 'continuous', duration: 3600, title: `Caminhada Contínua (60 min @ ${spd.replace('.', ',')} km/h)`, speed: spd }
+                    ];
+                    return {
+                        ...w,
+                        type: w.type || typeName,
+                        stimulusTime: '60',
+                        warmupTime: '0',
+                        totalTime: '60 min',
+                        speed: spd,
+                        customDisplay: `<span class="text-[#e2ff00] font-black">60' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">${spd.replace('.', ',')} km/h</span>`,
+                        description: `Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo constante a ${spd.replace('.', ',')} km/h.`,
+                        segments: segs
+                    };
+                }
+                return w;
+            });
+            if (filtered.length > 0) {
+                setWorkouts(filtered);
+            } else {
+                setWorkouts(getDefaultWorkouts(student.id));
+            }
             
             // Count unique students with prescribed workouts
             const studentIds = new Set(data.map(d => d.studentId));
-            setRunnerCount(studentIds.size);
+            setRunnerCount(Math.max(1, studentIds.size));
         }, (error) => {
-            try {
-                handleFirestoreError(error, OperationType.GET, path);
-            } catch (e) {
-                console.error(e);
-            }
+            console.warn("Firestore snapshot listener error (falling back to local):", error);
+            setWorkouts(getDefaultWorkouts(student.id));
         });
         return () => unsub();
     }, [student.id]);
@@ -1235,8 +1256,32 @@ function parseWorkoutSegments(workout: WorkoutModel): WorkoutSegment[] {
     if (workout.type === 'TREINO LIVRE') {
         return [{ type: 'continuous', duration: 24 * 60 * 60, title: 'Treino Livre' }];
     }
+
+    // If student is André or workout is Caminhada Adaptativa / Progressiva, enforce 60 minutes
+    if (workout.studentId === 'fixed-andre' || workout.type?.toLowerCase().includes('caminhada adaptativa') || workout.type?.toLowerCase().includes('caminhada progressiva')) {
+        const isProgressive = workout.type?.toLowerCase().includes('progressiva') || workout.dayOfWeek === 'Quarta' || workout.dayOfWeek === 'Domingo' || workout.speed === '6.0';
+        const spd = isProgressive ? '6.0' : (workout.speed || '5.5');
+        return [
+            {
+                type: 'continuous',
+                duration: 3600,
+                title: `Caminhada Contínua (60 min @ ${spd.replace('.', ',')} km/h)`,
+                speed: spd
+            }
+        ];
+    }
+
     if (workout.segments && workout.segments.length > 0) {
-        return workout.segments;
+        return workout.segments.map(s => {
+            if (s.title?.toLowerCase().includes('caminhada') && (s.duration === 3000 || s.duration === 4200)) {
+                return {
+                    ...s,
+                    duration: 3600,
+                    title: s.title.replace('50 min', '60 min').replace('70 min', '60 min')
+                };
+            }
+            return s;
+        });
     }
     const segments: WorkoutSegment[] = [];
     
@@ -1279,7 +1324,7 @@ function parseWorkoutSegments(workout: WorkoutModel): WorkoutSegment[] {
         }
     } else {
         // Continuous
-        const mainMins = parseToMinutes(workout.totalTime, workout.speed) || parseToMinutes(workout.distance, workout.speed);
+        const mainMins = parseToMinutes(workout.totalTime, workout.speed) || parseToMinutes(workout.stimulusTime, workout.speed) || parseToMinutes(workout.distance, workout.speed);
         if (mainMins > 0) {
             segments.push({
                 type: 'continuous',
@@ -1313,7 +1358,7 @@ function parseWorkoutSegments(workout: WorkoutModel): WorkoutSegment[] {
 }
 
 export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: { student: Student, onBack: () => void, onSave: (id: string, data: any) => void, onToggleMenu?: () => void }) {
-    const [workouts, setWorkouts] = useState<WorkoutModel[]>([]);
+    const [workouts, setWorkouts] = useState<WorkoutModel[]>(() => getDefaultWorkouts(student.id));
     const [runnerCount, setRunnerCount] = useState(1);
     const [loggingWorkout, setLoggingWorkout] = useState<WorkoutModel | null>(null);
     const [liveWorkout, setLiveWorkout] = useState<WorkoutModel | null>(null);
@@ -1321,10 +1366,12 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
 
     useEffect(() => {
         if (!student.id) return;
+        const seedKey = `seeded_${student.id}_run_v30`;
+        if (localStorage.getItem(seedKey) === 'true') return;
         
         const checkAndSeed = async () => {
             try {
-                const hasSeeded = localStorage.getItem(`seeded_${student.id}_run_v16`);
+                localStorage.setItem(seedKey, 'true');
                 const path = `artifacts/${RUN_COLLECTION}/workouts`;
                 const q = collection(db, path);
                 const querySnapshot = await getDocs(q);
@@ -1332,28 +1379,34 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                     .map(d => ({id: d.id, ...d.data()} as WorkoutModel))
                     .filter(w => w.studentId === student.id);
 
-                if ((!hasSeeded || currentWorkouts.length === 0) && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
-                    console.log(`Seeding initial workouts for ${student.nome}...`);
-                    if (student.id === 'fixed-andre') {
-                        for (const w of currentWorkouts) {
+                const needsReSeed = currentWorkouts.length === 0 || 
+                    (student.id === 'fixed-andre' && currentWorkouts.some(w => w.stimulusTime !== '60' || w.customDisplay?.includes('50\'') || w.customDisplay?.includes('70\'')));
+
+                if (needsReSeed && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
+                    for (const w of currentWorkouts) {
+                        try {
                             const docPath = `artifacts/${RUN_COLLECTION}/workouts/${w.id}`;
                             await deleteDoc(doc(db, docPath));
+                        } catch (e) {
+                            console.warn("Could not delete old workout:", e);
                         }
                     }
                     await seedWorkouts(student.id);
-                    localStorage.setItem(`seeded_${student.id}_run_v16`, 'true');
                 }
             } catch (err) {
-                console.error("Error during workout check/seed:", err);
+                console.warn("Firestore checkAndSeed note (using local defaults):", err);
             }
         };
         
         checkAndSeed();
     }, [student.id]);
 
-    // Ensure Galaxy Watch 7 workout (3,12 km - 12/08/2026) is always persisted in history
+    // Ensure Galaxy Watch 7 workout (3,12 km - 12/08/2026) is persisted in history once
     useEffect(() => {
         if (!student.id) return;
+        const gwKey = `gw7_synced_${student.id}`;
+        if (localStorage.getItem(gwKey) === 'true') return;
+
         const currentHistory = student.workoutHistory || [];
         const hasGW7 = currentHistory.some(h => 
             h.id === 'gw7-walk-12082026' || 
@@ -1361,6 +1414,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         );
 
         if (!hasGW7) {
+            localStorage.setItem(gwKey, 'true');
             const gw7Entry: WorkoutHistoryEntry = {
                 id: 'gw7-walk-12082026',
                 workoutId: 'fixed-andre-quarta-1208',
@@ -1403,8 +1457,10 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                 lastSessionDate: '12/08/2026'
             };
             onSave(student.id, { workoutHistory: updatedHistory, analytics: updatedAnalytics });
+        } else {
+            localStorage.setItem(gwKey, 'true');
         }
-    }, [student.id, student.workoutHistory]);
+    }, [student.id]);
 
     useEffect(() => {
         if (!student.id) return;
@@ -1412,17 +1468,40 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
         const q = collection(db, path);
         const unsub = onSnapshot(q, (snap) => {
             const data = snap.docs.map(d => ({id: d.id, ...d.data()} as WorkoutModel));
-            setWorkouts(data.filter(w => w.studentId === student.id));
+            const filtered: WorkoutModel[] = data.filter(w => w.studentId === student.id).map(w => {
+                if (w.studentId === 'fixed-andre' || student.id === 'fixed-andre') {
+                    const isProgressive = w.type?.toLowerCase().includes('progressiva') || w.dayOfWeek === 'Quarta' || w.dayOfWeek === 'Domingo' || w.speed === '6.0';
+                    const spd = isProgressive ? '6.0' : '5.5';
+                    const typeName = isProgressive ? 'Caminhada Progressiva' : 'Caminhada Adaptativa';
+                    const segs: WorkoutSegment[] = [
+                        { type: 'continuous', duration: 3600, title: `Caminhada Contínua (60 min @ ${spd.replace('.', ',')} km/h)`, speed: spd }
+                    ];
+                    return {
+                        ...w,
+                        type: w.type || typeName,
+                        stimulusTime: '60',
+                        warmupTime: '0',
+                        totalTime: '60 min',
+                        speed: spd,
+                        customDisplay: `<span class="text-[#e2ff00] font-black">60' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">${spd.replace('.', ',')} km/h</span>`,
+                        description: `Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo constante a ${spd.replace('.', ',')} km/h.`,
+                        segments: segs
+                    };
+                }
+                return w;
+            });
+            if (filtered.length > 0) {
+                setWorkouts(filtered);
+            } else {
+                setWorkouts(getDefaultWorkouts(student.id));
+            }
             
             // Count unique students with prescribed workouts
             const studentIds = new Set(data.map(d => d.studentId));
-            setRunnerCount(studentIds.size);
+            setRunnerCount(Math.max(1, studentIds.size));
         }, (error) => {
-            try {
-                handleFirestoreError(error, OperationType.GET, path);
-            } catch (e) {
-                console.error(e);
-            }
+            console.warn("Firestore snapshot listener error (falling back to local):", error);
+            setWorkouts(getDefaultWorkouts(student.id));
         });
         return () => unsub();
     }, [student.id]);
@@ -2157,7 +2236,7 @@ const getDayIndex = (day: string): number => {
     return idx === -1 ? 99 : idx;
 };
 
-const seedWorkouts = async (studentId: string) => {
+export const getDefaultWorkouts = (studentId: string): WorkoutModel[] => {
     const complexSegments: WorkoutSegment[] = [
         { type: 'warmup', duration: 10 * 60, title: 'Aquecimento' },
         { type: 'stimulus', duration: 90, title: 'Tiro 1/8' },
@@ -2198,123 +2277,127 @@ const seedWorkouts = async (studentId: string) => {
 
     const rodagem = {
         type: 'Rodagem',
-        warmupTime: '50', sets: '1', reps: '1', stimulusTime: '0', recoveryTime: '0', cooldownTime: '0',
-        customDisplay: '<span class="text-emerald-500">50\' CA</span> <span class="text-zinc-400 ml-3 text-[0.9em]">5.5km/h</span>',
+        warmupTime: '60', sets: '1', reps: '1', stimulusTime: '0', recoveryTime: '0', cooldownTime: '0',
+        customDisplay: '<span class="text-emerald-500">60\' CA</span> <span class="text-zinc-400 ml-3 text-[0.9em]">5.5km/h</span>',
         description: 'Caminhada Contínua a 5,5 km/h'
-    };
-
-    const createQuintaDomingoSegments = (): WorkoutSegment[] => {
-        const segs: WorkoutSegment[] = [
-            { type: 'warmup', duration: 600, title: 'Aquecimento (10 min @ < 5,0 km/h)', speed: '4.8' }
-        ];
-        for (let i = 1; i <= 6; i++) {
-            segs.push({
-                type: 'stimulus',
-                duration: 180,
-                title: `Caminhada 5,0 km/h (3 min) [${i}/6]`,
-                speed: '5.0'
-            });
-            segs.push({
-                type: 'stimulus',
-                duration: 120,
-                title: `Acelerada 6,0 km/h (2 min) [${i}/6]`,
-                speed: '6.0'
-            });
-        }
-        segs.push({
-            type: 'cooldown',
-            duration: 600,
-            title: 'Desaquecimento (10 min @ < 5,0 km/h)',
-            speed: '4.8'
-        });
-        return segs;
     };
 
     const payloadMap: Record<string, any[]> = {
         'fixed-andre': [
             {
+                id: 'fixed-andre-terca',
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Terça',
+                type: 'Caminhada Adaptativa',
+                warmupTime: '0',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '60',
+                recoveryTime: '0',
+                cooldownTime: '0',
+                speed: '5.5',
+                customDisplay: '<span class="text-[#e2ff00] font-black">60\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
+                description: 'Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo constante a 5,5 km/h.',
+                segments: [
+                    { type: 'continuous', duration: 3600, title: 'Caminhada Contínua (60 min @ 5,5 km/h)', speed: '5.5' }
+                ]
+            },
+            {
+                id: 'fixed-andre-quarta',
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Quarta',
-                type: 'Caminhada Contínua',
+                type: 'Caminhada Progressiva',
                 warmupTime: '0',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '50',
+                stimulusTime: '60',
                 recoveryTime: '0',
                 cooldownTime: '0',
-                speed: '5.5',
-                customDisplay: '<span class="text-[#e2ff00] font-black">50\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
-                description: '50 min Total. Caminhada contínua em ritmo constante de 5,5 km/h.',
+                speed: '6.0',
+                customDisplay: '<span class="text-[#e2ff00] font-black">60\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">6,0 km/h</span>',
+                description: 'Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo de 6,0 km/h. Se sentir agulhada no joelho, reduza para 5,5 km/h.',
                 segments: [
-                    { type: 'continuous', duration: 3000, title: 'Caminhada Contínua (50 min @ 5,5 km/h)', speed: '5.5' }
+                    { type: 'continuous', duration: 3600, title: 'Caminhada Contínua (60 min @ 6,0 km/h)', speed: '6.0' }
                 ]
             },
             {
+                id: 'fixed-andre-quinta',
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Quinta',
-                type: 'Caminhada Intervalada',
-                warmupTime: '10',
-                sets: '6',
-                reps: '1',
-                stimulusTime: '30',
-                recoveryTime: '0',
-                cooldownTime: '10',
-                speed: '5.0 - 6.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">10\' AQ (&lt;5km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-[#e2ff00] font-black">6x (3\' 5km/h : 2\' 6km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">10\' DES</span>',
-                description: '50 min Total. 10 min caminhada confortável (<5km/h) + 30 min (6 ciclos de 3 min a 5km/h e 2 min a 6km/h) + 10 min desaquecimento.',
-                segments: createQuintaDomingoSegments()
-            },
-            {
-                studentId: 'fixed-andre',
-                dayOfWeek: 'Sábado',
-                type: 'Caminhada Contínua',
+                type: 'Caminhada Adaptativa',
                 warmupTime: '0',
                 sets: '1',
                 reps: '1',
-                stimulusTime: '50',
+                stimulusTime: '60',
                 recoveryTime: '0',
                 cooldownTime: '0',
                 speed: '5.5',
-                customDisplay: '<span class="text-[#e2ff00] font-black">50\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
-                description: '50 min Total. Caminhada contínua em ritmo constante de 5,5 km/h.',
+                customDisplay: '<span class="text-[#e2ff00] font-black">60\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
+                description: 'Fase 1 (Semanas 1-3): 60 min contínuos. Realizar após fortalecimento se possível.',
                 segments: [
-                    { type: 'continuous', duration: 3000, title: 'Caminhada Contínua (50 min @ 5,5 km/h)', speed: '5.5' }
+                    { type: 'continuous', duration: 3600, title: 'Caminhada Contínua (60 min @ 5,5 km/h)', speed: '5.5' }
                 ]
             },
             {
+                id: 'fixed-andre-sabado',
+                studentId: 'fixed-andre',
+                dayOfWeek: 'Sábado',
+                type: 'Caminhada Adaptativa',
+                warmupTime: '0',
+                sets: '1',
+                reps: '1',
+                stimulusTime: '60',
+                recoveryTime: '0',
+                cooldownTime: '0',
+                speed: '5.5',
+                customDisplay: '<span class="text-[#e2ff00] font-black">60\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">5,5 km/h</span>',
+                description: 'Fase 1 (Semanas 1-3): 60 min contínuos a 5,5 km/h.',
+                segments: [
+                    { type: 'continuous', duration: 3600, title: 'Caminhada Contínua (60 min @ 5,5 km/h)', speed: '5.5' }
+                ]
+            },
+            {
+                id: 'fixed-andre-domingo',
                 studentId: 'fixed-andre',
                 dayOfWeek: 'Domingo',
-                type: 'Caminhada Intervalada',
-                warmupTime: '10',
-                sets: '6',
+                type: 'Caminhada Progressiva',
+                warmupTime: '0',
+                sets: '1',
                 reps: '1',
-                stimulusTime: '30',
+                stimulusTime: '60',
                 recoveryTime: '0',
-                cooldownTime: '10',
-                speed: '5.0 - 6.0',
-                customDisplay: '<span class="text-emerald-400 font-bold">10\' AQ (&lt;5km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-[#e2ff00] font-black">6x (3\' 5km/h : 2\' 6km/h)</span> <span class="text-zinc-500 mx-1">+</span> <span class="text-blue-400 font-bold">10\' DES</span>',
-                description: '50 min Total. 10 min caminhada confortável (<5km/h) + 30 min (6 ciclos de 3 min a 5km/h e 2 min a 6km/h) + 10 min desaquecimento.',
-                segments: createQuintaDomingoSegments()
+                cooldownTime: '0',
+                speed: '6.0',
+                customDisplay: '<span class="text-[#e2ff00] font-black">60\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">6,0 km/h</span>',
+                description: 'Fase 1 (Semanas 1-3): 60 min contínuos a 6,0 km/h. Se sentir cansaço articular, reduza para 5,5 km/h.',
+                segments: [
+                    { type: 'continuous', duration: 3600, title: 'Caminhada Contínua (60 min @ 6,0 km/h)', speed: '6.0' }
+                ]
             }
         ],
         'fixed-liliane': [
-            { studentId: 'fixed-liliane', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
-            { studentId: 'fixed-liliane', dayOfWeek: 'Terça', ...rodagem },
-            { studentId: 'fixed-liliane', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
-            { studentId: 'fixed-liliane', dayOfWeek: 'Quinta', ...rodagem },
-            { studentId: 'fixed-liliane', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
+            { id: 'fixed-liliane-segunda', studentId: 'fixed-liliane', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
+            { id: 'fixed-liliane-terca', studentId: 'fixed-liliane', dayOfWeek: 'Terça', ...rodagem },
+            { id: 'fixed-liliane-quarta', studentId: 'fixed-liliane', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
+            { id: 'fixed-liliane-quinta', studentId: 'fixed-liliane', dayOfWeek: 'Quinta', ...rodagem },
+            { id: 'fixed-liliane-sexta', studentId: 'fixed-liliane', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
         ],
         'fixed-marcelly': [
-            { studentId: 'fixed-marcelly', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
-            { studentId: 'fixed-marcelly', dayOfWeek: 'Terça', ...rodagem },
-            { studentId: 'fixed-marcelly', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
-            { studentId: 'fixed-marcelly', dayOfWeek: 'Quinta', ...rodagem },
-            { studentId: 'fixed-marcelly', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
+            { id: 'fixed-marcelly-segunda', studentId: 'fixed-marcelly', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
+            { id: 'fixed-marcelly-terca', studentId: 'fixed-marcelly', dayOfWeek: 'Terça', ...rodagem },
+            { id: 'fixed-marcelly-quarta', studentId: 'fixed-marcelly', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
+            { id: 'fixed-marcelly-quinta', studentId: 'fixed-marcelly', dayOfWeek: 'Quinta', ...rodagem },
+            { id: 'fixed-marcelly-sexta', studentId: 'fixed-marcelly', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
         ]
     };
 
-    const payload = payloadMap[studentId];
-    if (!payload) return;
+    return payloadMap[studentId] || [];
+};
+
+const seedWorkouts = async (studentId: string) => {
+    localStorage.setItem(`seeded_${studentId}_run_v30`, 'true');
+    const payload = getDefaultWorkouts(studentId);
+    if (!payload || payload.length === 0) return;
 
     const path = `artifacts/${RUN_COLLECTION}/workouts`;
     // Use Promise.all to ensure all are added before finishing
@@ -2325,13 +2408,7 @@ const seedWorkouts = async (studentId: string) => {
                 createdAt: new Date().toISOString() 
             });
         } catch (error) {
-            try {
-                handleFirestoreError(error, OperationType.WRITE, path);
-            } catch (e) {
-                console.error(e);
-            }
+            console.warn("Could not write workout to Firestore (quota or offline):", error);
         }
     }));
-    
-    localStorage.setItem(`seeded_${studentId}_run_v9`, 'true');
 };
