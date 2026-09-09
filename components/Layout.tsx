@@ -4,7 +4,7 @@ import {
   CloudRain, Sun, RefreshCw, Bell, Dumbbell, Wifi, WifiOff, 
   Mail, Phone, Loader2, MapPin, MessageCircle, Menu, X, 
   LayoutGrid, Bot, Settings2, User, Layout, Brain, Ruler, 
-  Footprints, BarChart3, Info, Cloud, Thermometer, Droplets, AlertTriangle, Smartphone
+  Footprints, BarChart3, Info, Cloud, Thermometer, Droplets, AlertTriangle, Smartphone, Headphones
 } from 'lucide-react';
 import { AppNotification } from '../types';
 
@@ -126,6 +126,7 @@ export function SideNav({
     { id: 'DASHBOARD', label: 'Home Dashboard', icon: LayoutGrid, color: 'zinc' },
     { id: 'WORKOUTS', label: 'Planilhas Ativas', icon: Dumbbell, color: 'orange' },
     { id: 'RUNTRACK_STUDENT', label: 'ABFIT RUN', icon: Footprints, color: 'rose' },
+    { id: 'SPOTIFY_PLAYER', label: 'Spotify Free', icon: Headphones, color: 'emerald' },
     { id: 'STUDENT_PERIODIZATION', label: 'Periodização', icon: Brain, color: 'indigo' },
     { id: 'STUDENT_ASSESSMENT', label: 'Avaliação Física', icon: Ruler, color: 'emerald' },
     { id: 'CORRE_RJ', label: 'Corre RJ 2026', icon: MapPin, color: 'yellow' },
@@ -156,6 +157,7 @@ export function SideNav({
       case 'rose': return 'bg-rose-600/10 text-foreground';
       case 'blue': return 'bg-blue-600/10 text-foreground';
       case 'yellow': return 'bg-yellow-600/10 text-foreground';
+      case 'purple': return 'bg-purple-600/10 text-foreground';
       default: return 'bg-secondary text-foreground';
     }
   };
@@ -171,6 +173,7 @@ export function SideNav({
       case 'rose': return 'text-rose-600';
       case 'blue': return 'text-blue-600';
       case 'yellow': return 'text-yellow-500';
+      case 'purple': return 'text-purple-500';
       default: return 'text-foreground';
     }
   };
@@ -184,6 +187,7 @@ export function SideNav({
       case 'rose': return 'bg-rose-600 shadow-[0_0_15px_rgba(225,29,72,0.8)]';
       case 'blue': return 'bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.8)]';
       case 'yellow': return 'bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.8)]';
+      case 'purple': return 'bg-purple-600 shadow-[0_0_15px_rgba(168,85,247,0.8)]';
       default: return 'bg-foreground shadow-[0_0_15px_rgba(255,255,255,0.4)]';
     }
   };

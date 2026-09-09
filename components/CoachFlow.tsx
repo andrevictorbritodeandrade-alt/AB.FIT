@@ -8,7 +8,7 @@ import {
   Users, Info, Sparkles, LayoutGrid, Calendar, Clock, Play, FileText, Folder,
   ChevronDown, Lightbulb, Bell, CalendarClock, Search, Check, Layers, Video, X, Eye, EyeOff,
   BarChart3, ZapIcon, Settings2, Link as LinkIcon, Send, Menu, Layout, AlertTriangle, Scan, Upload, Copy,
-  CheckCircle2, MapPin, History, Download
+  CheckCircle2, MapPin, History, Download, Headphones
 } from 'lucide-react';
 import { Card, AppFooter, Logo, HeaderTitle, NotificationBadge, WeatherWidget } from './Layout';
 import { callAI } from '../services/gemini';
@@ -481,6 +481,17 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
                 </div>
             ))}
         </div>
+
+        {/* Spotify */}
+        <button onClick={() => onNavigate('SPOTIFY_PLAYER')} className="w-full p-3.5 mt-4 rounded-3xl bg-emerald-950/20 border border-emerald-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-emerald-600/50">
+           <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#1DB954] flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                 <Headphones size={18} className="text-black" />
+              </div>
+              <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Spotify Free</span>
+           </div>
+           <ChevronRight className="text-[#1DB954] group-hover:translate-x-1 transition-transform" />
+        </button>
 
         {/* Periodização */}
         <button onClick={() => onNavigate('PERIODIZATION')} className="w-full p-3.5 rounded-3xl bg-indigo-950/20 border border-indigo-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-indigo-600/50">

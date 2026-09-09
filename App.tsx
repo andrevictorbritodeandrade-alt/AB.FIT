@@ -5,12 +5,13 @@ import {
   Camera, Brain, Ruler, Footprints,
   Info, LogOut, Layout, Bell,
   BarChart3, ChevronRight, Activity, Settings2, Bot, ArrowLeft, Menu, MapPin,
-  AlertTriangle, Sparkles, Calendar, Smartphone
+  AlertTriangle, Sparkles, Calendar, Smartphone, Headphones
 } from 'lucide-react';
 import { Logo, BackgroundWrapper, AppFooter, WeatherWidget, GlobalSyncIndicator, Card, NotificationBadge, SideNav, HeaderTitle } from './components/Layout';
 import { ProfessorDashboard, StudentManagement, WorkoutEditorView, CoachAssessmentView, PeriodizationView, RunTrackManager, StudentWorkoutHistoryView } from './components/CoachFlow';
 import { WorkoutSessionView, StudentAssessmentView, StudentPeriodizationView, AboutView } from './components/StudentFlow';
 import { RunTrackStudentView } from './components/RunTrack';
+import { SpotifyView } from './components/SpotifyView';
 import { WorkoutFeed } from './components/WorkoutFeed';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import AICoach from './components/AICoach';
@@ -1812,6 +1813,29 @@ export default function App() {
           if (docSnap.exists()) {
               const rawData = { id: docSnap.id, ...docSnap.data() } as Student;
               
+              // Merge local cache if available (fallback for offline / quota limits)
+              try {
+                  const cachedStr = localStorage.getItem(`student_cache_${targetId}`);
+                  if (cachedStr) {
+                      const cached = JSON.parse(cachedStr);
+                      if (cached && cached.workoutHistory && Array.isArray(cached.workoutHistory)) {
+                          const existingHistory = rawData.workoutHistory || [];
+                          const mergedHist = [...existingHistory];
+                          cached.workoutHistory.forEach((h: any) => {
+                              if (!mergedHist.some(item => item.id === h.id || (item.date === h.date && item.workoutId === h.workoutId))) {
+                                  mergedHist.unshift(h);
+                              }
+                          });
+                          rawData.workoutHistory = mergedHist;
+                      }
+                      if (cached.analytics) {
+                          rawData.analytics = { ...cached.analytics, ...(rawData.analytics || {}) };
+                      }
+                  }
+              } catch (e) {
+                  console.warn("Could not read student_cache from localStorage:", e);
+              }
+              
               // --- MERGE COM DADOS PADRÃO (FIX PARA ALUNO) ---
               const defaultProfile = defaultStudentsData.find(d => d.id === rawData.id || (d.email && rawData.email && d.email.toLowerCase() === rawData.email.toLowerCase()));
               
@@ -2373,6 +2397,18 @@ export default function App() {
       finalData.analytics = { sessionsCompleted: 0, streakDays: 0, exercises: {}, lastSessionDate: null };
     }
 
+    // ALWAYS update local state and localStorage cache immediately so UI updates and user never loses data on quota/offline errors!
+    if (selectedStudent && selectedStudent.id === sid) {
+      const updated = { ...selectedStudent, ...finalData };
+      setSelectedStudent(updated);
+      try {
+        localStorage.setItem(`student_cache_${sid}`, JSON.stringify(updated));
+      } catch (err) {
+        console.warn("Could not save to localStorage cache:", err);
+      }
+    }
+    setStudents(prev => prev.map(s => s.id === sid ? { ...s, ...finalData } : s));
+
     try { 
       const docRef = doc(db, path);
       await setDoc(docRef, { ...finalData, lastUpdateTimestamp: Date.now() }, { merge: true });
@@ -2398,7 +2434,8 @@ export default function App() {
       } catch (err) {
         console.error("Failed to sync save data:", err);
       }
-      return false;
+      // Return true because local state and cache were successfully updated, ensuring user gets a smooth experience despite quota limits
+      return true;
     }
   };
 
@@ -2572,11 +2609,12 @@ export default function App() {
   const allDashboardItems = [
     { id: 'WORKOUTS', label: 'Planilhas Ativas', icon: Dumbbell, color: 'orange' },
     { id: 'RUNTRACK_STUDENT', label: 'ABFIT RUN', icon: Footprints, color: 'rose' },
+    { id: 'SPOTIFY_PLAYER', label: 'Spotify Free', icon: Headphones, color: 'emerald' },
     { id: 'STUDENT_PERIODIZATION', label: 'Periodização', icon: Brain, color: 'indigo' },
     { id: 'STUDENT_ASSESSMENT', label: 'Avaliação Física', icon: Ruler, color: 'emerald' },
     { id: 'CORRE_RJ', label: 'Corre RJ 2026', icon: MapPin, color: 'yellow' },
     { id: 'FEED', label: 'Feed Performance', icon: Layout, color: 'red' },
-    {id: 'ANALYTICS', label: 'Evolução e Dados', icon: BarChart3, color: 'blue' },
+    { id: 'ANALYTICS', label: 'Evolução e Dados', icon: BarChart3, color: 'blue' },
     { id: 'ABOUT_ABFIT', label: 'Sobre a ABFIT', icon: Info, color: 'zinc' }
   ];
 
@@ -2882,13 +2920,26 @@ export default function App() {
                   progressText = `Global: ${completedCount} de ${targetCount}`;
                 }
 
+                const colorStyles: Record<string, any> = {
+                  orange: { border: 'border-orange-600/30', hoverBorder: 'hover:border-orange-600/60', shadow: 'shadow-orange-600/10', bg: 'bg-orange-600', text: 'text-orange-600' },
+                  rose: { border: 'border-rose-600/30', hoverBorder: 'hover:border-rose-600/60', shadow: 'shadow-rose-600/10', bg: 'bg-rose-600', text: 'text-rose-600' },
+                  purple: { border: 'border-purple-600/30', hoverBorder: 'hover:border-purple-600/60', shadow: 'shadow-purple-600/10', bg: 'bg-purple-600', text: 'text-purple-600' },
+                  indigo: { border: 'border-indigo-600/30', hoverBorder: 'hover:border-indigo-600/60', shadow: 'shadow-indigo-600/10', bg: 'bg-indigo-600', text: 'text-indigo-600' },
+                  emerald: { border: 'border-emerald-600/30', hoverBorder: 'hover:border-emerald-600/60', shadow: 'shadow-emerald-600/10', bg: 'bg-emerald-600', text: 'text-emerald-600' },
+                  yellow: { border: 'border-yellow-600/30', hoverBorder: 'hover:border-yellow-600/60', shadow: 'shadow-yellow-600/10', bg: 'bg-yellow-500', text: 'text-yellow-500' },
+                  red: { border: 'border-red-600/30', hoverBorder: 'hover:border-red-600/60', shadow: 'shadow-red-600/10', bg: 'bg-red-600', text: 'text-red-600' },
+                  blue: { border: 'border-blue-600/30', hoverBorder: 'hover:border-blue-600/60', shadow: 'shadow-blue-600/10', bg: 'bg-blue-600', text: 'text-blue-600' },
+                  zinc: { border: 'border-zinc-600/30', hoverBorder: 'hover:border-zinc-600/60', shadow: 'shadow-zinc-600/10', bg: 'bg-zinc-600', text: 'text-zinc-600' },
+                };
+                const c = colorStyles[item.color] || colorStyles.zinc;
+
                 return (
                   <div 
                     key={item.id} 
-                    className={`w-full h-[92px] p-4 bg-zinc-950/80 border-2 border-${item.color}-600/30 group cursor-pointer active:scale-95 transition-all shadow-xl shadow-${item.color}-600/10 flex flex-row items-center gap-5 rounded-[2.5rem] backdrop-blur-md hover:border-${item.color}-600/60`} 
+                    className={`w-full h-[92px] p-4 bg-zinc-950/80 border-2 ${c.border} group cursor-pointer active:scale-95 transition-all shadow-xl ${c.shadow} flex flex-row items-center gap-5 rounded-[2.5rem] backdrop-blur-md ${c.hoverBorder}`} 
                     onClick={() => setView(item.id)}
                   >
-                    <div className={`w-16 h-16 bg-${item.color}-600 rounded-[1.8rem] flex items-center justify-center shadow-lg shadow-${item.color}-600/40 shrink-0`}> 
+                    <div className={`w-16 h-16 ${c.bg} rounded-[1.8rem] flex items-center justify-center shadow-lg ${c.shadow} shrink-0`}> 
                       <item.icon className="text-white" size={32} /> 
                     </div>
                     <div className="flex-1 text-left">
@@ -2900,14 +2951,14 @@ export default function App() {
                       </div>
                       {(isPeriodization || isWorkouts) && (
                         <div className="mt-2 w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                          <div className={`h-full bg-${item.color}-600 shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-1000`} style={{ width: `${progress}%` }} />
+                          <div className={`h-full ${c.bg} shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-1000`} style={{ width: `${progress}%` }} />
                         </div>
                       )}
                       {!isPeriodization && !isWorkouts && (
                         <div className="mt-2 text-[8px] font-black uppercase text-zinc-600 tracking-widest italic">Acesse sua jornada</div>
                       )}
                     </div>
-                    <ChevronRight size={16} className={`text-${item.color}-600 opacity-30 group-hover:opacity-100 transition-opacity mr-2`} />
+                    <ChevronRight size={16} className={`${c.text} opacity-30 group-hover:opacity-100 transition-opacity mr-2`} />
                   </div>
                 );
               })}
@@ -2925,6 +2976,7 @@ export default function App() {
         {view === 'STUDENT_PERIODIZATION' && studentForView && <StudentPeriodizationView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'RUNTRACK_STUDENT' && studentForView && <RunTrackStudentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
+        {view === 'SPOTIFY_PLAYER' && <SpotifyView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'CORRE_RJ' && <CorreRJView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'ANALYTICS' && studentForView && <AnalyticsDashboard student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'ABOUT_ABFIT' && <AboutView onBack={handleBackNavigation} />}
