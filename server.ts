@@ -4,11 +4,28 @@ import path from "path";
 import fs from "fs";
 import cors from "cors";
 import { fileURLToPath } from 'url';
-import admin from 'firebase-admin';
+import { initializeApp as initFirebaseApp } from 'firebase/app';
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  doc, 
+  setDoc, 
+  getDocs, 
+  query, 
+  where, 
+  serverTimestamp,
+  runTransaction
+} from 'firebase/firestore';
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Firebase Admin
-admin.initializeApp();
+// Read config once
+const firebaseConfig = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
+const projectId = firebaseConfig.projectId;
+
+// Initialize Firebase with client configuration for direct Firestore access
+const firebaseApp = initFirebaseApp(firebaseConfig, 'abfit-backend');
+const serverDb = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,10 +51,6 @@ function getGenAI() {
   }
   return cachedGenAI;
 }
-
-// Read config once
-const firebaseConfig = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
-const projectId = firebaseConfig.projectId;
 
 async function startServer() {
   const app = express();
@@ -153,48 +166,92 @@ async function startServer() {
     }
 
     try {
-      const db = admin.firestore();
-      const alunoRef = db.collection('alunos').doc(userId);
-      const logsRef = alunoRef.collection('logsTreino');
-      const prescricoesRef = alunoRef.collection('prescricoes');
+      const logsRef = collection(serverDb, 'alunos', userId, 'logsTreino');
+      const prescricoesRef = collection(serverDb, 'alunos', userId, 'prescricoes');
 
-      // 1. Registra o log do treino
+      // 1. Registra o log do treino no aluno
       const newLog = {
         prescricaoId: treinoId,
-        dataHora: admin.firestore.FieldValue.serverTimestamp(),
+        dataHora: serverTimestamp(),
         duracaoMinutos: duracaoMinutos || 0,
         calorias: calorias || 0,
         cargas: cargas || [],
         concluido: true,
         timestamp: Date.now()
       };
-      await logsRef.add(newLog);
+      await addDoc(logsRef, newLog);
+
+      // 1.1 Registra na coleção de workouts (com serverTimestamp)
+      await addDoc(collection(serverDb, 'workouts'), {
+        userId,
+        treinoId,
+        prescricaoId: treinoId,
+        duracaoMinutos: duracaoMinutos || 0,
+        calorias: calorias || 0,
+        cargas: cargas || [],
+        concluidoEm: serverTimestamp(),
+        concluido: true,
+        timestamp: Date.now()
+      });
+
+      // 1.2 Atualiza o userProgress de forma atômica com runTransaction
+      let newTotalWorkouts = 1;
+      try {
+        const userProgressRef = doc(serverDb, 'userProgress', userId);
+        await runTransaction(serverDb, async (transaction) => {
+          const userDoc = await transaction.get(userProgressRef);
+          let currentCount = 0;
+          if (userDoc.exists()) {
+            currentCount = userDoc.data()?.totalWorkouts || 0;
+          }
+          newTotalWorkouts = currentCount + 1;
+          transaction.set(userProgressRef, {
+            totalWorkouts: newTotalWorkouts,
+            lastWorkoutAt: serverTimestamp(),
+            lastWorkoutId: treinoId
+          }, { merge: true });
+        });
+      } catch (tErr) {
+        console.warn("Aviso ao atualizar userProgress no backend:", tErr);
+      }
 
       // 2. Busca todas as prescrições para calcular a meta global
-      const prescricoesSnap = await prescricoesRef.get();
       let targetGlobal = 0;
       let targetPerWorkout = 20;
       let nomeTreino = "Treino";
 
-      prescricoesSnap.forEach(doc => {
-        const data = doc.data();
-        targetGlobal += (data.totalSessoes || 0);
-        if (doc.id === treinoId) {
-          targetPerWorkout = data.totalSessoes || 20;
-          nomeTreino = data.nome || "Treino";
-        }
-      });
+      try {
+        const prescricoesSnap = await getDocs(prescricoesRef);
+        prescricoesSnap.forEach(d => {
+          const data = d.data();
+          targetGlobal += (data.totalSessoes || 0);
+          if (d.id === treinoId) {
+            targetPerWorkout = data.totalSessoes || 20;
+            nomeTreino = data.nome || "Treino";
+          }
+        });
+      } catch (pErr) {
+        console.warn("Aviso ao buscar prescricoes:", pErr);
+      }
 
       // 3. Busca todos os logs para calcular o progresso
-      const logsSnap = await logsRef.where('concluido', '==', true).get();
-      let totalGlobal = logsSnap.size;
+      let totalGlobal = newTotalWorkouts;
       let totalPerWorkout = 0;
 
-      logsSnap.forEach(doc => {
-        if (doc.data().prescricaoId === treinoId) {
-          totalPerWorkout++;
+      try {
+        const logsQ = query(logsRef, where('concluido', '==', true));
+        const logsSnap = await getDocs(logsQ);
+        if (!logsSnap.empty) {
+          totalGlobal = Math.max(totalGlobal, logsSnap.size);
+          logsSnap.forEach(d => {
+            if (d.data().prescricaoId === treinoId) {
+              totalPerWorkout++;
+            }
+          });
         }
-      });
+      } catch (lErr) {
+        console.warn("Aviso ao buscar logs:", lErr);
+      }
 
       // 4. Retorna os dados
       res.json({
@@ -202,7 +259,7 @@ async function startServer() {
         total: totalPerWorkout, // total for this workout
         meta: targetPerWorkout,   // meta for this workout
         totalGlobal: totalGlobal,
-        metaGlobal: targetGlobal,
+        metaGlobal: targetGlobal || 60,
         nomeTreino: nomeTreino,
         metaAtingida: totalPerWorkout >= targetPerWorkout,
         mensagem: totalPerWorkout >= targetPerWorkout
@@ -210,7 +267,7 @@ async function startServer() {
           : null
       });
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao finalizar treino:", error);
       res.status(500).json({ error: 'Erro ao finalizar treino.' });
     }
   });

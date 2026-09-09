@@ -28,7 +28,7 @@
     },
     "LogTreino": {
       "title": "LogTreino",
-      "description": "Registro de um treino executado.",
+      "description": "Registro de um treino executado na subcoleção do aluno.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -40,6 +40,31 @@
         "concluido": { "type": "boolean" }
       },
       "required": ["prescricaoId", "dataHora", "concluido"]
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "Registro de treino na coleção global de workouts.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "workoutId": { "type": "string" },
+        "nome": { "type": "string" },
+        "duracao": { "type": "string" },
+        "concluidoEm": { "type": "object", "description": "Firestore serverTimestamp" }
+      },
+      "required": ["userId", "nome", "concluidoEm"]
+    },
+    "UserProgress": {
+      "title": "UserProgress",
+      "description": "Contador atômico de progresso e sessões de treino.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "totalWorkouts": { "type": "number" },
+        "lastWorkoutAt": { "type": "object", "description": "Firestore serverTimestamp" }
+      },
+      "required": ["totalWorkouts"]
     }
   },
   "firestore": {
@@ -54,6 +79,14 @@
     "/alunos/{alunoId}/logsTreino/{logId}": {
       "schema": "LogTreino",
       "description": "Subcoleção de registros de treinos executados."
+    },
+    "/workouts/{workoutId}": {
+      "schema": "Workout",
+      "description": "Coleção global de treinos realizados com serverTimestamp."
+    },
+    "/userProgress/{userId}": {
+      "schema": "UserProgress",
+      "description": "Documentos de progresso atômico do usuário."
     }
   }
 }

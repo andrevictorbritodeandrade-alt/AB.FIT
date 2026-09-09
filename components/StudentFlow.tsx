@@ -374,12 +374,12 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   }, [ex.load, ex.id, lastLoad]);
 
   const totalSets = parseInt(ex.sets || '3') || 3;
-  const rawRepsStr = String(currentReps || ex.reps || '15').trim();
+  const rawRepsStr = String(currentReps || ex.reps || '13').trim();
   const repsParts = rawRepsStr.split('/');
   const hasMultipleReps = repsParts.length > 1;
 
   // Se tem repetições diferentes, totalReps exibe a sequência (ex: 13/11/9)
-  const displayRepsText = hasMultipleReps ? rawRepsStr : formatReps(rawRepsStr) || '15';
+  const displayRepsText = hasMultipleReps ? rawRepsStr : formatReps(rawRepsStr) || '13';
   const allSetsCompleted = progress.completedSets.length >= totalSets;
 
   const getLoadForSet = (sIdx: number) => {
@@ -660,7 +660,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const currentMethod = useMemo(() => getCurrentMethodForStudent(user), [user]);
 
   const currentPeriodizationObj = user.periodization;
-  const periodKey = currentPeriodizationObj?.phaseTitle || currentReps || '13/11/9';
+  const periodKey = currentPeriodizationObj?.phaseTitle || currentReps || '13';
   const prog = user.periodizationProgress || {};
   const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
   
@@ -1242,7 +1242,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           </div>
           <div className="text-right">
             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest italic block">PRESCRIÇÃO</span>
-            <span className="text-xs font-black italic text-red-500">{((currentMicro.metodo || currentMicro.method || 'Pirâmide decrescente').toUpperCase().includes('PIRÂMIDE DECRESCENTE') || (currentMicro.metodo || currentMicro.method || 'Pirâmide decrescente').toUpperCase().includes('PIRAMIDE DECRESCENTE')) ? '13/11/9' : (currentReps || currentMicro.reps || '13/11/9')}</span>
+            <span className="text-xs font-black italic text-red-500">{(currentReps || currentMicro.reps || '13')}</span>
           </div>
         </div>
       )}
@@ -1296,7 +1296,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               lastLoad={lastLoads[ex.name]}
               idx={idx} 
               progress={progress} 
-              currentReps={['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(ex.name.toUpperCase()) || (ex.method || currentMethod)?.toUpperCase().includes('PIRÂMIDE DECRESCENTE') || (ex.method || currentMethod)?.toUpperCase().includes('PIRAMIDE DECRESCENTE') ? (ex.reps && ex.reps.includes('/') ? ex.reps : '13/11/9') : currentReps}
+              currentReps={currentReps}
               currentMethod={currentMethod}
               onToggleFinish={(id) => setExerciseProgress(p => ({ ...p, [id]: { ...p[id], isFinished: !p[id].isFinished } }))}
               onMarkSet={(id, sIdx, rest) => {

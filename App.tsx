@@ -11,14 +11,34 @@ import { Logo, BackgroundWrapper, AppFooter, WeatherWidget, GlobalSyncIndicator,
 import { ProfessorDashboard, StudentManagement, WorkoutEditorView, CoachAssessmentView, PeriodizationView, RunTrackManager, StudentWorkoutHistoryView } from './components/CoachFlow';
 import { WorkoutSessionView, StudentAssessmentView, StudentPeriodizationView, AboutView } from './components/StudentFlow';
 import { RunTrackStudentView } from './components/RunTrack';
-import { SpotifyView } from './components/SpotifyView';
+import MusicPlayer from './components/MusicPlayer/MusicPlayer';
 import { WorkoutFeed } from './components/WorkoutFeed';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import AICoach from './components/AICoach';
 import { CorreRJView } from './components/CorreRJ';
 import { InstallPrompt } from './components/InstallPrompt';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
-import { auth, db, appId, handleFirestoreError, OperationType, collection, query, onSnapshot, doc, setDoc, addDoc } from './services/firebase';
+import { 
+  auth, 
+  db, 
+  appId, 
+  handleFirestoreError, 
+  OperationType, 
+  collection, 
+  query, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  addDoc, 
+  getDoc, 
+  getDocs, 
+  where, 
+  orderBy, 
+  limit, 
+  serverTimestamp, 
+  runTransaction, 
+  increment 
+} from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
 import { useTheme } from './components/ThemeContext';
 
@@ -128,13 +148,14 @@ function LoginScreen({ onLogin, error, students }: { onLogin: (val: string) => v
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   const registeredOptions = useMemo(() => {
-    const coachOption = { name: "PROFESSOR", value: "PROFESSOR", type: "COACH" };
+    const coachOption = { name: "PROFESSOR", value: "PROFESSOR", type: "COACH", photoUrl: undefined };
     const studentOptions = [...students]
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
       .map(s => ({
         name: s.nome,
         value: s.email,
-        type: "ALUNO"
+        type: "ALUNO",
+        photoUrl: s.photoUrl
       }));
     
     return [coachOption, ...studentOptions];
@@ -166,8 +187,20 @@ function LoginScreen({ onLogin, error, students }: { onLogin: (val: string) => v
                   <div className="p-3 border-b border-white/5 bg-zinc-800/50 text-center sticky top-0 z-10"><p className="text-[11px] font-black text-zinc-500 uppercase text-center tracking-[0.2em]">Selecione um perfil</p></div>
                   {registeredOptions.map((opt, idx) => (
                     <button key={`opt-${idx}`} onClick={() => { setInput(opt.value); setShowDropdown(false); }} className="w-full p-4 hover:bg-red-600/10 text-left flex items-center justify-between border-b border-white/5 transition-colors group">
-                      <div className="text-left"><p className="text-white text-base font-black uppercase tracking-tight text-left">{opt.name}</p><p className="text-[12px] text-zinc-500 lowercase text-left">{opt.value}</p></div>
-                      <span className={`text-[11px] font-black px-2 py-1 rounded-full ${opt.type === 'COACH' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400'}`}>{opt.type}</span>
+                      <div className="flex items-center gap-3 text-left">
+                        {opt.photoUrl ? (
+                          <img src={opt.photoUrl} alt={opt.name} className="w-10 h-10 rounded-full object-cover border border-white/10 shrink-0" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-400 shrink-0">
+                            {opt.name?.substring(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-white text-base font-black uppercase tracking-tight text-left leading-tight">{opt.name}</p>
+                          <p className="text-[12px] text-zinc-500 lowercase text-left truncate max-w-[200px]">{opt.value}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[11px] font-black px-2 py-1 rounded-full shrink-0 ${opt.type === 'COACH' ? 'bg-red-600 text-white' : 'bg-zinc-800 text-zinc-400'}`}>{opt.type}</span>
                     </button>
                   ))}
                 </div>
@@ -209,8 +242,14 @@ export default function App() {
 
   const studentForView = useMemo(() => {
     if (!selectedStudent) return null;
-    if (isCoach) return selectedStudent;
-    // O aluno vê o que está selecionado (que vem do banco ou do merge)
+    const isAndre = selectedStudent.id === 'fixed-andre' || selectedStudent.email === 'andrevictorbritodeandrade@gmail.com' || selectedStudent.nome?.toLowerCase().includes('andré');
+    const isMarcelly = selectedStudent.id === 'fixed-marcelly' || selectedStudent.email === 'marcellybispo92@gmail.com' || selectedStudent.nome?.toLowerCase().includes('marcelly');
+    if (isAndre || isMarcelly) {
+      return {
+        ...selectedStudent,
+        photoUrl: '/images/profiles/andre_marcelly.jpg'
+      };
+    }
     return selectedStudent;
   }, [selectedStudent, view, isCoach]);
 
@@ -391,7 +430,7 @@ export default function App() {
             updates.workouts = student.workouts.map(w => ({
               ...w,
               exercises: w.exercises.map(ex => {
-                let newReps = '13/11/9';
+                let newReps = '13';
                 const exName = ex.name.toUpperCase();
                 if (name === 'André' && ['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(exName)) {
                   newReps = '13/13/13';
@@ -685,7 +724,7 @@ export default function App() {
           id: 'fixed-andre', 
           nome: 'André Brito', 
           email: 'andrevictorbritodeandrade@gmail.com', 
-          photoUrl: 'https://image.pollinations.ai/prompt/Disney%20style%203d%20animation%20of%20a%20black%20man%20named%20André%20Brito%2C%20full%20beard%2C%20round%20glasses%2C%20wearing%20a%20safari%20hat%20and%20leopard%20print%20shirt%2C%20standing%20in%20a%20colorful%20colonial%20street?width=400&height=400&nologo=true',
+          photoUrl: '/images/profiles/andre_marcelly.jpg',
           age: 36,
           weight: 103,
           height: 180,
@@ -1184,153 +1223,117 @@ export default function App() {
           },
           sexo: 'Masculino', 
           periodization: {
-            id: 'per-andre-01',
-            titulo: 'Periodização Científica',
-            startDate: '2026-08-05T00:00:00.000Z',
+            id: 'per-andre-18sessoes',
+            titulo: 'Periodização Científica - 18 Sessões (3x13 reps)',
+            startDate: '2026-09-09T00:00:00.000Z',
             type: 'STRENGTH',
-            phaseTitle: 'Mesociclo de Recomposição Corporal, Mitigação de Sarcopenia Pós-Bariátrica e Estabilização Patelofemoral - 16 Semanas',
-            generalStrategy: "O perfil do aluno Andre apresenta alta complexidade fisiologica devido ao status pos-cirurgia bariatrica, demandando foco absoluto na mitigacao da sarcopenia (retencao de massa magra) e estimulo a sintese proteica para suportar o deficit calorico continuo rumo aos 87kg. A instabilidade patelar cronica (4 luxacoes) exige prescricao biomecanica restritiva, priorizando o fortalecimento do Vasto Medial Obliquo (VMO) e gluteo medio em cadeia cinetica fechada para realinhamento patelofemoral. O espectro autista (TEA) combinado ao TDAH sugere a necessidade de previsibilidade macroestrutural ambiental para conforto cognitivo, aliada a microvariacoes nos estimulos (gamificacao de carga e metodo) para engajamento dopaminergico continuo. Dieta: Déficit de 300-500 kcal, 1.8-2.2 g/kg prot.",
+            phaseTitle: 'Mesociclo 18 Sessões - Hipertrofia & Força Estabilizadora (3x13 reps)',
+            generalStrategy: "Mesociclo de 6 semanas (18 treinos por plano, 3x na semana). Foco em volume de 3x13 para hipertrofia com proteção articular patelar. Marcos de ajuste de sobrecarga programados nas sessões 6 e 12. Na sessão 18, transição de volume para 11 repetições, com manutenção dos exercícios e no máximo substituição de aparelhos por pesos livres onde indicado.",
             clinicalSafety: [
-              "Biomecanica Patelar: Substituir Cadeira Extensora tradicional com arco completo de movimento por variacoes em cadeia cinetica fechada (Leg Press com pes altos, Box Squat, Step-ups controlados) para reduzir forcas de cisalhamento. Fortalecimento de abdutores e rotadores externos do quadril e fundamental para evitar o valgo dinamico.",
-              "Fisiologia Pos-Bariatrica: Risco elevado de perda de densidade ossea, malabsorcao e sarcopenia. A hidratacao intra-treino deve ocorrer em pequenos goles constantes (100ml a cada 15 min) para evitar distensao gastrica ou dumping. Garantir com a equipe de nutricao aporte proteico peri-treino adequado.",
-              "Neurodivergencia (TEA e TDAH): Manter a ordem geral dos exercicios estritamente identica para evitar ansiedade antecipatoria (TEA), mas estipular quebra de micro-recordes (PRs de carga, repeticao ou qualidade de movimento) para garantir o pico de dopamina necessario ao foco (TDAH). Considerar o uso de fones com cancelamento de ruido para isolamento sensorial no ambiente de academia.",
-              "Recuperacao e Sono: O aluno necessita de higiene do sono rigorosa, pois o deficit calorico somado ao choque neuromuscular exigira otimizacao do GH e testosterona liberados predominantemente nas fases de sono profundo, cruciais para a manutencao da massa magra pos-bariatrica.",
-              "Script Rápido - Joelho: Dor >3/10 -> parou, diminui amplitude ou troca pra ponte/abdutora.",
-              "Script Rápido - TDAH/TEA: Ansiedade alta = treina 2 séries ou vai embora; treinar curto > não treinar."
+              "Ajuste de Carga Programado: Avaliação e ajuste progressivo de cargas nos treinos 6 e 12 de cada microciclo.",
+              "Transição no Treino 18: Ao completar o 18º treino, transição de repetições para 11 reps (manutenção de exercícios, permitindo troca pontual de máquina para peso livre).",
+              "Biomecânica Patelar: Estabilização articular e proteção de joelho mantida com controle excêntrico rigoroso.",
+              "Treino A: Terças, Quintas e Sábados (3x/semana).",
+              "Treino B: Quartas, Sábados e Domingos (3x/semana)."
             ],
             bioInsight: {
-              context: "Referências Científicas: Schoenfeld, B. J. (2010). The mechanisms of muscle hypertrophy and their application to resistance training. Journal of Strength and Conditioning Research, 24(10), 2857-2872. | Escamilla, R. F., et al. (2009). Patellofemoral joint kinematics and kinetics during common lower extremity exercises. Sports Medicine, 39(1), 15-37. | Mechanick, J. I., et al. (2020). Clinical Practice Guidelines for the Perioperative Nutrition, Metabolic, and Nonsurgical Support of Patients Undergoing Bariatric Procedures. Surgery for Obesity and Related Diseases, 16(2), 175-247. | Ratey, J. J. (2008). Spark: The Revolutionary New Science of Exercise and the Brain. Little, Brown Spark. (Mecanismos neurobiologicos do exercicio no TDAH e TEA).",
-              tips: []
+              context: "Metodologia periodizada para André Brito: 18 sessões de 3x13 reps com ajustes de carga nos treinos 6 e 12, e evolução para 11 reps no treino 18.",
+              tips: [
+                "Treinos 1 a 5: Consolidação técnica e registro de carga base em 3x13.",
+                "Treino 6: 1º Ponto de Ajuste de Carga (+5% a 10% de sobrecarga se RPE < 8).",
+                "Treinos 7 a 11: Estabilização de sobrecarga tensional.",
+                "Treino 12: 2º Ponto de Ajuste de Carga (+5% a 10% de sobrecarga se tolerância articular plena).",
+                "Treinos 13 a 17: Pico de força/hipertrofia na faixa de 13 reps.",
+                "Treino 18: Fechamento das 6 semanas -> Troca de fase para 11 repetições com manutenção de exercícios (no máximo troca de máquinas para alguns pesos livres)."
+              ]
             },
             targetVolume: {
-              "Peito": 11,
-              "Costas e Cintura Escapular": 11,
-              "Ombro": 11,
-              "Biceps": 11,
-              "Triceps": 11,
-              "Quadríceps e Adutores": 11,
-              "Glúteos e Posteriores": 11,
-              "Core e Abdomen": 11
+              "Peito": 6,
+              "Costas e Cintura Escapular": 9,
+              "Ombro": 3,
+              "Biceps": 3,
+              "Triceps": 3,
+              "Quadríceps e Adutores": 12,
+              "Glúteos e Posteriores": 12,
+              "Core e Abdomen": 6
             },
             microciclos: [
               {
-                id: 'm1',
-                semanas: '1-2',
-                titulo: 'RESISTÊNCIA DE FORÇA BÁSICA',
-                metodo: 'Pirâmide decrescente',
-                intensidade: 'Cadência: 2-0-2-1 / Desc: 75s',
-                volume: '3 x 12/10/8 (todos)',
-                descricao: 'Aumentando a carga a cada série. 1ª série 1-2 reps reserva. 2ª mais pesada. 3ª quase falha.'
+                id: 'm-1-6',
+                semanas: '1-2 (Treinos 1 a 6)',
+                titulo: 'FASE INICIAL & 1º AJUSTE DE CARGA (3x13)',
+                metodo: 'Séries retas 3x13',
+                intensidade: 'RPE 7-8 / Desc: 45s',
+                volume: '3 x 13 (todos os exercícios)',
+                descricao: 'Início da recontagem de 18 treinos. No treino 6: primeiro ajuste programado de carga.'
               },
               {
-                id: 'm2',
-                semanas: '3-5',
-                titulo: 'DENSIDADE E CONTROLE MOTOR',
-                metodo: 'Séries retas + cadência lenta',
-                intensidade: 'Cadência: 4-0-2-0 / Desc: 60s',
-                volume: '3 x 8-10',
-                descricao: 'Intensificar hipertrofia sem aumentar séries, preservando joelho. Progressão se completar 3x10 com facilidade.'
+                id: 'm-7-12',
+                semanas: '3-4 (Treinos 7 a 12)',
+                titulo: 'PROGRESSÃO TENSIONAL & 2º AJUSTE DE CARGA (3x13)',
+                metodo: 'Séries retas 3x13 com sobrecarga',
+                intensidade: 'RPE 8-9 / Desc: 45s',
+                volume: '3 x 13 (todos os exercícios)',
+                descricao: 'Treinos 7 a 12. No treino 12: segundo ajuste programado de carga.'
               },
               {
-                id: 'm3',
-                semanas: '6-7',
-                titulo: 'HIPERTROFIA: BI-SET ANTAGONISTA (SUPERIORES)',
-                metodo: 'Bi-set (Superiores) / Séries retas (Pernas/Core)',
-                intensidade: 'Cadência: 2-0-2-0 / Desc: 90s',
-                volume: 'Sup: 3x10-12 / Pernas: 3x10-12',
-                descricao: 'Supino+Crucifixo sem descanso (90s após). Pernas séries retas. Se joelho doer, manter pernas nas séries retas sem alteração.'
-              },
-              {
-                id: 'm4',
-                semanas: '8-9',
-                titulo: 'HIPERTROFIA: DROP SET MECÂNICO (SUPERIORES)',
-                metodo: 'Drop set nos 2 primeiros de superiores',
-                intensidade: 'Cadência: 2-0-2-0 / Desc: 90s',
-                volume: 'Sup: 3x + drop / Pernas: 3x10',
-                descricao: 'Reduzir carga 2 vezes e até a falha nos primeiros exs superiores. Demais exercícios normais.'
-              },
-              {
-                id: 'm5',
-                semanas: '10',
-                titulo: 'DESCARGA REGENERATIVA',
-                metodo: 'Descarga / Recuperação',
-                intensidade: 'Cadência: 2-0-2-0 / Desc: 60s',
-                volume: '3 x 12-15',
-                descricao: 'Séries leves, sem falha. Isometrias mantidas.'
-              },
-              {
-                id: 'm6',
-                semanas: '11-12',
-                titulo: 'FORÇA FUNCIONAL - ONDULAÇÃO',
-                metodo: 'Ondulação (força sup + manutenção pernas)',
-                intensidade: 'Explosiva concên. (Sup) / 2-0-2-0 (Per)',
-                volume: 'Sup: 3x6-8 / Pernas: 3x10-12',
-                descricao: 'Foco em força para superiores com cadência explosiva, manutenção para os inferiores, protegendo o joelho com carga estável. Desc: 90s/60s.'
-              },
-              {
-                id: 'm7',
-                semanas: '13-14',
-                titulo: 'FORÇA FUNCIONAL - ISOMETRIA',
-                metodo: 'Séries normais + isometria ao final',
-                intensidade: 'Cadência: 2-0-2-0 / Desc: 75s',
-                volume: '3x8-10 + 1 isometria (30-45s)',
-                descricao: 'Ao final do ex. principal adicionar 1 série isométrica no maior ângulo de tensão.'
-              },
-              {
-                id: 'm8',
-                semanas: '15-16',
-                titulo: 'DESCARGA E TESTE',
-                metodo: 'Descarga + teste 5RM (superiores)',
-                intensidade: 'Normal / Desc: 60s',
-                volume: 'Sup: 2x15 + 1x5RM / Pernas: 3x12',
-                descricao: 'Descarga de volume total, teste de RM em exercícios chave com segurança no fim.'
+                id: 'm-13-18',
+                semanas: '5-6 (Treinos 13 a 18)',
+                titulo: 'CONSOLIDAÇÃO & TRANSIÇÃO PARA 11 REPS',
+                metodo: 'Séries retas 3x13 -> Transição no 18',
+                intensidade: 'RPE 8.5-9.5 / Desc: 45s',
+                volume: '3 x 13 -> 11 reps no treino 18',
+                descricao: 'No treino 18: troca de treino para 11 repetições, manutenção dos exercícios com no máximo troca de aparelhos para alguns livres.'
               }
             ]
           },
-          faseAjusteA: 5,
-          faseAjusteB: 4,
-          faseAjusteC: 3,
-          totalGlobalA: 5,
-          totalGlobalB: 4,
-          totalGlobalC: 3,
-          trainingProgress: { completedCount: 12, targetCount: 60 },
+          faseAjusteA: 0,
+          faseAjusteB: 0,
+          faseAjusteC: 0,
+          totalGlobalA: 0,
+          totalGlobalB: 0,
+          totalGlobalC: 0,
+          trainingProgress: { completedCount: 0, targetCount: 36 },
+          periodizationProgress: {
+            '3 x 13': { A: 0, B: 0, C: 0 }
+          },
           workouts: [
             {
               id: 'treino-a-andre',
-              title: 'TREINO A (segundas, quartas e sextas)',
-              projectedSessions: 20,
+              title: 'TREINO A (terças, quintas e sábados)',
+              projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13/13/13', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13/13/13', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13/13/13', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-4', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13/13/13', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'CADEIRA ADUTORA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-6', name: 'SUPINO ABERTO NO BANCO RETO COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'CRUCIFIXO ABERTO BANCO INCLINADO COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-8', name: 'DESENVOLVIMENTO ABERTO BANCO 75º COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-9', name: 'TRÍCEPS FRANCÊS SIMULTÂNEO COM HBC EM PÉ', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-a-10', name: 'TRÍCEPS EM PÉ NO CROSS COM CORDA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' }
+                { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-2', name: 'Agachamento livre', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-6', name: 'Supino aberto com HBC banco reto', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-a-9', name: 'Abdominal supra no solo', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-andre',
-              title: 'TREINO B (terças, quintas e sábados)',
-              projectedSessions: 20,
+              title: 'TREINO B (quartas, sábados e domingos)',
+              projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-2', name: 'CADEIRA ABDUTORA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-3', name: 'CADEIRA FLEXORA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-4', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-5', name: 'CADEIRA SOLEAR', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-6', name: 'REMADA FECHADA NA MÁQUINA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-7', name: 'PUXADA COM TRIÂNGULO NO PULLEY ALTO', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-8', name: 'PUXADA ABERTO NO PULLEY ALTO COM BARRA RETA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-9', name: 'BÍCEPS SUPINADO NO BANCO 60º COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'a-b-10', name: 'BÍCEPS NO CROSS COM CORDA EM PÉ', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' }
+                { id: 'a-b-1', name: 'Stiff em pé com HBC', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-2', name: 'Extensão de quadril no graviton/caneleira', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
+                { id: 'a-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' }
               ]
             },
             {
@@ -1432,7 +1435,7 @@ export default function App() {
           id: 'fixed-marcelly', 
           nome: 'Marcelly Bispo', 
           email: 'marcellybispo92@gmail.com', 
-          photoUrl: 'https://image.pollinations.ai/prompt/Disney%20style%203d%20animation%20of%20a%20black%20woman%20named%20Marcelly%20Bispo%2C%20voluminous%20curly%20afro%20hair%2C%20wearing%20a%20yellow%20leopard%20print%20one-shoulder%20top%20and%20skirt%2C%20standing%20in%20a%20colorful%20Brazilian%20colonial%20street?width=400&height=400&nologo=true',
+          photoUrl: '/images/profiles/andre_marcelly.jpg',
           age: 34,
           weight: 61.2,
           height: 167,
@@ -1636,12 +1639,12 @@ export default function App() {
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'm-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-3', name: 'AGACHAMENTO LIVRE COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-4', name: 'AGACHAMENTO EM PASSADA COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-5', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-6', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' }
+                { id: 'm-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-a-3', name: 'AGACHAMENTO LIVRE COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-a-4', name: 'AGACHAMENTO EM PASSADA COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-a-5', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-a-6', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' }
               ]
             },
             {
@@ -1651,12 +1654,12 @@ export default function App() {
               frequencyWeekly: 2,
               status: 'published',
               exercises: [
-                { id: 'm-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-2', name: 'LEVANTAMENTO TERRA COM HBM', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-3', name: 'AGACHAMENTO SUMÔ COM HBC ENTRE OS QUADRIS SEM STEP', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-4', name: 'AGACHAMENTO SUMÔ SEGURANDO HBC NA FRENTE DO TÓRAX', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-6', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13/11/9', rest: '25s', executionType: 'Simples' }
+                { id: 'm-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-b-2', name: 'LEVANTAMENTO TERRA COM HBM', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-b-3', name: 'AGACHAMENTO SUMÔ COM HBC ENTRE OS QUADRIS SEM STEP', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-b-4', name: 'AGACHAMENTO SUMÔ SEGURANDO HBC NA FRENTE DO TÓRAX', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
+                { id: 'm-b-6', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' }
               ]
             }
           ]
@@ -1836,6 +1839,61 @@ export default function App() {
                   console.warn("Could not read student_cache from localStorage:", e);
               }
               
+              // 1. Carrega histórico persistido da coleção 'workouts' do Firestore (Passo 3)
+              try {
+                const wQuery = query(
+                  collection(db, 'workouts'),
+                  where('userId', '==', targetId),
+                  orderBy('timestamp', 'desc'),
+                  limit(100)
+                );
+                const wSnap = await getDocs(wQuery);
+                if (!wSnap.empty) {
+                  const cloudWorkouts: WorkoutHistoryEntry[] = [];
+                  wSnap.forEach(wDoc => {
+                    const wd = wDoc.data();
+                    cloudWorkouts.push({
+                      id: wDoc.id,
+                      workoutId: wd.workoutId || wd.treinoId || '',
+                      name: wd.nome || 'Treino',
+                      date: wd.concluidoEm?.toDate ? wd.concluidoEm.toDate().toLocaleDateString('pt-BR') : new Date(wd.timestamp || Date.now()).toLocaleDateString('pt-BR'),
+                      duration: wd.duracao || (wd.duracaoMinutos ? `${wd.duracaoMinutos}:00` : '00:00'),
+                      exercises: wd.exercicios || (wd.cargas || []).map((c: any) => ({ name: c.exercicio, load: c.carga, loadUnit: c.unidade })),
+                      timestamp: wd.timestamp || Date.now(),
+                      type: 'STRENGTH'
+                    });
+                  });
+                  const existingHistory = rawData.workoutHistory || [];
+                  const mergedHistory = [...existingHistory];
+                  cloudWorkouts.forEach(cw => {
+                    if (!mergedHistory.some(h => h.id === cw.id || (h.timestamp === cw.timestamp && h.workoutId === cw.workoutId))) {
+                      mergedHistory.push(cw);
+                    }
+                  });
+                  mergedHistory.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                  rawData.workoutHistory = mergedHistory;
+                }
+              } catch (wErr) {
+                console.warn("Aviso ao carregar coleção 'workouts' do Firestore:", wErr);
+              }
+
+              // 2. Carrega contadores atômicos da coleção 'userProgress' do Firestore (Passo 4)
+              try {
+                const pDocRef = doc(db, 'userProgress', targetId);
+                const pDocSnap = await getDoc(pDocRef);
+                if (pDocSnap.exists()) {
+                  const pData = pDocSnap.data();
+                  if (pData.totalWorkouts && (!rawData.trainingProgress?.completedCount || pData.totalWorkouts > rawData.trainingProgress.completedCount)) {
+                    rawData.trainingProgress = {
+                      completedCount: pData.totalWorkouts,
+                      targetCount: rawData.trainingProgress?.targetCount || 60
+                    };
+                  }
+                }
+              } catch (pErr) {
+                console.warn("Aviso ao carregar 'userProgress' do Firestore:", pErr);
+              }
+              
               // --- MERGE COM DADOS PADRÃO (FIX PARA ALUNO) ---
               const defaultProfile = defaultStudentsData.find(d => d.id === rawData.id || (d.email && rawData.email && d.email.toLowerCase() === rawData.email.toLowerCase()));
               
@@ -1844,6 +1902,17 @@ export default function App() {
                   
                   if (!rawData.nome) { rawData.nome = defaultProfile.nome; hasCloudChanges = true; }
                   if (!rawData.email) { rawData.email = defaultProfile.email; hasCloudChanges = true; }
+                  
+                  // Permanent profile photo for André and Marcelly
+                  if (defaultProfile.id === 'fixed-andre' || defaultProfile.id === 'fixed-marcelly' || defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || defaultProfile.email === 'marcellybispo92@gmail.com') {
+                    if (rawData.photoUrl !== '/images/profiles/andre_marcelly.jpg') {
+                      rawData.photoUrl = '/images/profiles/andre_marcelly.jpg';
+                      hasCloudChanges = true;
+                    }
+                  } else if (!rawData.photoUrl && defaultProfile.photoUrl) {
+                    rawData.photoUrl = defaultProfile.photoUrl;
+                    hasCloudChanges = true;
+                  }
                   
                   if (!rawData.periodization && defaultProfile.periodization) {
                       rawData.periodization = defaultProfile.periodization;
@@ -1854,48 +1923,6 @@ export default function App() {
                           ...defaultProfile.periodization,
                           startDate: rawData.periodization.startDate || defaultProfile.periodization.startDate
                       };
-                      hasCloudChanges = true;
-                  }
-
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' && !(rawData as any)._resetJul72026) {
-                      rawData.workouts = defaultProfile.workouts;
-                      rawData.periodization = defaultProfile.periodization;
-                      rawData.totalGlobalA = 0;
-                      rawData.totalGlobalB = 0;
-                      rawData.totalGlobalC = 0;
-                      rawData.faseAjusteA = 0;
-                      rawData.faseAjusteB = 0;
-                      rawData.faseAjusteC = 0;
-                      rawData.trainingProgress = { completedCount: 0, targetCount: 60 };
-                      
-                      // Also reset history so it matches exactly
-                      rawData.workoutHistory = [];
-                      (rawData as any)._resetJul72026 = true;
-                      hasCloudChanges = true;
-                  }
-
-                  if (defaultProfile.email === 'marcellybispo92@gmail.com' && !(rawData as any)._resetJul82026_marcelly_v3) {
-                      rawData.workouts = defaultProfile.workouts;
-                      rawData.periodization = defaultProfile.periodization;
-                      rawData.totalGlobalA = 0;
-                      rawData.totalGlobalB = 0;
-                      rawData.totalGlobalC = 0;
-                      rawData.faseAjusteA = 0;
-                      rawData.faseAjusteB = 0;
-                      rawData.faseAjusteC = 0;
-                      rawData.trainingProgress = { completedCount: 0, targetCount: 40 };
-                      
-                      rawData.workoutHistory = [];
-                      (rawData as any)._resetJul82026_marcelly_v3 = true;
-                      hasCloudChanges = true;
-                  }
-
-                  if (defaultProfile.email === 'andrademarcia.ucam@gmail.com' && !(rawData as any)._resetJul72026_marcia) {
-                      rawData.workouts = defaultProfile.workouts;
-                      rawData.periodization = defaultProfile.periodization;
-                      rawData.trainingProgress = { completedCount: 0, targetCount: 36 };
-                      rawData.workoutHistory = [];
-                      (rawData as any)._resetJul72026_marcia = true;
                       hasCloudChanges = true;
                   }
                   
@@ -1945,10 +1972,27 @@ export default function App() {
                       }
                   });
                   
-                  // Force clean workouts for Andre
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com') {
-                      currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
-                      workoutsModified = true;
+                  // Force clean workouts and session recount for Andre
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v1') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v1';
+                          rawData.workouts = defaultProfile.workouts || [];
+                          currentWorkouts = defaultProfile.workouts || [];
+                          rawData.periodization = defaultProfile.periodization;
+                          rawData.faseAjusteA = 0;
+                          rawData.faseAjusteB = 0;
+                          rawData.faseAjusteC = 0;
+                          rawData.totalGlobalA = 0;
+                          rawData.totalGlobalB = 0;
+                          rawData.totalGlobalC = 0;
+                          rawData.trainingProgress = { completedCount: 0, targetCount: 36 };
+                          rawData.periodizationProgress = { '3 x 13': { A: 0, B: 0, C: 0 } };
+                          workoutsModified = true;
+                          hasCloudChanges = true;
+                      } else {
+                          currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
+                          workoutsModified = true;
+                      }
                   }
                   
                   // Force clean workouts for Marcelly
@@ -2122,7 +2166,11 @@ export default function App() {
             
             if (!existing.nome) merged[existingIndex].nome = def.nome;
             if (!existing.email) merged[existingIndex].email = def.email;
-            if (!existing.photoUrl && def.photoUrl) merged[existingIndex].photoUrl = def.photoUrl;
+            if (def.id === 'fixed-andre' || def.id === 'fixed-marcelly' || def.email === 'andrevictorbritodeandrade@gmail.com' || def.email === 'marcellybispo92@gmail.com') {
+              merged[existingIndex].photoUrl = '/images/profiles/andre_marcelly.jpg';
+            } else if (!existing.photoUrl && def.photoUrl) {
+              merged[existingIndex].photoUrl = def.photoUrl;
+            }
             
             if (!existing.periodization && def.periodization) {
                 merged[existingIndex].periodization = def.periodization;
@@ -2411,7 +2459,20 @@ export default function App() {
 
     try { 
       const docRef = doc(db, path);
-      await setDoc(docRef, { ...finalData, lastUpdateTimestamp: Date.now() }, { merge: true });
+      await setDoc(docRef, { ...finalData, lastUpdateTimestamp: serverTimestamp() }, { merge: true });
+
+      // Se trainingProgress foi atualizado, sincroniza também na coleção userProgress
+      if (finalData.trainingProgress?.completedCount !== undefined) {
+        try {
+          const uRef = doc(db, 'userProgress', sid);
+          await setDoc(uRef, {
+            totalWorkouts: finalData.trainingProgress.completedCount,
+            lastWorkoutAt: serverTimestamp()
+          }, { merge: true });
+        } catch (uErr) {
+          console.warn("Could not sync userProgress doc:", uErr);
+        }
+      }
 
       // If workouts are updated, sync to prescricoes subcollection
       if (finalData.workouts && Array.isArray(finalData.workouts)) {
@@ -2421,7 +2482,7 @@ export default function App() {
                   nome: w.title,
                   totalSessoes: w.projectedSessions || 20,
                   ativo: true,
-                  lastUpdate: Date.now()
+                  lastUpdate: serverTimestamp()
               }), { merge: true });
           }
       }
@@ -2471,27 +2532,70 @@ export default function App() {
     
     // Periodization Key logic
     const currentPeriodization = studentForView.periodization;
-    const currentReps = studentForView.workouts?.find(w => w.id === post.workoutId)?.exercises[0]?.reps || '13/11/9';
+    const currentReps = studentForView.workouts?.find(w => w.id === post.workoutId)?.exercises[0]?.reps || '13';
     const periodKey = currentPeriodization?.phaseTitle || currentReps;
 
-    // Save to logsTreino subcollection
+    // 1. Salva na subcoleção logsTreino com serverTimestamp()
     const logsRef = collection(db, 'alunos', studentForView.id, 'logsTreino');
     const newLog = {
       treinoId: post.workoutId,
       prescricaoId: post.workoutId,
       nome: post.name,
-      dataHora: post.timestamp,
+      dataHora: serverTimestamp(),
       duracaoMinutos,
       calorias,
       cargas,
       concluido: true,
-      periodization: periodKey
+      periodization: periodKey,
+      timestamp: Date.now()
     };
 
     try {
       await addDoc(logsRef, newLog);
     } catch (e) {
       console.warn("Falha ao salvar logTreino:", e);
+    }
+
+    // 2. Salva na coleção global de workouts com serverTimestamp (Passo 2)
+    try {
+      await addDoc(collection(db, 'workouts'), {
+        userId: studentForView.id,
+        workoutId: post.workoutId,
+        nome: post.name,
+        exercicios: post.exercises || [],
+        cargas,
+        duracao: post.duration || '00:00',
+        duracaoMinutos,
+        calorias,
+        concluidoEm: serverTimestamp(),
+        concluido: true,
+        timestamp: Date.now()
+      });
+      console.log("Treino salvo na coleção workouts com serverTimestamp.");
+    } catch (wErr) {
+      console.error("Erro ao salvar na coleção workouts:", wErr);
+    }
+
+    // 3. Atualiza contadores de progressão de forma atômica usando runTransaction (Passo 4)
+    try {
+      const userProgressRef = doc(db, 'userProgress', studentForView.id);
+      await runTransaction(db, async (transaction) => {
+        const userProgressDoc = await transaction.get(userProgressRef);
+        let currentCount = 0;
+        if (userProgressDoc.exists()) {
+          currentCount = userProgressDoc.data().totalWorkouts || 0;
+        }
+        const newCount = currentCount + 1;
+        transaction.set(userProgressRef, {
+          totalWorkouts: newCount,
+          lastWorkoutAt: serverTimestamp(),
+          lastWorkoutName: post.name,
+          lastWorkoutId: post.workoutId
+        }, { merge: true });
+      });
+      console.log("Progresso registrado com transação atômica em userProgress.");
+    } catch (pErr) {
+      console.error("Falha ao registrar progresso atômico no userProgress:", pErr);
     }
 
     const updates: any = { 
@@ -2609,7 +2713,7 @@ export default function App() {
   const allDashboardItems = [
     { id: 'WORKOUTS', label: 'Planilhas Ativas', icon: Dumbbell, color: 'orange' },
     { id: 'RUNTRACK_STUDENT', label: 'ABFIT RUN', icon: Footprints, color: 'rose' },
-    { id: 'SPOTIFY_PLAYER', label: 'Spotify Free', icon: Headphones, color: 'emerald' },
+    { id: 'MUSIC_PLAYER', label: 'ABFIT MUSIC', icon: Headphones, color: 'emerald' },
     { id: 'STUDENT_PERIODIZATION', label: 'Periodização', icon: Brain, color: 'indigo' },
     { id: 'STUDENT_ASSESSMENT', label: 'Avaliação Física', icon: Ruler, color: 'emerald' },
     { id: 'CORRE_RJ', label: 'Corre RJ 2026', icon: MapPin, color: 'yellow' },
@@ -2833,7 +2937,7 @@ export default function App() {
               {/* CURRENT PHASE PROGRESS (A/B Treinos) */}
               {(() => {
                 const currentPeriodization = studentForView.periodization;
-                const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13/11/9';
+                const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13';
                 const periodKey = currentPeriodization?.phaseTitle || currentReps;
                 const prog = studentForView.periodizationProgress || {};
                 const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
@@ -2872,22 +2976,6 @@ export default function App() {
                   </div>
                 );
               })()}
-
-              <button 
-                onClick={() => setShowInstallPrompt(true)} 
-                className="w-full py-3.5 px-5 bg-gradient-to-r from-red-950/80 via-zinc-900 to-black border border-red-600/40 rounded-3xl flex items-center justify-between text-white hover:border-red-600 transition-all active:scale-95 shadow-xl group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 bg-red-600/20 rounded-2xl text-red-500 border border-red-500/20">
-                    <Smartphone size={20} />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs font-black uppercase italic tracking-wider">Instalar App ABFIT no Celular</p>
-                    <p className="text-[10px] text-zinc-400 font-medium">Instalação direta no celular ou geração de APK</p>
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-red-500 group-hover:translate-x-1 transition-transform" />
-              </button>
               
               {visibleDashboardItems.map(item => {
                 const isPeriodization = item.id === 'STUDENT_PERIODIZATION';
@@ -2904,7 +2992,7 @@ export default function App() {
                   progressText = `Semana ${curWk} de ${totalWks}`;
                 } else if (isWorkouts) {
                   const currentPeriodization = studentForView.periodization;
-                  const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13/11/9';
+                  const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13';
                   const periodKey = currentPeriodization?.phaseTitle || currentReps;
                   const prog = studentForView.periodizationProgress || {};
                   const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
@@ -2976,7 +3064,7 @@ export default function App() {
         {view === 'STUDENT_PERIODIZATION' && studentForView && <StudentPeriodizationView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'RUNTRACK_STUDENT' && studentForView && <RunTrackStudentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
-        {view === 'SPOTIFY_PLAYER' && <SpotifyView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
+        {view === 'MUSIC_PLAYER' && <MusicPlayer onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'CORRE_RJ' && <CorreRJView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'ANALYTICS' && studentForView && <AnalyticsDashboard student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'ABOUT_ABFIT' && <AboutView onBack={handleBackNavigation} />}

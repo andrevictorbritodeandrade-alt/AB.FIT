@@ -126,7 +126,7 @@ export function SideNav({
     { id: 'DASHBOARD', label: 'Home Dashboard', icon: LayoutGrid, color: 'zinc' },
     { id: 'WORKOUTS', label: 'Planilhas Ativas', icon: Dumbbell, color: 'orange' },
     { id: 'RUNTRACK_STUDENT', label: 'ABFIT RUN', icon: Footprints, color: 'rose' },
-    { id: 'SPOTIFY_PLAYER', label: 'Spotify Free', icon: Headphones, color: 'emerald' },
+    { id: 'MUSIC_PLAYER', label: 'ABFIT MUSIC', icon: Headphones, color: 'emerald' },
     { id: 'STUDENT_PERIODIZATION', label: 'Periodização', icon: Brain, color: 'indigo' },
     { id: 'STUDENT_ASSESSMENT', label: 'Avaliação Física', icon: Ruler, color: 'emerald' },
     { id: 'CORRE_RJ', label: 'Corre RJ 2026', icon: MapPin, color: 'yellow' },

@@ -15,7 +15,13 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
-  getDocs
+  getDocs,
+  serverTimestamp,
+  runTransaction,
+  increment,
+  where,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
@@ -66,7 +72,13 @@ export {
   updateDoc,
   deleteDoc,
   addDoc,
-  getDocs
+  getDocs,
+  serverTimestamp,
+  runTransaction,
+  increment,
+  where,
+  orderBy,
+  limit
 };
 
 export const auth = getAuth(app);
