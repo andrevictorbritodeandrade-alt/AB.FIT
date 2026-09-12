@@ -179,6 +179,18 @@ export interface TrainingProgress {
   targetCount: number;
 }
 
+export interface ActivePlan {
+  id?: string;
+  phaseName: string;
+  targetSets: number; // Ex: 18
+  progress: {
+    A: number;
+    B: number;
+    C: number;
+  };
+  updatedAt?: any;
+}
+
 export interface Student {
   id: string;
   nome: string;
@@ -191,6 +203,7 @@ export interface Student {
   periodization?: PeriodizationPlan;
   analytics?: AnalyticsData;
   trainingProgress?: TrainingProgress;
+  activePlan?: ActivePlan;
   nutrition?: NutritionProfile;
   notifications?: AppNotification[];
   disabledFeatures?: string[];

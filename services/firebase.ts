@@ -1,10 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, 
-  initializeFirestore,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-  enableIndexedDbPersistence,
   doc, 
   getDocFromServer,
   collection,
@@ -29,37 +25,10 @@ import { getAuth } from "firebase/auth";
 // Import the Firebase configuration from the auto-generated file
 import firebaseConfig from '../firebase-applet-config.json';
 
-console.log("Firebase Config:", {
-  projectId: firebaseConfig.projectId,
-  firestoreDatabaseId: firebaseConfig.firestoreDatabaseId,
-  appId: firebaseConfig.appId
-});
-
 const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
-const dbId = firebaseConfig.firestoreDatabaseId || '(default)';
-console.log(`Inicializando Firestore com Database ID: ${dbId}`);
 
-// Initialize Firestore with offline persistence enabled
-let dbInstance;
-try {
-  dbInstance = initializeFirestore(app, {
-    localCache: persistentLocalCache({
-      tabManager: persistentMultipleTabManager()
-    })
-  }, dbId);
-  console.log("Firestore initialized with multi-tab persistent cache.");
-} catch (e) {
-  console.warn("Falling back to standard getFirestore and enableIndexedDbPersistence:", e);
-  dbInstance = getFirestore(app, dbId);
-  if (typeof window !== 'undefined') {
-    enableIndexedDbPersistence(dbInstance).catch((err) => {
-      console.warn('Firestore persistence notice:', err.code);
-    });
-  }
-}
-
-export const db = dbInstance;
 
 // Export firestore functions to ensure they are from the same module instance
 export {

@@ -5,7 +5,7 @@ import {
   Loader2, Clock, Target, Award, ShieldCheck, Brain,
   Camera, CheckCircle2, X, Trash2, FastForward, Check,
   Trophy, AlertCircle, Info, ChevronDown, ChevronUp,
-  Zap, Scan, Shield, Maximize2, Calendar, RefreshCw, Menu, Sparkles, AlertTriangle, LayoutGrid, TrendingUp
+  Zap, Scan, Shield, Maximize2, Calendar, RefreshCw, Menu, Sparkles, AlertTriangle, LayoutGrid, TrendingUp, Bell
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LabelList 
@@ -14,6 +14,7 @@ import { Card, AppFooter, HeaderTitle, BackgroundCarousel, FITNESS_IMAGES } from
 import GeraAi from './GeraAi';
 import { Student, WorkoutHistoryEntry, Workout, AnalyticsData, Exercise } from '../types';
 import { db, handleFirestoreError, OperationType, doc, getDoc, collection, query, onSnapshot, setDoc } from '../services/firebase';
+import { finalizarTreino } from '../services/workoutService';
 
 const formatReps = (reps: any): string | null => {
   if (!reps) return null;
@@ -30,6 +31,7 @@ const GIF_DATABASE: Record<string, string> = {
   "leg press": "https://i.pinimg.com/originals/9e/1f/2a/9e1f2a36b0432924467c6999205307b2.gif",
   "levantar e sentar": "https://i.pinimg.com/originals/18/31/39/183139366e60970220677270387439da.gif",
   "agachamento": "https://i.pinimg.com/originals/3f/78/3f/3f783f237373024766023277732623a6.gif",
+  "hack": "https://i.pinimg.com/originals/3f/78/3f/3f783f237373024766023277732623a6.gif",
   "stiff": "https://i.pinimg.com/originals/60/0a/85/600a8523c0356191942730628e469d72.gif",
   "mesa flexora": "https://i.pinimg.com/originals/34/00/28/340028e35900508e063806f97653241e.gif",
   "cadeira extensora": "https://i.pinimg.com/originals/94/a5/d8/94a5d85203387c97561337dce95e4e20.gif",
@@ -67,6 +69,7 @@ const GIF_DATABASE: Record<string, string> = {
 
   // ABDOMEN / CORE
   "abdominal": "https://i.pinimg.com/originals/c9/26/50/c92650050893347c6920330424647306.gif",
+  "crunch": "https://i.pinimg.com/originals/c9/26/50/c92650050893347c6920330424647306.gif",
   "prancha": "https://i.pinimg.com/originals/7e/63/01/7e63013d396d74704047c870296700c2.gif",
   "mata-borrão": "https://i.pinimg.com/originals/81/20/83/81208392a5499292376991f24d7790b9.gif",
   "super-man": "https://i.pinimg.com/originals/81/20/83/81208392a5499292376991f24d7790b9.gif",
@@ -677,9 +680,9 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     return { a, b, c };
   }, [user.workoutHistory, periodKey]);
 
-  const countA = historyCounts.a;
-  const countB = historyCounts.b;
-  const countC = historyCounts.c;
+  const countA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : historyCounts.a);
+  const countB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : historyCounts.b);
+  const countC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : historyCounts.c);
 
   const totalCompleted = countA + countB + countC;
 
@@ -757,10 +760,10 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       completed = (periodProg as any)[activeWorkout.id] || 0;
     }
 
-    const total = activeWorkout.projectedSessions || 20;
+    const total = user.activePlan?.targetSets || activeWorkout.projectedSessions || 18;
     const startDateDisplay = user.protocolStartDate ? new Date(user.protocolStartDate).toLocaleDateString('pt-BR') : 'Aguardando 1º Treino';
     return { completed, total, totalGlobal: totalCompleted, startDate: startDateDisplay, rawStartDate: user.protocolStartDate };
-  }, [activeWorkout, user.protocolStartDate, countA, countB, countC, periodProg, totalCompleted]);
+  }, [activeWorkout, user.protocolStartDate, user.activePlan, countA, countB, countC, periodProg, totalCompleted]);
 
   const allExercisesCompleted = useMemo(() => {
     if (!activeWorkout) return false;
@@ -1154,7 +1157,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                 completed = (periodProg as any)[w.id] || 0;
               }
 
-              const total = w.projectedSessions || 20;
+              const total = user.activePlan?.targetSets || w.projectedSessions || 18;
 
               return (
                 <Card key={w.id} className="p-5 bg-card/50 border-border flex flex-row items-center gap-5 group cursor-pointer hover:border-red-600/20 shadow-xl rounded-[2rem] transition-all hover:scale-[1.02] active:scale-95" onClick={() => startSession(w)}>

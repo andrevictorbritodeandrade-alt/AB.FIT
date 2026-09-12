@@ -157,19 +157,81 @@ async function startServer() {
     res.json({ status: "ok", aiConfigured: !!key && key.startsWith("AIzaSy") });
   });
 
-  // Finalizar Treino Endpoint
+  // Finalizar Treino Endpoint (Transação Atômica Infalível)
   app.post("/api/finalizarTreino", async (req, res) => {
-    const { userId, treinoId, duracaoMinutos, calorias, cargas } = req.body;
+    const { userId, treinoId, duracaoMinutos, calorias, cargas, nomeTreinoCustom } = req.body;
     
     if (!userId || !treinoId) {
       return res.status(400).json({ error: 'userId e treinoId são obrigatórios.' });
     }
 
     try {
-      const logsRef = collection(serverDb, 'alunos', userId, 'logsTreino');
-      const prescricoesRef = collection(serverDb, 'alunos', userId, 'prescricoes');
+      // Determina tipo de treino (A, B ou C)
+      const tIdLower = (treinoId || '').toLowerCase();
+      let workoutType: 'A' | 'B' | 'C' = 'A';
+      if (tIdLower.includes('treino-b') || tIdLower.includes('b-') || tIdLower.includes('-b') || tIdLower.endsWith('b')) {
+        workoutType = 'B';
+      } else if (tIdLower.includes('treino-c') || tIdLower.includes('c-') || tIdLower.includes('-c') || tIdLower.endsWith('c')) {
+        workoutType = 'C';
+      }
 
-      // 1. Registra o log do treino no aluno
+      // 1. Salva na coleção users/{userId}/workout_history permanentemente
+      const userHistoryRef = collection(serverDb, 'users', userId, 'workout_history');
+      await addDoc(userHistoryRef, {
+        planId: 'current',
+        workoutType,
+        dateCompleted: serverTimestamp(),
+        duracaoMinutos: duracaoMinutos || 0,
+        calorias: calorias || 0,
+        cargas: cargas || [],
+        exercises: cargas || [],
+        nomeTreino: nomeTreinoCustom || `Treino ${workoutType}`,
+        timestamp: Date.now()
+      });
+
+      // 2. Atualiza active_plans/{planId} usando runTransaction (Contagem Atômica)
+      const planRef = doc(serverDb, 'users', userId, 'active_plans', 'current');
+      let notificacaoNecessaria: string | null = null;
+      let novaContagem = 1;
+      let targetSets = 18;
+
+      await runTransaction(serverDb, async (transaction) => {
+        const planDoc = await transaction.get(planRef);
+        if (!planDoc.exists()) {
+          targetSets = 18;
+          novaContagem = 1;
+          transaction.set(planRef, {
+            phaseName: "Mesociclo 16 - Hipertrofia",
+            targetSets: 18,
+            progress: {
+              A: workoutType === 'A' ? 1 : 0,
+              B: workoutType === 'B' ? 1 : 0,
+              C: workoutType === 'C' ? 1 : 0
+            },
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          const planData = planDoc.data() as any;
+          targetSets = planData.targetSets || 18;
+          const progress = planData.progress || { A: 0, B: 0, C: 0 };
+          novaContagem = (progress[workoutType] || 0) + 1;
+
+          transaction.update(planRef, {
+            [`progress.${workoutType}`]: novaContagem,
+            updatedAt: serverTimestamp()
+          });
+        }
+
+        // Lógica de Notificação
+        if (novaContagem === 6 || novaContagem === 12) {
+          notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
+        } else if (novaContagem === targetSets) {
+          notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${workoutType}. Última sessão antes de mudar a periodização!`;
+        }
+      });
+
+      // 3. Registra nos logs legados do aluno (alunos/{userId}/logsTreino) e na coleção workouts
+      const logsRef = collection(serverDb, 'alunos', userId, 'logsTreino');
       const newLog = {
         prescricaoId: treinoId,
         dataHora: serverTimestamp(),
@@ -181,7 +243,6 @@ async function startServer() {
       };
       await addDoc(logsRef, newLog);
 
-      // 1.1 Registra na coleção de workouts (com serverTimestamp)
       await addDoc(collection(serverDb, 'workouts'), {
         userId,
         treinoId,
@@ -194,77 +255,16 @@ async function startServer() {
         timestamp: Date.now()
       });
 
-      // 1.2 Atualiza o userProgress de forma atômica com runTransaction
-      let newTotalWorkouts = 1;
-      try {
-        const userProgressRef = doc(serverDb, 'userProgress', userId);
-        await runTransaction(serverDb, async (transaction) => {
-          const userDoc = await transaction.get(userProgressRef);
-          let currentCount = 0;
-          if (userDoc.exists()) {
-            currentCount = userDoc.data()?.totalWorkouts || 0;
-          }
-          newTotalWorkouts = currentCount + 1;
-          transaction.set(userProgressRef, {
-            totalWorkouts: newTotalWorkouts,
-            lastWorkoutAt: serverTimestamp(),
-            lastWorkoutId: treinoId
-          }, { merge: true });
-        });
-      } catch (tErr) {
-        console.warn("Aviso ao atualizar userProgress no backend:", tErr);
-      }
-
-      // 2. Busca todas as prescrições para calcular a meta global
-      let targetGlobal = 0;
-      let targetPerWorkout = 20;
-      let nomeTreino = "Treino";
-
-      try {
-        const prescricoesSnap = await getDocs(prescricoesRef);
-        prescricoesSnap.forEach(d => {
-          const data = d.data();
-          targetGlobal += (data.totalSessoes || 0);
-          if (d.id === treinoId) {
-            targetPerWorkout = data.totalSessoes || 20;
-            nomeTreino = data.nome || "Treino";
-          }
-        });
-      } catch (pErr) {
-        console.warn("Aviso ao buscar prescricoes:", pErr);
-      }
-
-      // 3. Busca todos os logs para calcular o progresso
-      let totalGlobal = newTotalWorkouts;
-      let totalPerWorkout = 0;
-
-      try {
-        const logsQ = query(logsRef, where('concluido', '==', true));
-        const logsSnap = await getDocs(logsQ);
-        if (!logsSnap.empty) {
-          totalGlobal = Math.max(totalGlobal, logsSnap.size);
-          logsSnap.forEach(d => {
-            if (d.data().prescricaoId === treinoId) {
-              totalPerWorkout++;
-            }
-          });
-        }
-      } catch (lErr) {
-        console.warn("Aviso ao buscar logs:", lErr);
-      }
-
-      // 4. Retorna os dados
+      // 4. Retorna resposta completa com a contagem atômica do Firebase
       res.json({
-        treinoId: treinoId,
-        total: totalPerWorkout, // total for this workout
-        meta: targetPerWorkout,   // meta for this workout
-        totalGlobal: totalGlobal,
-        metaGlobal: targetGlobal || 60,
-        nomeTreino: nomeTreino,
-        metaAtingida: totalPerWorkout >= targetPerWorkout,
-        mensagem: totalPerWorkout >= targetPerWorkout
-          ? `Parabéns! Você completou as ${targetPerWorkout} sessões do ${nomeTreino}.`
-          : null
+        success: true,
+        treinoId,
+        workoutType,
+        total: novaContagem,
+        meta: targetSets,
+        targetSets,
+        notificacaoNecessaria,
+        mensagem: notificacaoNecessaria
       });
     } catch (error) {
       console.error("Erro ao finalizar treino:", error);

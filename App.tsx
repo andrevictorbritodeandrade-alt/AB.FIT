@@ -40,6 +40,7 @@ import {
   increment 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
+import { finalizarTreino, subscribeToActivePlan } from './services/workoutService';
 import { useTheme } from './components/ThemeContext';
 
 const removeUndefined = (obj: any): any => {
@@ -239,6 +240,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [workoutAlertNotification, setWorkoutAlertNotification] = useState<string | null>(null);
 
   const studentForView = useMemo(() => {
     if (!selectedStudent) return null;
@@ -435,7 +437,7 @@ export default function App() {
                 if (name === 'André' && ['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(exName)) {
                   newReps = '13/13/13';
                 }
-                return { ...ex, reps: newReps, rest: '25s' };
+                return { ...ex, reps: newReps, rest: name === 'André' ? '20s' : '25s' };
               })
             }));
           }
@@ -1263,7 +1265,7 @@ export default function App() {
                 semanas: '1-2 (Treinos 1 a 6)',
                 titulo: 'FASE INICIAL & 1º AJUSTE DE CARGA (3x13)',
                 metodo: 'Séries retas 3x13',
-                intensidade: 'RPE 7-8 / Desc: 45s',
+                intensidade: 'RPE 7-8 / Desc: 20s',
                 volume: '3 x 13 (todos os exercícios)',
                 descricao: 'Início da recontagem de 18 treinos. No treino 6: primeiro ajuste programado de carga.'
               },
@@ -1272,7 +1274,7 @@ export default function App() {
                 semanas: '3-4 (Treinos 7 a 12)',
                 titulo: 'PROGRESSÃO TENSIONAL & 2º AJUSTE DE CARGA (3x13)',
                 metodo: 'Séries retas 3x13 com sobrecarga',
-                intensidade: 'RPE 8-9 / Desc: 45s',
+                intensidade: 'RPE 8-9 / Desc: 20s',
                 volume: '3 x 13 (todos os exercícios)',
                 descricao: 'Treinos 7 a 12. No treino 12: segundo ajuste programado de carga.'
               },
@@ -1281,21 +1283,27 @@ export default function App() {
                 semanas: '5-6 (Treinos 13 a 18)',
                 titulo: 'CONSOLIDAÇÃO & TRANSIÇÃO PARA 11 REPS',
                 metodo: 'Séries retas 3x13 -> Transição no 18',
-                intensidade: 'RPE 8.5-9.5 / Desc: 45s',
+                intensidade: 'RPE 8.5-9.5 / Desc: 20s',
                 volume: '3 x 13 -> 11 reps no treino 18',
                 descricao: 'No treino 18: troca de treino para 11 repetições, manutenção dos exercícios com no máximo troca de aparelhos para alguns livres.'
               }
             ]
           },
-          faseAjusteA: 0,
-          faseAjusteB: 0,
+          faseAjusteA: 1,
+          faseAjusteB: 2,
           faseAjusteC: 0,
-          totalGlobalA: 0,
-          totalGlobalB: 0,
+          totalGlobalA: 1,
+          totalGlobalB: 2,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 0, targetCount: 36 },
+          trainingProgress: { completedCount: 3, targetCount: 36 },
+          activePlan: {
+            id: 'current',
+            phaseName: 'Mesociclo 16 - Hipertrofia',
+            targetSets: 18,
+            progress: { A: 1, B: 2, C: 0 }
+          },
           periodizationProgress: {
-            '3 x 13': { A: 0, B: 0, C: 0 }
+            '3 x 13': { A: 1, B: 2, C: 0 }
           },
           workouts: [
             {
@@ -1306,15 +1314,15 @@ export default function App() {
               status: 'published',
               description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-2', name: 'Agachamento livre', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-6', name: 'Supino aberto com HBC banco reto', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-a-9', name: 'Abdominal supra no solo', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' }
+                { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
@@ -1325,15 +1333,15 @@ export default function App() {
               status: 'published',
               description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-b-1', name: 'Stiff em pé com HBC', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-2', name: 'Extensão de quadril no graviton/caneleira', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' },
-                { id: 'a-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '45s', executionType: 'Simples' }
+                { id: 'a-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
@@ -1668,6 +1676,7 @@ export default function App() {
 
   useEffect(() => {
     let unsub: () => void;
+    let unsubPlan: (() => void) | null = null;
     
     // Se a autenticação ainda não estiver pronta, esperamos.
     // Mas se estiver pronta, prosseguimos mesmo sem usuário (user === null)
@@ -1716,36 +1725,7 @@ export default function App() {
           const updatedStudents = snapshot.docs.map(d => {
             const student = { id: d.id, ...d.data() } as Student;
             if (student.id === 'fixed-andre' && (!student.workouts || student.workouts.length === 0)) {
-                student.workouts = [
-                    {
-                      id: 'treino-a-andre',
-                      title: 'TREINO A (segundas e quintas)',
-                      status: 'published',
-                      exercises: [
-                        { id: 'a-a-1', name: 'SUPINO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-2', name: 'SUPINO ABERTO ALTERNADO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-3', name: 'CRUCIFIXO ABERTO NO BANCO RETO COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-4', name: 'DESENVOLVIMENTO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-5', name: 'FLEXÃO DE OMBRO ALTERNADO NO BANCO 75 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-6', name: 'ABDUÇÃO DE OMBROS EM PÉ COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples' },
-                        { id: 'a-a-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '30s', executionType: 'Simples' }
-                      ]
-                    },
-                    {
-                      id: 'treino-b-andre',
-                      title: 'TREINO B (terças e sextas)',
-                      status: 'published',
-                      exercises: [
-                        { id: 'a-b-1', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '30' },
-                        { id: 'a-b-2', name: 'REMADA NEUTRA NA MÁQUINA SENTADA', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '15' },
-                        { id: 'a-b-3', name: 'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '4' },
-                        { id: 'a-b-4', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '25' },
-                        { id: 'a-b-5', name: 'PUXADA SUPINADA NO PULLEY ALTO', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '25' },
-                        { id: 'a-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '4', reps: '12', rest: '30s', executionType: 'Simples', load: '20' },
-                        { id: 'a-b-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '30s', executionType: 'Simples', load: '' }
-                      ]
-                    },
-                ];
+                student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || [];
             }
             if (student.nome?.includes('Marcelly') && student.workouts) {
               student.workouts = student.workouts.filter(w => !((w.title?.toUpperCase() === 'TREINO A') && (!w.exercises || w.exercises.length === 0)));
@@ -1955,6 +1935,7 @@ export default function App() {
                                       return {
                                           ...defEx,
                                           ...existingEx, // keep existing load/loadUnit and other customizations
+                                          name: defEx.name, // Always update to current prescribed exercise name
                                           description: existingEx.description || defEx.description,
                                           benefits: existingEx.benefits || defEx.benefits,
                                       };
@@ -1974,19 +1955,28 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v1') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v1';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v20s') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v20s';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = 0;
-                          rawData.faseAjusteB = 0;
-                          rawData.faseAjusteC = 0;
-                          rawData.totalGlobalA = 0;
-                          rawData.totalGlobalB = 0;
-                          rawData.totalGlobalC = 0;
-                          rawData.trainingProgress = { completedCount: 0, targetCount: 36 };
-                          rawData.periodizationProgress = { '3 x 13': { A: 0, B: 0, C: 0 } };
+                          rawData.faseAjusteA = Math.max(rawData.faseAjusteA || 0, 1);
+                          rawData.faseAjusteB = Math.max(rawData.faseAjusteB || 0, 2);
+                          rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
+                          rawData.totalGlobalA = Math.max(rawData.totalGlobalA || 0, 1);
+                          rawData.totalGlobalB = Math.max(rawData.totalGlobalB || 0, 2);
+                          rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
+                          rawData.activePlan = rawData.activePlan || {
+                            id: 'current',
+                            phaseName: 'Mesociclo 16 - Hipertrofia',
+                            targetSets: 18,
+                            progress: { A: 1, B: 2, C: 0 }
+                          };
+                          rawData.trainingProgress = { completedCount: 3, targetCount: 36 };
+                          rawData.periodizationProgress = {
+                            ...(rawData.periodizationProgress || {}),
+                            '3 x 13': { A: 1, B: 2, C: 0 }
+                          };
                           workoutsModified = true;
                           hasCloudChanges = true;
                       } else {
@@ -2139,12 +2129,29 @@ export default function App() {
             }
           }
         });
+        try {
+          unsubPlan = subscribeToActivePlan(targetId, (plan) => {
+            setSelectedStudent(prev => {
+              if (!prev || prev.id !== targetId) return prev;
+              return {
+                ...prev,
+                activePlan: plan,
+                faseAjusteA: plan.progress.A,
+                faseAjusteB: plan.progress.B,
+                faseAjusteC: plan.progress.C
+              };
+            });
+          });
+        } catch (pe) {
+          console.warn("Aviso ao escutar activePlan:", pe);
+        }
       } catch (e) {
         console.error("Erro ao iniciar listener do aluno:", e);
       }
     }
     return () => { 
       if (unsub) unsub(); 
+      if (unsubPlan) unsubPlan();
       clearTimeout(studentLoadTimeout);
     };
   }, [authReady, view, selectedStudent?.id, isCoach, defaultStudentsData]);
@@ -2198,6 +2205,7 @@ export default function App() {
                                 return {
                                     ...defEx,
                                     ...existingEx, // keep existing load/loadUnit and other customizations
+                                    name: defEx.name, // Always update to current prescribed exercise name
                                     description: existingEx.description || defEx.description,
                                     benefits: existingEx.benefits || defEx.benefits,
                                 };
@@ -2450,8 +2458,21 @@ export default function App() {
       const updated = { ...selectedStudent, ...finalData };
       setSelectedStudent(updated);
       try {
-        localStorage.setItem(`student_cache_${sid}`, JSON.stringify(updated));
+        const cacheObj = {
+          ...updated,
+          photoUrl: updated.photoUrl?.startsWith('data:') ? undefined : updated.photoUrl,
+          workoutHistory: Array.isArray(updated.workoutHistory) ? updated.workoutHistory.slice(0, 10) : updated.workoutHistory,
+        };
+        localStorage.setItem(`student_cache_${sid}`, JSON.stringify(cacheObj));
       } catch (err) {
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('student_cache_') || k.startsWith('firestore_clients_')) && k !== `student_cache_${sid}`) {
+              localStorage.removeItem(k);
+            }
+          }
+        } catch (_) {}
         console.warn("Could not save to localStorage cache:", err);
       }
     }
@@ -2576,7 +2597,44 @@ export default function App() {
       console.error("Erro ao salvar na coleção workouts:", wErr);
     }
 
-    // 3. Atualiza contadores de progressão de forma atômica usando runTransaction (Passo 4)
+    // Determina tipo de treino (A, B ou C)
+    let tipoTreino: 'A' | 'B' | 'C' = 'A';
+    if (title.includes('treino b') || post.workoutId?.includes('-b') || post.workoutId?.toLowerCase().endsWith('b')) {
+      tipoTreino = 'B';
+    } else if (title.includes('treino c') || post.workoutId?.includes('-c') || post.workoutId?.toLowerCase().endsWith('c')) {
+      tipoTreino = 'C';
+    }
+
+    // 3. Executa a Transação Atômica no Firestore (active_plans + workout_history)
+    let novaContagemAtômica = (studentForView.activePlan?.progress?.[tipoTreino] || 0) + 1;
+    let targetSetsAtômico = studentForView.activePlan?.targetSets || 18;
+
+    try {
+      const resFinalizar = await finalizarTreino(studentForView.id, 'current', tipoTreino, {
+        planId: 'current',
+        workoutType: tipoTreino,
+        volumeTotal: cargas.reduce((acc: number, cur: any) => acc + (parseFloat(cur.carga) || 0), 0),
+        duration: post.duration,
+        duracaoMinutos,
+        calorias,
+        workoutName: post.name,
+        exercises: post.exercises,
+        photoUrl: post.photoUrl
+      });
+
+      if (resFinalizar.success && resFinalizar.novaContagem !== undefined) {
+        novaContagemAtômica = resFinalizar.novaContagem;
+        targetSetsAtômico = resFinalizar.targetSets || targetSetsAtômico;
+      }
+
+      if (resFinalizar.notificacaoNecessaria) {
+        setWorkoutAlertNotification(resFinalizar.notificacaoNecessaria);
+      }
+    } catch (txErr) {
+      console.error("Erro na transação atômica de treino:", txErr);
+    }
+
+    // 4. Atualiza contadores globais de progressão de forma atômica
     try {
       const userProgressRef = doc(db, 'userProgress', studentForView.id);
       await runTransaction(db, async (transaction) => {
@@ -2598,10 +2656,25 @@ export default function App() {
       console.error("Falha ao registrar progresso atômico no userProgress:", pErr);
     }
 
+    const currentActivePlan = studentForView.activePlan || {
+      id: 'current',
+      phaseName: "Mesociclo 16 - Hipertrofia",
+      targetSets: targetSetsAtômico,
+      progress: { A: 1, B: 2, C: 0 }
+    };
+
     const updates: any = { 
       workoutHistory: updatedHistory,
       trainingProgress: updatedProgress,
       analytics: updatedAnalytics,
+      activePlan: {
+        ...currentActivePlan,
+        targetSets: targetSetsAtômico,
+        progress: {
+          ...currentActivePlan.progress,
+          [tipoTreino]: novaContagemAtômica
+        }
+      },
       workouts: (studentForView.workouts || []).map(w => 
         w.id === post.workoutId ? { ...w, exercises: post.exercises } : w
       )
@@ -2611,18 +2684,18 @@ export default function App() {
     const prog = studentForView.periodizationProgress || {};
     const currentPeriodProg = { ...(prog[periodKey] || { A: 0, B: 0, C: 0 }) };
 
-    if (title.includes('treino a')) {
-      updates.faseAjusteA = (studentForView.faseAjusteA || 0) + 1;
+    if (tipoTreino === 'A') {
+      updates.faseAjusteA = novaContagemAtômica;
       updates.totalGlobalA = (studentForView.totalGlobalA || 0) + 1;
-      currentPeriodProg.A += 1;
-    } else if (title.includes('treino b')) {
-      updates.faseAjusteB = (studentForView.faseAjusteB || 0) + 1;
+      currentPeriodProg.A = novaContagemAtômica;
+    } else if (tipoTreino === 'B') {
+      updates.faseAjusteB = novaContagemAtômica;
       updates.totalGlobalB = (studentForView.totalGlobalB || 0) + 1;
-      currentPeriodProg.B += 1;
-    } else if (title.includes('treino c')) {
-      updates.faseAjusteC = (studentForView.faseAjusteC || 0) + 1;
+      currentPeriodProg.B = novaContagemAtômica;
+    } else if (tipoTreino === 'C') {
+      updates.faseAjusteC = novaContagemAtômica;
       updates.totalGlobalC = (studentForView.totalGlobalC || 0) + 1;
-      currentPeriodProg.C += 1;
+      currentPeriodProg.C = novaContagemAtômica;
     }
 
     updates.periodizationProgress = { ...prog, [periodKey]: currentPeriodProg };
@@ -2934,42 +3007,52 @@ export default function App() {
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
               <AssessmentAlert student={studentForView} />
 
-              {/* CURRENT PHASE PROGRESS (A/B Treinos) */}
+              {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
-                const currentPeriodization = studentForView.periodization;
-                const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13';
-                const periodKey = currentPeriodization?.phaseTitle || currentReps;
-                const prog = studentForView.periodizationProgress || {};
-                const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
-                const countA = Math.max(studentForView.faseAjusteA || 0, periodProg.A);
-                const countB = Math.max(studentForView.faseAjusteB || 0, periodProg.B);
+                const targetSets = studentForView.activePlan?.targetSets || 18;
+                const countA = studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 1);
+                const countB = studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 2);
+                const phaseName = studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia";
+                const percentA = Math.min(100, (countA / targetSets) * 100);
+                const percentB = Math.min(100, (countB / targetSets) * 100);
 
                 return (
                   <div className="w-full bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
-                    <div className="flex items-center gap-2 mb-1 px-1">
-                      <Activity size={14} className="text-red-600" />
-                      <div className="flex flex-col">
-                        <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic leading-none">Progresso da Fase Atual</h3>
-                        <span className="text-[8px] font-black uppercase text-red-600/60 tracking-widest italic mt-1">{periodKey}</span>
+                    <div className="flex items-center justify-between mb-1 px-1">
+                      <div className="flex items-center gap-2">
+                        <Activity size={14} className="text-red-600" />
+                        <div className="flex flex-col">
+                          <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic leading-none">Progresso da Fase Atual</h3>
+                          <span className="text-[8px] font-black uppercase text-red-600/60 tracking-widest italic mt-1">{phaseName}</span>
+                        </div>
                       </div>
+                      <span className="text-[9px] font-mono text-zinc-500 uppercase">Meta: {targetSets} sessões</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
                           <span className="text-white">Treino A</span>
-                          <span className="text-red-600">{countA} / 20</span>
+                          <span className="text-red-600 font-mono">{countA} / {targetSets}</span>
                         </div>
                         <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (countA / 20) * 100)}%` }} />
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${percentA}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-zinc-500 px-1 font-mono">
+                          <span>{percentA.toFixed(0)}%</span>
+                          <span>Faltam {Math.max(0, targetSets - countA)}</span>
                         </div>
                       </div>
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
                           <span className="text-white">Treino B</span>
-                          <span className="text-red-600">{countB} / 20</span>
+                          <span className="text-red-600 font-mono">{countB} / {targetSets}</span>
                         </div>
                         <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${Math.min(100, (countB / 20) * 100)}%` }} />
+                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${percentB}%` }} />
+                        </div>
+                        <div className="flex justify-between text-[8px] text-zinc-500 px-1 font-mono">
+                          <span>{percentB.toFixed(0)}%</span>
+                          <span>Faltam {Math.max(0, targetSets - countB)}</span>
                         </div>
                       </div>
                     </div>
@@ -3080,6 +3163,29 @@ export default function App() {
         {view === 'PRESCREVE_AI' && <GeraAi onBack={() => setView(isCoach ? 'PROFESSOR_DASH' : 'DASHBOARD')} />}
         {(showInstallPrompt || view === 'INSTALL_APP') && (
           <InstallPrompt onClose={() => { setShowInstallPrompt(false); if (view === 'INSTALL_APP') setView(isCoach ? 'PROFESSOR_DASH' : 'DASHBOARD'); }} />
+        )}
+
+        {workoutAlertNotification && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+            <div className="bg-zinc-900 border-2 border-red-600 rounded-[2.5rem] p-6 sm:p-8 max-w-md w-full text-center space-y-5 shadow-[0_0_50px_rgba(220,38,38,0.4)]">
+              <div className="w-16 h-16 rounded-full bg-red-600/20 border-2 border-red-600 flex items-center justify-center mx-auto text-red-600 animate-bounce">
+                <Bell size={28} />
+              </div>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase text-red-600 tracking-[0.25em] italic">Notificação do Treinador</span>
+                <h3 className="text-xl font-black italic uppercase text-white tracking-tight">Periodização & Cargas</h3>
+                <p className="text-sm font-semibold text-zinc-300 leading-relaxed pt-2">
+                  {workoutAlertNotification}
+                </p>
+              </div>
+              <button
+                onClick={() => setWorkoutAlertNotification(null)}
+                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-red-600/30 active:scale-95"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
         )}
       </main>
     </BackgroundWrapper>

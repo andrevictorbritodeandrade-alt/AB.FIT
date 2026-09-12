@@ -370,6 +370,59 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
         </div>
       </div>
 
+      {/* CARD DE PROGRESSO DA FASE ATUAL (FONTE DA VERDADE FIREBASE - active_plans) */}
+      {(() => {
+        const targetSets = student.activePlan?.targetSets || 18;
+        const progressA = student.activePlan?.progress?.A ?? (student.faseAjusteA !== undefined ? student.faseAjusteA : 1);
+        const progressB = student.activePlan?.progress?.B ?? (student.faseAjusteB !== undefined ? student.faseAjusteB : 2);
+        const percentA = Math.min(100, (progressA / targetSets) * 100);
+        const percentB = Math.min(100, (progressB / targetSets) * 100);
+        const phaseName = student.activePlan?.phaseName || "Mesociclo 16 - Hipertrofia";
+
+        return (
+          <div className="w-full bg-zinc-900/50 p-5 rounded-[2.5rem] border border-zinc-800 space-y-4 mb-6 shadow-xl">
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <Activity size={16} className="text-red-600" />
+                <div className="flex flex-col">
+                  <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] italic">Progresso da Fase Atual</h3>
+                  <span className="text-[9px] font-bold text-red-600 tracking-wider mt-0.5">{phaseName}</span>
+                </div>
+              </div>
+              <span className="text-[9px] font-mono text-zinc-500 uppercase">Meta: {targetSets} sessões</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="space-y-1.5 bg-black/40 p-3 rounded-2xl border border-zinc-800/60">
+                <div className="flex justify-between text-[11px] font-black uppercase italic tracking-wider px-1">
+                  <span className="text-white">Treino A</span>
+                  <span className="text-red-500 font-mono">{progressA} / {targetSets}</span>
+                </div>
+                <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                  <div className="h-full bg-red-600 transition-all duration-700 rounded-full" style={{ width: `${percentA}%` }} />
+                </div>
+                <div className="flex justify-between text-[9px] text-zinc-500 px-1 pt-0.5 font-mono">
+                  <span>{percentA.toFixed(0)}% concluído</span>
+                  <span>{Math.max(0, targetSets - progressA)} restantes</span>
+                </div>
+              </div>
+              <div className="space-y-1.5 bg-black/40 p-3 rounded-2xl border border-zinc-800/60">
+                <div className="flex justify-between text-[11px] font-black uppercase italic tracking-wider px-1">
+                  <span className="text-white">Treino B</span>
+                  <span className="text-red-500 font-mono">{progressB} / {targetSets}</span>
+                </div>
+                <div className="w-full h-2.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
+                  <div className="h-full bg-red-600 transition-all duration-700 rounded-full" style={{ width: `${percentB}%` }} />
+                </div>
+                <div className="flex justify-between text-[9px] text-zinc-500 px-1 pt-0.5 font-mono">
+                  <span>{percentB.toFixed(0)}% concluído</span>
+                  <span>{Math.max(0, targetSets - progressB)} restantes</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* CARDS DE RESUMO RÁPIDO */}
       <div className="grid grid-cols-2 gap-3 mb-8">
          <Card className="p-4 bg-zinc-900/50 border-zinc-800 text-center col-span-2">
