@@ -223,10 +223,10 @@ async function startServer() {
         }
 
         // Lógica de Notificação
-        if (novaContagem === 6 || novaContagem === 12) {
-          notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
+        if (novaContagem === 6 || novaContagem === 12 || novaContagem === 18) {
+          notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar e aumentar a carga!`;
         } else if (novaContagem === targetSets) {
-          notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${workoutType}. Última sessão antes de mudar a periodização!`;
+          notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do Treino ${workoutType}. Este é o seu último treino desse ciclo e você precisa trocar de treino!`;
         }
       });
 

@@ -1012,8 +1012,20 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
         await onSave(user.id, updates);
         
-        if (result.mensagem) {
-            alert(result.mensagem);
+        let messageToDisplay = result.mensagem;
+        if (!messageToDisplay) {
+          const wType = title.includes('treino a') ? 'A' : title.includes('treino b') ? 'B' : 'C';
+          const currentCount = wType === 'A' ? updates.faseAjusteA : wType === 'B' ? updates.faseAjusteB : updates.faseAjusteC;
+          const target = user.activePlan?.targetSets || activeWorkout.projectedSessions || 24;
+          if (currentCount === 6 || currentCount === 12 || currentCount === 18) {
+            messageToDisplay = `Atenção: Você concluiu o treino ${wType} pela ${currentCount}ª vez. Hora de ajustar e aumentar a carga!`;
+          } else if (currentCount === target) {
+            messageToDisplay = `Parabéns! Você concluiu os ${target} treinos do Treino ${wType}. Este é o seu último treino desse ciclo e você precisa trocar de treino!`;
+          }
+        }
+
+        if (messageToDisplay) {
+            alert(messageToDisplay);
         }
       }
 

@@ -1595,79 +1595,91 @@ export default function App() {
             },
             microciclos: [
               {
-                id: 'm1',
-                semanas: '1-4',
-                titulo: 'ADAPTAÇÃO ANATÔMICA E HIPERTROFIA BASE',
-                intensidade: '70-75% 1RM (RIR 2-3)',
-                volume: '12-14 SÉRIES SEMANAIS POR GRUPAMENTO, 8-12 REPETIÇÕES',
-                metodo: 'PIRÂMIDE CRESCENTE E DROP-SETS EVENTUAIS',
-                descricao: 'Sessões estruturadas para focar em grupos específicos dentro de 60 minutos. Ritmo dinâmico para evitar dispersão atencional.'
+                id: 'm1-marcelly',
+                semanas: 'Treinos 1 a 6',
+                titulo: 'FASE INICIAL DE HIPERTROFIA (3x13)',
+                intensidade: 'RPE 7-8 / Desc: 30s',
+                volume: '3 x 13 (24 treinos)',
+                metodo: 'SÉRIES RETAS (30s descanso)',
+                descricao: 'Na 6ª execução: lembrete para ajustar e aumentar a carga.'
               },
               {
-                id: 'm2',
-                semanas: '5-8',
-                titulo: 'TENSÃO MECÂNICA E HIPERTROFIA MIOFIBRILAR',
-                intensidade: '80-85% 1RM (RIR 1-2)',
-                volume: '14-16 SÉRIES SEMANAIS POR GRUPAMENTO, 6-8 REPETIÇÕES',
-                metodo: 'REST-PAUSE (PAUSA-DESCANSO)',
-                descricao: 'Excelente para traços de TDAH, pois o tempo de descanso é curtíssimo (10-15s), mantendo o sistema nervoso central em alerta e encurtando o tempo da sessão.'
+                id: 'm2-marcelly',
+                semanas: 'Treinos 7 a 12',
+                titulo: 'PROGRESSÃO DE CARGA 1 (3x13)',
+                intensidade: 'RPE 8-8.5 / Desc: 30s',
+                volume: '3 x 13 (24 treinos)',
+                metodo: 'SÉRIES RETAS COM SOBRECARGA',
+                descricao: 'Na 12ª execução: lembrete para ajustar e aumentar a carga.'
               },
               {
-                id: 'm3',
-                semanas: '9-11',
-                titulo: 'ESTRESSE METABÓLICO E OVERREACHING FUNCIONAL',
-                intensidade: '65-75% 1RM (RIR 0 - FALHA MOMENTÂNEA)',
-                volume: '18-20 SÉRIES SEMANAIS POR GRUPAMENTO, 12-15 REPETIÇÕES',
-                metodo: 'BI-SETS AGONISTA-ANTAGONISTA E CLUSTER SETS',
-                descricao: 'Aumenta drasticamente o fluxo sanguíneo (pump) e economiza tempo. Transições rápidas sustentam o foco mental de indivíduos neurodivergentes.'
+                id: 'm3-marcelly',
+                semanas: 'Treinos 13 a 18',
+                titulo: 'PROGRESSÃO DE CARGA 2 (3x13)',
+                intensidade: 'RPE 8.5-9 / Desc: 30s',
+                volume: '3 x 13 (24 treinos)',
+                metodo: 'SÉRIES RETAS COM SOBRECARGA',
+                descricao: 'Na 18ª execução: lembrete para ajustar e aumentar a carga.'
               },
               {
-                id: 'm4',
-                semanas: '12',
-                titulo: 'SUPERCOMPENSAÇÃO E DISSIPAÇÃO DE FADIGA (DELOAD)',
-                intensidade: '50-60% 1RM (RIR 3-4)',
-                volume: '8-10 SÉRIES SEMANAIS POR GRUPAMENTO, 10-12 REPETIÇÕES',
-                metodo: 'SÉRIES TRADICIONAIS COM FOCO EM CONEXÃO MENTE-MÚSCULO',
-                descricao: 'Redução do estresse sistêmico para permitir a regeneração tecidual e consolidação dos ganhos hipertróficos projetados (2kg).'
+                id: 'm4-marcelly',
+                semanas: 'Treinos 19 a 24',
+                titulo: 'CONSOLIDAÇÃO E TRANSIÇÃO (3x13)',
+                intensidade: 'RPE 9-9.5 / Desc: 30s',
+                volume: '3 x 13 (24 treinos)',
+                metodo: 'SÉRIES RETAS DE CONSOLIDAÇÃO',
+                descricao: 'Na 24ª execução: aviso de último treino e necessidade de trocar de treino.'
               }
             ]
           },
-          faseAjusteA: 2,
-          faseAjusteB: 2,
+          faseAjusteA: 0,
+          faseAjusteB: 0,
           faseAjusteC: 0,
-          totalGlobalA: 2,
-          totalGlobalB: 2,
+          totalGlobalA: 0,
+          totalGlobalB: 0,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 5, targetCount: 40 },
+          trainingProgress: { completedCount: 0, targetCount: 48 },
+          activePlan: {
+            id: 'current',
+            phaseName: 'Mesociclo - Hipertrofia (24 Treinos)',
+            targetSets: 24,
+            progress: { A: 0, B: 0, C: 0 }
+          },
           workouts: [
             {
               id: 'treino-a-marcelly',
-              title: 'TREINO A',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
+              title: 'TREINO A (Membros Inferiores)',
+              projectedSessions: 24,
+              frequencyWeekly: 3,
               status: 'published',
+              description: '24 treinos (3x13). Lembrete de aumento de carga na 6ª, 12ª e 18ª execução. Na 24ª execução: troca de treino.',
               exercises: [
-                { id: 'm-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-3', name: 'AGACHAMENTO LIVRE COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-4', name: 'AGACHAMENTO EM PASSADA COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-5', name: 'CADEIRA EXTENSORA', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-a-6', name: 'CADEIRA EXTENSORA UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' }
+                { id: 'm-a-1', name: 'Leg press horizontal máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-2', name: 'Leg press horizontal máquina unilateral', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-3', name: 'Extensão de quadril máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-4', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-5', name: 'Agachamento no aparelho hack machine em pé', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-6', name: 'Agachamento sumô na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-7', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-a-8', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-marcelly',
-              title: 'TREINO B',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
+              title: 'TREINO B (Membros Superiores)',
+              projectedSessions: 24,
+              frequencyWeekly: 3,
               status: 'published',
+              description: '24 treinos (3x13). Lembrete de aumento de carga na 6ª, 12ª e 18ª execução. Na 24ª execução: troca de treino.',
               exercises: [
-                { id: 'm-b-1', name: 'STIFF EM PÉ COM HBC', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-2', name: 'LEVANTAMENTO TERRA COM HBM', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-3', name: 'AGACHAMENTO SUMÔ COM HBC ENTRE OS QUADRIS SEM STEP', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-4', name: 'AGACHAMENTO SUMÔ SEGURANDO HBC NA FRENTE DO TÓRAX', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-5', name: 'CADEIRA FLEXORA', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' },
-                { id: 'm-b-6', name: 'CADEIRA FLEXORA UNILATERAL', sets: '3', reps: '13', rest: '25s', executionType: 'Simples' }
+                { id: 'm-b-1', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-2', name: 'Desenvolvimento aberto na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-3', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-4', name: 'Puxada com triângulo no pulley alto', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-5', name: 'Tríceps em pé no cross com barra reta', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-6', name: 'Bíceps em pé no cross com barra reta', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-7', name: 'Abdominal crunch na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
+                { id: 'm-b-8', name: 'Abdominal supra no solo', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' }
               ]
             }
           ]
@@ -1986,9 +1998,24 @@ export default function App() {
                   }
                   
                   // Force clean workouts for Marcelly
-                  if (defaultProfile.email === 'marcellybispo92@gmail.com') {
-                      currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-marcelly');
-                      workoutsModified = true;
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
+                      if ((rawData as any)._planRevision !== '24-sessoes-3x13-marcelly-v1') {
+                          (rawData as any)._planRevision = '24-sessoes-3x13-marcelly-v1';
+                          rawData.workouts = defaultProfile.workouts || [];
+                          currentWorkouts = defaultProfile.workouts || [];
+                          rawData.periodization = defaultProfile.periodization;
+                          rawData.activePlan = {
+                            id: 'current',
+                            phaseName: 'Mesociclo - Hipertrofia (24 Treinos)',
+                            targetSets: 24,
+                            progress: { A: 0, B: 0, C: 0 }
+                          };
+                          workoutsModified = true;
+                          hasCloudChanges = true;
+                      } else {
+                          currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-marcelly');
+                          workoutsModified = true;
+                      }
                   }
                   
                   if (workoutsModified || !rawData.workouts) {
