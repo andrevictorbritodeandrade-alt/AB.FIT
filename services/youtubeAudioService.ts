@@ -24,13 +24,14 @@ export interface AudioPlayerState {
 class YouTubeAudioService {
   private timer: any = null;
   private listeners: Set<StateListener> = new Set();
+  private ytPlayer: any = null;
 
   private state: AudioPlayerState = {
     currentSong: musicCategories[0]?.songs[0] || null,
     queue: musicCategories[0]?.songs || [],
     isPlaying: false,
     currentTime: 0,
-    duration: 180,
+    duration: 0,
     volume: 90,
     isMuted: false,
     shuffle: false,
@@ -45,6 +46,77 @@ class YouTubeAudioService {
     this.loadFavorites();
     if (typeof window !== 'undefined') {
       this.setupMessageListener();
+      this.initYouTubeApiScript();
+    }
+  }
+
+  private initYouTubeApiScript() {
+    if (typeof window === 'undefined') return;
+    if (!(window as any).YT && !document.getElementById('youtube-iframe-api-script')) {
+      const tag = document.createElement('script');
+      tag.id = 'youtube-iframe-api-script';
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      if (firstScriptTag && firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      } else {
+        document.head.appendChild(tag);
+      }
+    }
+  }
+
+  public attachYouTubePlayer(elementId: string) {
+    if (typeof window === 'undefined') return;
+
+    const init = () => {
+      if ((window as any).YT && (window as any).YT.Player) {
+        try {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+
+          this.ytPlayer = new (window as any).YT.Player(elementId, {
+            events: {
+              onReady: (event: any) => {
+                if (this.state.volume !== undefined) {
+                  try { event.target.setVolume(this.state.volume); } catch (e) {}
+                }
+                if (this.state.isMuted) {
+                  try { event.target.mute(); } catch (e) {}
+                }
+                this.updateTimeAndDuration();
+              },
+              onStateChange: (event: any) => {
+                // 0 = Ended, 1 = Playing, 2 = Paused, 3 = Buffering
+                if (event.data === 0) {
+                  this.handleNext();
+                } else if (event.data === 1) {
+                  this.updateState({ isPlaying: true });
+                  this.startProgressTimer();
+                  this.updateTimeAndDuration();
+                } else if (event.data === 2) {
+                  this.updateState({ isPlaying: false });
+                  this.stopProgressTimer();
+                } else if (event.data === 3) {
+                  this.updateTimeAndDuration();
+                }
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('[ABFIT Music] Error initializing YT.Player:', e);
+        }
+      }
+    };
+
+    if (!(window as any).YT || !(window as any).YT.Player) {
+      const prevOnReady = (window as any).onYouTubeIframeAPIReady;
+      (window as any).onYouTubeIframeAPIReady = () => {
+        if (typeof prevOnReady === 'function') prevOnReady();
+        init();
+      };
+      this.initYouTubeApiScript();
+    } else {
+      init();
     }
   }
 
@@ -83,13 +155,16 @@ class YouTubeAudioService {
               this.updateState({ isPlaying: false });
               this.stopProgressTimer();
             }
-          } else if (data.event === 'infoDelivery') {
-            if (data.info?.currentTime !== undefined) {
-              const dur = data.info.duration || this.state.duration;
-              this.updateState({ 
-                currentTime: Math.floor(data.info.currentTime),
-                duration: dur > 0 ? Math.floor(dur) : this.state.duration
-              });
+          } else if (data.event === 'infoDelivery' && data.info) {
+            const updates: Partial<AudioPlayerState> = {};
+            if (typeof data.info.currentTime === 'number') {
+              updates.currentTime = Math.floor(data.info.currentTime);
+            }
+            if (typeof data.info.duration === 'number' && data.info.duration > 0) {
+              updates.duration = Math.floor(data.info.duration);
+            }
+            if (Object.keys(updates).length > 0) {
+              this.updateState(updates);
             }
           }
         }
@@ -117,15 +192,44 @@ class YouTubeAudioService {
     }
   }
 
+  private updateTimeAndDuration() {
+    if (this.ytPlayer && typeof this.ytPlayer.getDuration === 'function') {
+      try {
+        const dur = this.ytPlayer.getDuration();
+        const cur = this.ytPlayer.getCurrentTime();
+        const updates: Partial<AudioPlayerState> = {};
+
+        if (typeof dur === 'number' && !isNaN(dur) && dur > 0) {
+          updates.duration = Math.floor(dur);
+        }
+        if (typeof cur === 'number' && !isNaN(cur) && cur >= 0) {
+          updates.currentTime = Math.floor(cur);
+        }
+
+        if (Object.keys(updates).length > 0) {
+          this.updateState(updates);
+        }
+      } catch (e) {}
+    }
+  }
+
   private startProgressTimer() {
     this.stopProgressTimer();
     this.timer = setInterval(() => {
-      this.sendIframeCommand('getCurrentTime');
-      this.sendIframeCommand('getDuration');
-      // Incremento fallback suave
-      this.updateState({
-        currentTime: Math.min(this.state.currentTime + 1, this.state.duration || 300)
-      });
+      if (this.ytPlayer && typeof this.ytPlayer.getCurrentTime === 'function') {
+        this.updateTimeAndDuration();
+      } else {
+        this.sendIframeCommand('getCurrentTime');
+        this.sendIframeCommand('getDuration');
+        // Incremento suave sem cap arbitrário em 180s
+        if (this.state.isPlaying) {
+          const nextTime = this.state.currentTime + 1;
+          const maxDur = this.state.duration > 0 ? this.state.duration : 3600;
+          this.updateState({
+            currentTime: Math.min(nextTime, maxDur)
+          });
+        }
+      }
     }, 1000);
   }
 
@@ -174,18 +278,37 @@ class YouTubeAudioService {
       queue,
       isPlaying: true,
       currentTime: 0,
+      duration: 0,
       playbackKey: isDifferent ? Date.now() : this.state.playbackKey,
     });
+
+    if (this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function' && isDifferent) {
+      try {
+        this.ytPlayer.loadVideoById(song.id);
+        if (this.state.volume !== undefined) {
+          try { this.ytPlayer.setVolume(this.state.volume); } catch (e) {}
+        }
+      } catch (e) {}
+    }
 
     this.startProgressTimer();
 
     // Envia comando para iniciar
     setTimeout(() => {
+      if (this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
+        try { this.ytPlayer.playVideo(); } catch (e) {}
+      }
       this.sendIframeCommand('playVideo');
       this.sendIframeCommand('setVolume', [this.state.volume]);
       if (this.state.isMuted) {
+        if (this.ytPlayer && typeof this.ytPlayer.mute === 'function') {
+          try { this.ytPlayer.mute(); } catch (e) {}
+        }
         this.sendIframeCommand('mute');
       } else {
+        if (this.ytPlayer && typeof this.ytPlayer.unMute === 'function') {
+          try { this.ytPlayer.unMute(); } catch (e) {}
+        }
         this.sendIframeCommand('unMute');
       }
     }, 150);
@@ -228,10 +351,16 @@ class YouTubeAudioService {
     }
 
     if (this.state.isPlaying) {
+      if (this.ytPlayer && typeof this.ytPlayer.pauseVideo === 'function') {
+        try { this.ytPlayer.pauseVideo(); } catch (e) {}
+      }
       this.sendIframeCommand('pauseVideo');
       this.updateState({ isPlaying: false });
       this.stopProgressTimer();
     } else {
+      if (this.ytPlayer && typeof this.ytPlayer.playVideo === 'function') {
+        try { this.ytPlayer.playVideo(); } catch (e) {}
+      }
       this.sendIframeCommand('playVideo');
       this.updateState({ isPlaying: true });
       this.startProgressTimer();
@@ -283,17 +412,30 @@ class YouTubeAudioService {
   }
 
   public seekTo(seconds: number) {
-    this.updateState({ currentTime: seconds });
-    this.sendIframeCommand('seekTo', [seconds, true]);
+    const targetSec = Math.floor(seconds);
+    this.updateState({ currentTime: targetSec });
+    if (this.ytPlayer && typeof this.ytPlayer.seekTo === 'function') {
+      try { this.ytPlayer.seekTo(targetSec, true); } catch (e) {}
+    }
+    this.sendIframeCommand('seekTo', [targetSec, true]);
   }
 
   public setVolume(vol: number) {
     const isMuted = vol === 0;
     this.updateState({ volume: vol, isMuted });
+    if (this.ytPlayer && typeof this.ytPlayer.setVolume === 'function') {
+      try { this.ytPlayer.setVolume(vol); } catch (e) {}
+    }
     this.sendIframeCommand('setVolume', [vol]);
     if (isMuted) {
+      if (this.ytPlayer && typeof this.ytPlayer.mute === 'function') {
+        try { this.ytPlayer.mute(); } catch (e) {}
+      }
       this.sendIframeCommand('mute');
     } else {
+      if (this.ytPlayer && typeof this.ytPlayer.unMute === 'function') {
+        try { this.ytPlayer.unMute(); } catch (e) {}
+      }
       this.sendIframeCommand('unMute');
     }
   }
@@ -302,9 +444,18 @@ class YouTubeAudioService {
     const newMuted = !this.state.isMuted;
     this.updateState({ isMuted: newMuted });
     if (newMuted) {
+      if (this.ytPlayer && typeof this.ytPlayer.mute === 'function') {
+        try { this.ytPlayer.mute(); } catch (e) {}
+      }
       this.sendIframeCommand('mute');
     } else {
+      if (this.ytPlayer && typeof this.ytPlayer.unMute === 'function') {
+        try { this.ytPlayer.unMute(); } catch (e) {}
+      }
       this.sendIframeCommand('unMute');
+      if (this.ytPlayer && typeof this.ytPlayer.setVolume === 'function') {
+        try { this.ytPlayer.setVolume(this.state.volume || 80); } catch (e) {}
+      }
       this.sendIframeCommand('setVolume', [this.state.volume || 80]);
     }
   }

@@ -903,11 +903,11 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     
     // Para o timer imediatamente para feedback visual
     setSessionStartTime(null);
-    const finalElapsedTime = elapsedTime;
-    const duracaoMinutos = Math.ceil(finalElapsedTime / 60);
+    const finalElapsedTime = elapsedTime || 0;
+    const duracaoMinutos = Math.max(1, Math.ceil(finalElapsedTime / 60));
     const calorias = duracaoMinutos * 7;
-    const cargas = activeWorkout.exercises.map(ex => ({
-      exercicio: ex.name,
+    const cargas = (activeWorkout.exercises || []).map(ex => ({
+      exercicio: ex.name || 'Exercício',
       carga: ex.load || '0',
       unidade: ex.loadUnit || 'Kg'
     }));
@@ -923,7 +923,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         timestamp: Date.now(),
         photoUrl: selfieUrl || undefined,
         type: 'STRENGTH',
-        exercises: activeWorkout.exercises
+        exercises: activeWorkout.exercises || []
       };
 
       let result: any = { 
@@ -963,7 +963,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         const currentAnalytics = user.analytics || { sessionsCompleted: 0, streakDays: 0, exercises: {} };
         const newExercises = { ...currentAnalytics.exercises };
         
-        activeWorkout.exercises.forEach(ex => {
+        (activeWorkout.exercises || []).forEach(ex => {
           const prog = exerciseProgress[ex.id || ''];
           const totalSets = parseInt(ex.sets || '3') || 3;
           if (prog && prog.completedSets.length >= totalSets) {
@@ -988,24 +988,21 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           }
         };
 
-        const title = activeWorkout.title.toLowerCase();
+        const title = (activeWorkout.title || '').toLowerCase();
         console.log("Título do treino finalizado:", title);
         if (title.includes('treino a')) {
           updates.faseAjusteA = (user.faseAjusteA || 0) + 1;
           updates.totalGlobalA = result.total || (user.totalGlobalA || 0) + 1;
-          console.log("[DEBUG] Incrementando A, faseAjuste:", updates.faseAjusteA, "total:", updates.totalGlobalA);
           const novoA = incrementarTreino('A');
           setLocalCounters(prev => ({ ...prev, A: novoA }));
         } else if (title.includes('treino b')) {
           updates.faseAjusteB = (user.faseAjusteB || 0) + 1;
           updates.totalGlobalB = result.total || (user.totalGlobalB || 0) + 1;
-          console.log("[DEBUG] Incrementando B, faseAjuste:", updates.faseAjusteB, "total:", updates.totalGlobalB);
           const novoB = incrementarTreino('B');
           setLocalCounters(prev => ({ ...prev, B: novoB }));
         } else if (title.includes('treino c')) {
           updates.faseAjusteC = (user.faseAjusteC || 0) + 1;
           updates.totalGlobalC = result.total || (user.totalGlobalC || 0) + 1;
-          console.log("[DEBUG] Incrementando C, faseAjuste:", updates.faseAjusteC, "total:", updates.totalGlobalC);
           const novoC = incrementarTreino('C');
           setLocalCounters(prev => ({ ...prev, C: novoC }));
         }
@@ -1028,20 +1025,20 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
             alert(messageToDisplay);
         }
       }
-
-      localStorage.removeItem(`workout_start_${user.id}`);
-      localStorage.removeItem(`active_workout_id_${user.id}`);
-      localStorage.removeItem(`workout_progress_${user.id}`);
+    } catch (error) {
+      console.error("Erro ao finalizar sessão:", error);
+    } finally {
+      try {
+        localStorage.removeItem(`workout_start_${user.id}`);
+        localStorage.removeItem(`active_workout_id_${user.id}`);
+        localStorage.removeItem(`workout_progress_${user.id}`);
+      } catch (_) {}
       setSessionStartTime(null);
       setActiveWorkout(null);
       setSelfieUrl(null);
       setIsFinishing(false);
       setShowPhotoStep(false);
       setShowCompletionModal(false);
-      onBack();
-    } catch (error) {
-      console.error("Erro ao finalizar sessão:", error);
-      setIsFinishing(false);
     }
   };
 
@@ -1180,8 +1177,11 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                     <div className="flex justify-between items-start mb-1 pr-2 gap-2">
                       <h4 className="text-xl font-black italic uppercase text-foreground tracking-tighter group-hover:text-red-600 transition-colors leading-tight">{w.title}</h4>
                       <div className="flex flex-col items-end shrink-0">
-                        <span className="text-xs font-black italic text-red-600 uppercase tracking-tighter leading-none">{completed} Executados</span>
-                        <span className="text-[9px] font-black italic text-muted-foreground uppercase tracking-tighter leading-none mt-1">{Math.max(0, total - completed)} Faltam</span>
+                        <div className="bg-red-600/10 border border-red-600/30 px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                          <span className="text-[10px] font-black italic text-muted-foreground uppercase tracking-wider">Evolução:</span>
+                          <span className="text-xs font-black italic text-red-600 uppercase tracking-tighter tabular-nums">{completed} de {total}</span>
+                        </div>
+                        <span className="text-[9px] font-black italic text-muted-foreground uppercase tracking-tighter leading-none mt-1">{Math.max(0, total - completed)} restantes</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mb-3 flex-wrap">

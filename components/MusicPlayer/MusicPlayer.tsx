@@ -66,11 +66,15 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
     return 'Boa noite';
   }, []);
 
-  // Formatação de minutos:segundos
+  // Formatação de minutos:segundos e horas
   const formatTime = (secs: number) => {
-    if (isNaN(secs) || secs < 0) return '0:00';
-    const m = Math.floor(secs / 60);
+    if (isNaN(secs) || secs <= 0) return '0:00';
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
     const s = Math.floor(secs % 60);
+    if (h > 0) {
+      return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
@@ -100,43 +104,6 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
   return (
     <div className="relative min-h-screen bg-zinc-950 text-white select-none pb-36 font-sans">
-      
-      {/* ========================================================= */}
-      {/* NÓ DE ÁUDIO/VÍDEO NATIVO DO YOUTUBE COM SUPORTE AUTOPLAY  */}
-      {/* ========================================================= */}
-      {currentSong && (
-        <div 
-          className={`fixed transition-all duration-300 z-50 overflow-hidden shadow-2xl ${
-            showMiniVideo
-              ? 'bottom-28 right-4 w-72 h-44 rounded-2xl border-2 border-red-600 bg-black shadow-red-950/80'
-              : 'bottom-0 right-0 w-[2px] h-[2px] opacity-[0.01] pointer-events-none'
-          }`}
-        >
-          {showMiniVideo && (
-            <div className="bg-zinc-900 px-3 py-1.5 flex items-center justify-between border-b border-zinc-800">
-              <span className="text-[10px] font-black uppercase tracking-wider text-red-500 truncate max-w-[180px]">
-                {currentSong.title}
-              </span>
-              <button 
-                onClick={() => audioService.toggleMiniVideo()}
-                className="text-zinc-400 hover:text-white p-0.5"
-                title="Minimizar vídeo"
-              >
-                <Minimize2 size={14} />
-              </button>
-            </div>
-          )}
-          <iframe
-            id="abfit-main-youtube-frame"
-            key={`${currentSong.id}-${playbackKey}`}
-            src={`https://www.youtube.com/embed/${currentSong.id}?enablejsapi=1&autoplay=${isPlaying ? '1' : '0'}&playsinline=1&rel=0&modestbranding=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-            title="ABFIT Music Player"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="w-full h-full border-0"
-          />
-        </div>
-      )}
 
       {/* ========================================================= */}
       {/* BARRA SUPERIOR DE NAVEGAÇÃO (ESTILO SPOTIFY)              */}
@@ -467,9 +434,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {/* GRID DE ACESSO RÁPIDO DO SPOTIFY (GRID DE 6 CARDS) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {filteredCategories.slice(0, 6).map(cat => {
+            {/* GRID DE ACESSO RÁPIDO DO SPOTIFY (GRID DE CARDS) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredCategories.slice(0, 8).map(cat => {
                 const isCatPlaying = isPlaying && queue.some(s => cat.songs.some(cs => cs.id === s.id));
 
                 return (
@@ -786,16 +753,16 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
             {/* Barra de Progresso com Tempo */}
             <div className="w-full max-w-md flex items-center gap-2 text-[10px] font-mono text-zinc-400">
-              <span className="w-8 text-right">{formatTime(currentTime)}</span>
+              <span className="min-w-[40px] text-right">{formatTime(currentTime)}</span>
               <input
                 type="range"
                 min={0}
-                max={duration || 180}
+                max={duration > 0 ? duration : 100}
                 value={currentTime}
                 onChange={(e) => audioService.seekTo(parseFloat(e.target.value))}
                 className="flex-1 h-1 bg-zinc-800 accent-red-600 rounded-lg cursor-pointer hover:h-1.5 transition-all"
               />
-              <span className="w-8">{formatTime(duration)}</span>
+              <span className="min-w-[40px]">{duration > 0 ? formatTime(duration) : '--:--'}</span>
             </div>
           </div>
 

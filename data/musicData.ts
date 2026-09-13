@@ -104,5 +104,15 @@ export const musicCategories: MusicCategory[] = [
     songs: [
       { id: 'hoIROKL1bB8', title: 'Pagode 1', artist: 'ABFIT Roda de Samba' }
     ]
+  },
+  {
+    id: 'npr-music',
+    name: 'NPR MUSIC',
+    description: 'Sessões ao vivo acústicas e envolventes do NPR Tiny Desk Concert para um treino com alta vibe e ritmo orgânico.',
+    color: '#8b5cf6',
+    gradient: 'from-purple-600 via-indigo-700 to-zinc-950',
+    songs: [
+      { id: 'enAyZlFjKss', title: 'NPR Tiny Desk Concert 1', artist: 'NPR Music Live' }
+    ]
   }
 ];
