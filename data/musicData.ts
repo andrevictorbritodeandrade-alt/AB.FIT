@@ -52,7 +52,10 @@ export const musicCategories: MusicCategory[] = [
     gradient: 'from-red-600 to-amber-600',
     songs: [
       { id: 'AljJx6atPDg', title: 'Pagodão Baiano 1', artist: 'ABFIT Seleção Bahia' },
-      { id: '4iFfuyOUM1Q', title: 'Pagodão Baiano 2', artist: 'ABFIT Seleção Bahia' }
+      { id: '4iFfuyOUM1Q', title: 'Pagodão Baiano 2', artist: 'ABFIT Seleção Bahia' },
+      { id: 'mju1KPxhO8I', title: 'Pagodão Baiano 3', artist: 'ABFIT Seleção Bahia' },
+      { id: 'GsJuSSxmz30', title: 'Pagodão Baiano 4', artist: 'ABFIT Seleção Bahia' },
+      { id: 'AOSAE_AebgA', title: 'Pagodão Baiano 5', artist: 'ABFIT Seleção Bahia' }
     ]
   },
   {
@@ -72,7 +75,11 @@ export const musicCategories: MusicCategory[] = [
     color: '#059669',
     gradient: 'from-emerald-600 to-yellow-600',
     songs: [
-      { id: 'H-Yrgs_OMio', title: 'Brasilidades 1', artist: 'ABFIT Tropical' }
+      { id: 'H-Yrgs_OMio', title: 'Brasilidades 1', artist: 'ABFIT Tropical' },
+      { id: 'xX-q3drj7lo', title: 'Brasilidades 2', artist: 'ABFIT Tropical' },
+      { id: '_KW4hB4Frsg', title: 'Brasilidades 3', artist: 'ABFIT Tropical' },
+      { id: 'kEw4URp6qFU', title: 'Brasilidades 4', artist: 'ABFIT Tropical' },
+      { id: 'IryEziyPw5M', title: 'Brasilidades 5', artist: 'ABFIT Tropical' }
     ]
   },
   {
@@ -87,12 +94,17 @@ export const musicCategories: MusicCategory[] = [
   },
   {
     id: 'amapiano',
-    name: 'Amapiano',
-    description: 'Log drums profundos, pianos envolventes e o som direto da África do Sul.',
+    name: 'Amapiano & Afrobeats',
+    description: 'Log drums profundos, batidas africanas, pianos envolventes e o melhor do Afrobeat.',
     color: '#f59e0b',
     gradient: 'from-amber-600 to-orange-700',
     songs: [
-      { id: 'T7RsHot9MBU', title: 'Amapiano 1', artist: 'ABFIT Afro Vibe' }
+      { id: 'T7RsHot9MBU', title: 'Amapiano 1', artist: 'ABFIT Afro Vibe' },
+      { id: '0zQnScWo3Ww', title: 'Amapiano & Afrobeats 2', artist: 'ABFIT Afro Vibe' },
+      { id: 'UxXoVc5DT44', title: 'Amapiano & Afrobeats 3', artist: 'ABFIT Afro Vibe' },
+      { id: 'ewLGbGqXdpY', title: 'Amapiano & Afrobeats 4', artist: 'ABFIT Afro Vibe' },
+      { id: 'YpFZZKF85aw', title: 'Amapiano & Afrobeats 5', artist: 'ABFIT Afro Vibe' },
+      { id: 'O1sU1F6dZNk', title: 'Amapiano & Afrobeats 6', artist: 'ABFIT Afro Vibe' }
     ]
   },
   {
@@ -102,7 +114,10 @@ export const musicCategories: MusicCategory[] = [
     color: '#ef4444',
     gradient: 'from-red-600 to-rose-700',
     songs: [
-      { id: 'hoIROKL1bB8', title: 'Pagode 1', artist: 'ABFIT Roda de Samba' }
+      { id: 'hoIROKL1bB8', title: 'Pagode 1', artist: 'ABFIT Roda de Samba' },
+      { id: '9f7AcEXNZyE', title: 'Pagode 2', artist: 'ABFIT Roda de Samba' },
+      { id: 'CQryy5dBz2s', title: 'Pagode 3', artist: 'ABFIT Roda de Samba' },
+      { id: 'QBYn1-0GNWE', title: 'Pagode 4', artist: 'ABFIT Roda de Samba' }
     ]
   },
   {
