@@ -4,6 +4,48 @@ import { ArrowLeft, Camera, Heart, Zap, MapPin, Activity, Clock, Menu, Send, Ima
 import { Card, HeaderTitle, AppFooter, BackgroundCarousel, FITNESS_IMAGES } from './Layout';
 import { WorkoutHistoryEntry } from '../types';
 
+// Helper para formatar data incluindo dia da semana mesmo para registros legados
+function formatWorkoutDate(dateStr?: string, timestamp?: number): string {
+  let dateObj: Date | null = null;
+  if (timestamp) {
+    dateObj = new Date(timestamp);
+  } else if (dateStr) {
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const year = parseInt(parts[2], 10);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        dateObj = new Date(year, month, day);
+      }
+    } else {
+      const parsed = Date.parse(dateStr);
+      if (!isNaN(parsed)) dateObj = new Date(parsed);
+    }
+  }
+
+  if (dateObj && !isNaN(dateObj.getTime())) {
+    const weekday = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+    const formatted = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${formatted}`;
+  }
+
+  return dateStr || '';
+}
+
+// Helper para obter a carga numérica registrada ou persistida localmente
+function getExerciseDisplayLoad(ex: any): string | null {
+  if (ex.load && String(ex.load).trim() !== '' && String(ex.load).trim() !== '0') {
+    return String(ex.load).trim();
+  }
+  try {
+    const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
+    if (ex.id && cargas[ex.id]) return String(cargas[ex.id]).trim();
+    if (ex.name && cargas[ex.name.toLowerCase().trim()]) return String(cargas[ex.name.toLowerCase().trim()]).trim();
+  } catch (e) {}
+  return null;
+}
+
 export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false, onAddPost }: { history: WorkoutHistoryEntry[], onBack: () => void, onToggleMenu?: () => void, isProfessor?: boolean, onAddPost?: (post: WorkoutHistoryEntry) => void }) {
   const [postText, setPostText] = useState('');
   const [postImage, setPostImage] = useState<string | null>(null);
@@ -138,7 +180,9 @@ export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false
                   ) : (
                     <h4 className="text-[11px] font-black uppercase italic text-white tracking-tight">{post.name}</h4>
                   )}
-                  <p className="text-[8px] text-zinc-500 font-bold uppercase">{post.date} • {post.type === 'RUNNING' ? 'CORRIDA' : post.type === 'POST' ? 'ATUALIZAÇÃO' : 'FORÇA'}</p>
+                  <p className="text-[8px] text-zinc-500 font-bold uppercase">
+                    {formatWorkoutDate(post.date, post.timestamp)} • {post.type === 'RUNNING' ? 'CORRIDA' : post.type === 'POST' ? 'ATUALIZAÇÃO' : 'FORÇA'}
+                  </p>
                 </div>
               </div>
 
@@ -176,14 +220,25 @@ export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false
                       <span className="text-xs font-black uppercase italic">Missão Cumprida</span>
                     </div>
                     <p className="text-lg font-black italic uppercase text-white leading-none">{post.name}</p>
+                    <div className="flex gap-4 mt-2 mb-3">
+                      <div className="flex flex-col">
+                        <span className="text-[7px] font-black text-red-500 uppercase">Duração</span>
+                        <span className="text-sm font-black italic text-white">{post.duration}</span>
+                      </div>
+                    </div>
                     {post.exercises && (
-                        <div className="mt-4 space-y-1">
-                           {post.exercises.map((ex, i) => (
-                              <div key={i} className="flex justify-between text-[10px] text-zinc-400 font-bold">
-                                 <span>{ex.name}</span>
-                                 <span>{ex.load} {ex.loadUnit || 'Kg'}</span>
-                              </div>
-                           ))}
+                        <div className="mt-4 space-y-1.5">
+                           {post.exercises.map((ex, i) => {
+                             const loadVal = getExerciseDisplayLoad(ex);
+                             return (
+                               <div key={i} className="flex justify-between items-center text-[10px] text-zinc-400 font-bold border-b border-white/[0.03] pb-0.5">
+                                  <span className="truncate pr-2">{ex.name}</span>
+                                  <span className="font-mono text-white font-black shrink-0">
+                                    {loadVal ? `${loadVal} ${ex.loadUnit || 'Kg'}` : `-- ${ex.loadUnit || 'Kg'}`}
+                                  </span>
+                               </div>
+                             );
+                           })}
                         </div>
                     )}
                     <p className="text-[9px] text-zinc-500 mt-2 font-bold uppercase italic">Treino finalizado com excelência técnica.</p>

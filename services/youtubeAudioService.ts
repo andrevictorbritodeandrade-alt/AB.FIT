@@ -218,16 +218,34 @@ class YouTubeAudioService {
     this.timer = setInterval(() => {
       if (this.ytPlayer && typeof this.ytPlayer.getCurrentTime === 'function') {
         this.updateTimeAndDuration();
+        
+        // Fallback Autoplay: Se estiver no final da música e não mudou
+        const { currentTime, duration, isPlaying } = this.state;
+        if (isPlaying && duration > 0 && currentTime >= duration - 1) {
+          // Pequeno delay para permitir o evento nativo do YT disparar
+          setTimeout(() => {
+            if (this.state.isPlaying && this.state.currentTime >= this.state.duration - 1) {
+              console.log('[ABFIT Music] Autoplay Fallback Triggered');
+              this.handleNext();
+            }
+          }, 1500);
+        }
       } else {
         this.sendIframeCommand('getCurrentTime');
         this.sendIframeCommand('getDuration');
-        // Incremento suave sem cap arbitrário em 180s
+        
+        // Incremento suave e verificação de fim de faixa para iframes sem API direta
         if (this.state.isPlaying) {
           const nextTime = this.state.currentTime + 1;
-          const maxDur = this.state.duration > 0 ? this.state.duration : 3600;
-          this.updateState({
-            currentTime: Math.min(nextTime, maxDur)
-          });
+          const maxDur = this.state.duration > 0 ? this.state.duration : 0;
+          
+          if (maxDur > 0 && nextTime >= maxDur) {
+            this.handleNext();
+          } else {
+            this.updateState({
+              currentTime: nextTime
+            });
+          }
         }
       }
     }, 1000);
@@ -272,14 +290,15 @@ class YouTubeAudioService {
   public playSong(song: Song, newQueue?: Song[]) {
     const queue = newQueue || (this.state.queue.length > 0 ? this.state.queue : [song]);
     const isDifferent = this.state.currentSong?.id !== song.id;
-
+    
+    // Sempre atualiza a chave de reprodução para garantir recarregamento se necessário
     this.updateState({
       currentSong: song,
       queue,
       isPlaying: true,
       currentTime: 0,
       duration: 0,
-      playbackKey: isDifferent ? Date.now() : this.state.playbackKey,
+      playbackKey: Date.now(),
     });
 
     if (this.ytPlayer && typeof this.ytPlayer.loadVideoById === 'function' && isDifferent) {
@@ -371,21 +390,28 @@ class YouTubeAudioService {
     const { queue, currentSong, shuffle, repeat } = this.state;
     if (queue.length === 0) return;
 
+    console.log('[ABFIT Music] Moving to next song...');
+
     if (repeat && currentSong) {
       this.playSong(currentSong);
       return;
     }
 
     const currentIndex = queue.findIndex((s) => s.id === currentSong?.id);
+    let nextIdx = 0;
+
     if (shuffle) {
-      let nextIdx = Math.floor(Math.random() * queue.length);
+      nextIdx = Math.floor(Math.random() * queue.length);
       if (queue.length > 1 && nextIdx === currentIndex) {
         nextIdx = (nextIdx + 1) % queue.length;
       }
-      this.playSong(queue[nextIdx]);
     } else {
-      const nextIdx = (currentIndex + 1) % queue.length;
-      this.playSong(queue[nextIdx]);
+      nextIdx = (currentIndex + 1) % queue.length;
+    }
+    
+    const nextSong = queue[nextIdx];
+    if (nextSong) {
+      this.playSong(nextSong);
     }
   }
 

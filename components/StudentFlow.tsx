@@ -324,15 +324,18 @@ function incrementarTreino(tipo: 'A' | 'B' | 'C') {
 }
 
 // --- FUNÇÕES DE PERSISTÊNCIA LOCAL ---
-function salvarCarga(exercicioId: string, carga: string) {
+function salvarCarga(exercicioId: string, carga: string, exercicioNome?: string) {
     const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
-    cargas[exercicioId] = carga;
+    if (exercicioId) cargas[exercicioId] = carga;
+    if (exercicioNome) cargas[exercicioNome.toLowerCase().trim()] = carga;
     localStorage.setItem('cargasTreino', JSON.stringify(cargas));
 }
 
-function carregarCarga(exercicioId: string): string {
+function carregarCarga(exercicioId: string, exercicioNome?: string): string {
     const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
-    return cargas[exercicioId] || '';
+    if (exercicioId && cargas[exercicioId]) return cargas[exercicioId];
+    if (exercicioNome && cargas[exercicioNome.toLowerCase().trim()]) return cargas[exercicioNome.toLowerCase().trim()];
+    return '';
 }
 
 function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish, onMarkSet, onUpdateLoad, onUpdateUnit, onShowDetail, onShowPrescreveAI, currentReps, currentMethod, onSkip }: { 
@@ -368,13 +371,13 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   }, [lastLoad]);
 
   useEffect(() => {
-    const saved = carregarCarga(ex.id || '');
+    const saved = carregarCarga(ex.id || '', ex.name);
     if (saved) {
       setLocalLoad(saved);
     } else {
       setLocalLoad(ex.load || lastLoad || '');
     }
-  }, [ex.load, ex.id, lastLoad]);
+  }, [ex.load, ex.id, ex.name, lastLoad]);
 
   const totalSets = parseInt(ex.sets || '3') || 3;
   const rawRepsStr = String(currentReps || ex.reps || '13').trim();
@@ -399,7 +402,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
     const updated = parts.join('/');
     setLocalLoad(updated);
     onUpdateLoad(ex.id!, updated, true);
-    salvarCarga(ex.id!, updated);
+    salvarCarga(ex.id!, updated, ex.name);
     setShowSaved(true);
   };
 
@@ -512,7 +515,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
               <button 
                 onClick={() => {
                   onUpdateLoad(ex.id!, localLoad, false);
-                  salvarCarga(ex.id!, localLoad);
+                  salvarCarga(ex.id!, localLoad, ex.name);
                   setDisplayLoad(localLoad);
                   setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
@@ -535,14 +538,14 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                   const val = e.target.value;
                   setLocalLoad(val);
                   onUpdateLoad(ex.id!, val, true);
-                  salvarCarga(ex.id!, val);
+                  salvarCarga(ex.id!, val, ex.name);
                 }}
                 className={`bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors ${showSaved ? 'text-emerald-500' : 'text-foreground'}`}
               />
               <button 
                 onClick={() => {
                   onUpdateLoad(ex.id!, localLoad, false);
-                  salvarCarga(ex.id!, localLoad);
+                  salvarCarga(ex.id!, localLoad, ex.name);
                   setDisplayLoad(localLoad);
                   setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
@@ -867,12 +870,22 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const startSession = (workout: Workout) => {
     const now = Date.now();
     setSessionStartTime(now);
-    setActiveWorkout(workout);
+    
+    // Enrich with last loads to "maintain loads" as requested
+    const enrichedExercises = workout.exercises.map(ex => {
+      const savedLoad = carregarCarga(ex.id || '');
+      const loadToUse = savedLoad || ex.load || lastLoads[ex.name] || '';
+      return { ...ex, load: loadToUse };
+    });
+    
+    const enrichedWorkout = { ...workout, exercises: enrichedExercises };
+    setActiveWorkout(enrichedWorkout);
+    
     localStorage.setItem(`workout_start_${user.id}`, now.toString());
     localStorage.setItem(`active_workout_id_${user.id}`, workout.id);
     localStorage.removeItem(`workout_progress_${user.id}`);
     const initialProgress: Record<string, { completedSets: number[], isFinished: boolean }> = {};
-    workout.exercises.forEach(ex => {
+    enrichedWorkout.exercises.forEach(ex => {
       initialProgress[ex.id || ''] = { completedSets: [], isFinished: false };
     });
     setExerciseProgress(initialProgress);
@@ -906,14 +919,27 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     const finalElapsedTime = elapsedTime || 0;
     const duracaoMinutos = Math.max(1, Math.ceil(finalElapsedTime / 60));
     const calorias = duracaoMinutos * 7;
-    const cargas = (activeWorkout.exercises || []).map(ex => ({
-      exercicio: ex.name || 'Exercício',
-      carga: ex.load || '0',
-      unidade: ex.loadUnit || 'Kg'
-    }));
+    const cargas = (activeWorkout.exercises || []).map(ex => {
+      const saved = carregarCarga(ex.id || '', ex.name);
+      const finalLoad = ex.load || saved || lastLoads[ex.name] || '';
+      return {
+        exercicio: ex.name || 'Exercício',
+        carga: finalLoad || '0',
+        unidade: ex.loadUnit || 'Kg'
+      };
+    });
 
     try {
       const now = new Date();
+      const mappedExercises = (activeWorkout.exercises || []).map(ex => {
+        const saved = carregarCarga(ex.id || '', ex.name);
+        const finalLoad = ex.load || saved || lastLoads[ex.name] || '';
+        return {
+          ...ex,
+          load: finalLoad
+        };
+      });
+
       const entry: WorkoutHistoryEntry = {
         id: Date.now().toString(),
         workoutId: activeWorkout.id,
@@ -923,7 +949,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         timestamp: Date.now(),
         photoUrl: selfieUrl || undefined,
         type: 'STRENGTH',
-        exercises: activeWorkout.exercises || []
+        exercises: mappedExercises
       };
 
       let result: any = { 

@@ -18,6 +18,7 @@ import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import AICoach from './components/AICoach';
 import { CorreRJView } from './components/CorreRJ';
 import { InstallPrompt } from './components/InstallPrompt';
+import { NotificationsModal } from './components/NotificationsModal';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   auth, 
@@ -103,7 +104,17 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-function SettingsView({ onBack }: { onBack: () => void }) {
+function SettingsView({ 
+  onBack, 
+  onOpenNotifications, 
+  notifications = [] 
+}: { 
+  onBack: () => void, 
+  onOpenNotifications?: () => void, 
+  notifications?: AppNotification[] 
+}) {
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <div className="p-6 pb-48 animate-in fade-in duration-500 text-foreground overflow-y-auto h-screen custom-scrollbar text-left bg-background transition-colors">
       <header className="flex items-center gap-4 mb-10">
@@ -128,18 +139,29 @@ function SettingsView({ onBack }: { onBack: () => void }) {
             <ChevronRight className="text-muted-foreground" size={18} />
          </Card>
 
-         <Card className="p-5 bg-card border-border flex items-center justify-between">
+         <Card 
+           onClick={onOpenNotifications}
+           className="p-5 bg-card border-border flex items-center justify-between cursor-pointer hover:border-red-600/50 transition-colors group"
+         >
             <div className="flex items-center gap-4">
-               <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg">
+               <div className="p-2.5 bg-blue-600 rounded-xl shadow-lg group-hover:scale-105 transition-transform">
                   <Bell className="text-white" size={20} />
                </div>
                <div>
-                  <h4 className="text-[13px] font-black uppercase italic text-foreground">Notificações</h4>
-                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Alertas de treino e renovação</p>
+                  <h4 className="text-[13px] font-black uppercase italic text-foreground flex items-center gap-2">
+                    Notificações
+                    {unreadCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-red-600 text-white text-[9px] font-black uppercase tracking-wider">
+                        {unreadCount} nova{unreadCount > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </h4>
+                  <p className="text-[9px] text-muted-foreground font-bold uppercase tracking-widest">Alertas de treino, renovação e avaliações</p>
                </div>
             </div>
-            <div className="w-10 h-5 bg-emerald-600 rounded-full relative">
-               <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full" />
+            <div className="flex items-center gap-2">
+               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest hidden sm:inline">Ver todas</span>
+               <ChevronRight className="text-muted-foreground group-hover:text-white transition-colors" size={18} />
             </div>
          </Card>
       </div>
@@ -246,6 +268,35 @@ export default function App() {
   const [authReady, setAuthReady] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [workoutAlertNotification, setWorkoutAlertNotification] = useState<string | null>(null);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('abfit_read_notifications') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const markNotificationAsRead = (id: string) => {
+    setReadNotificationIds(prev => {
+      const next = prev.includes(id) ? prev : [...prev, id];
+      try {
+        localStorage.setItem('abfit_read_notifications', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
+
+  const markAllNotificationsAsRead = () => {
+    const allIds = studentNotifications.map(n => n.id);
+    setReadNotificationIds(prev => {
+      const next = Array.from(new Set([...prev, ...allIds]));
+      try {
+        localStorage.setItem('abfit_read_notifications', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+  };
 
   const studentForView = useMemo(() => {
     if (!selectedStudent) return null;
@@ -2367,18 +2418,32 @@ export default function App() {
   const studentNotifications = useMemo(() => {
     if (!studentForView) return [];
     const notifications: AppNotification[] = [];
+
+    // Coach direct alert
+    if (workoutAlertNotification) {
+      notifications.push({
+        id: 'coach-workout-alert',
+        title: 'Notificação do Treinador',
+        message: workoutAlertNotification,
+        date: new Date().toLocaleDateString('pt-BR'),
+        read: readNotificationIds.includes('coach-workout-alert'),
+        type: 'COACH' as any
+      });
+    }
+
     const history = studentForView.workoutHistory || [];
     studentForView.workouts?.forEach(w => {
       const completed = history.filter(h => h.workoutId === w.id || h.name === w.title).length;
       const target = w.projectedSessions || 12;
       const remaining = target - completed;
       if (remaining <= 2 && remaining >= 0) {
+        const notifId = `renew-${w.id}`;
         notifications.push({ 
-          id: `renew-${w.id}`, 
+          id: notifId, 
           title: 'Renovação e Avaliação', 
-          message: `Faltam ${remaining} sessões. Agende sua nova avaliação física para troca de série.`, 
+          message: `Faltam ${remaining} sessões no treino "${w.title}". Agende sua nova avaliação física para troca de série.`, 
           date: new Date().toLocaleDateString('pt-BR'), 
-          read: false, 
+          read: readNotificationIds.includes(notifId), 
           type: 'RENEWAL' 
         });
       }
@@ -2387,35 +2452,68 @@ export default function App() {
     // Assessment check
     const assessments = studentForView.physicalAssessments || [];
     if (assessments.length === 0) {
-        notifications.push({
-            id: 'assessment-first',
-            title: 'Avaliação Física',
-            message: 'Você ainda não possui uma avaliação física registrada. Agende agora!',
-            date: new Date().toLocaleDateString('pt-BR'),
-            read: false,
-            type: 'SYSTEM'
-        });
+      const notifId = 'assessment-first';
+      notifications.push({
+        id: notifId,
+        title: 'Avaliação Física Obrigatória',
+        message: 'Você ainda não possui uma avaliação física registrada. Agende com seu treinador!',
+        date: new Date().toLocaleDateString('pt-BR'),
+        read: readNotificationIds.includes(notifId),
+        type: 'SYSTEM'
+      });
     } else {
-        const lastAssessment = assessments[assessments.length - 1];
-        const lastDate = new Date(lastAssessment.data);
-        if (!isNaN(lastDate.getTime())) {
-            const diffTime = Date.now() - lastDate.getTime();
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays > 45) { // Needs renewal
-                notifications.push({
-                    id: 'assessment-renewal',
-                    title: 'Avaliação Física',
-                    message: `Sua última avaliação foi há ${diffDays} dias. Agende uma nova.`,
-                    date: new Date().toLocaleDateString('pt-BR'),
-                    read: false,
-                    type: 'SYSTEM'
-                });
-            }
+      const lastAssessment = assessments[assessments.length - 1];
+      const lastDate = new Date(lastAssessment.data);
+      if (!isNaN(lastDate.getTime())) {
+        const diffTime = Date.now() - lastDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 45) { // Needs renewal
+          const notifId = 'assessment-renewal';
+          notifications.push({
+            id: notifId,
+            title: 'Renovação de Avaliação Física',
+            message: `Sua última avaliação física foi há ${diffDays} dias. Recomenda-se agendar uma nova avaliação.`,
+            date: new Date().toLocaleDateString('pt-BR'),
+            read: readNotificationIds.includes(notifId),
+            type: 'SYSTEM'
+          });
         }
+      }
+    }
+
+    // Periodization phase alert
+    if (studentForView.activePlan?.phaseName) {
+      const targetSets = studentForView.activePlan?.targetSets || 18;
+      const countA = studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0);
+      const countB = studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0);
+      if (countA >= targetSets && countB >= targetSets) {
+        const notifId = `phase-complete-${studentForView.activePlan.phaseName}`;
+        notifications.push({
+          id: notifId,
+          title: 'Fase de Periodização Concluída',
+          message: `Parabéns! Você completou a meta de treinos da fase ${studentForView.activePlan.phaseName}. Consulte seu treinador para a próxima fase.`,
+          date: new Date().toLocaleDateString('pt-BR'),
+          read: readNotificationIds.includes(notifId),
+          type: 'SYSTEM'
+        });
+      }
+    }
+
+    // Always include a persistent status notification if no urgent notifications exist
+    if (notifications.length === 0) {
+      const notifId = `active-status-${studentForView.id}`;
+      notifications.push({
+        id: notifId,
+        title: 'Assessoria Ativa',
+        message: 'Seu plano de treinamento está ativo e em andamento. Mantenha a consistência em cada sessão!',
+        date: new Date().toLocaleDateString('pt-BR'),
+        read: readNotificationIds.includes(notifId),
+        type: 'SYSTEM'
+      });
     }
 
     return notifications;
-  }, [studentForView]);
+  }, [studentForView, workoutAlertNotification, readNotificationIds]);
 
   const handleLogin = (val: string) => {
     setLoginError('');
@@ -2863,93 +2961,6 @@ export default function App() {
     return !studentForView?.disabledFeatures?.includes(item.id);
   });
 
-  const AssessmentAlert = ({ student }: { student: Student }) => {
-    // Definimos o marco da última avaliação completa (Bio + Dobras + Fitas + Relogio)
-    // Se o aluno tiver avaliações registradas, usamos a data da mais recente.
-    // Senão, se for o André, usamos '2026-04-20' como fallback, senão podemos mostrar um banner convidativo para registrar sua primeira avaliação física!
-    let lastFullDate = '';
-    
-    if (student.physicalAssessments && student.physicalAssessments.length > 0) {
-      // Obtém a data da avaliação física mais recente
-      const sorted = [...student.physicalAssessments].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
-      lastFullDate = sorted[0].data.split('T')[0];
-    } else if (student.id === 'fixed-andre') {
-      lastFullDate = '2026-04-20';
-    } else {
-      // Banner convidativo para alunos novos sem avaliações
-      return (
-        <div 
-          onClick={() => setView('STUDENT_ASSESSMENT')}
-          className="w-full max-w-xl p-4 rounded-[2.5rem] border-2 border-dashed border-red-650 bg-red-950/10 shadow-xl relative overflow-hidden transition-all flex flex-row items-center gap-5 cursor-pointer hover:scale-[1.01] active:scale-[0.99] animate-pulse"
-        >
-          <div className="w-16 h-16 rounded-[1.8rem] bg-red-600 text-white shadow-lg shrink-0 flex items-center justify-center">
-             <Sparkles size={24} />
-          </div>
-          <div className="flex-1 text-left">
-            <p className="text-[8px] font-black uppercase tracking-[0.2em] italic mb-1 text-red-500">REQUISITO ABFIT</p>
-            <h3 className="text-xs font-black italic uppercase tracking-widest text-white leading-tight">Cadastrar Primeira Avaliação Física</h3>
-            <p className="text-[9px] text-zinc-400 mt-1 uppercase tracking-wide">Toque aqui para enviar seu print de Bioimpedância ou digitar suas medidas corporais.</p>
-          </div>
-        </div>
-      );
-    }
-
-    const nextDate = new Date(lastFullDate);
-    nextDate.setDate(nextDate.getDate() + 30);
-    const now = new Date();
-    const diffTime = nextDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Mostra o alerta se faltar menos de 30 dias ou se estiver atrasado
-    const isOverdue = diffDays <= 0;
-    const isUrgent = diffDays <= 7;
-
-    return (
-      <div 
-        onClick={() => setView('STUDENT_ASSESSMENT')}
-        className={`w-full max-w-xl h-[92px] p-4 rounded-[2.5rem] border-2 shadow-xl relative overflow-hidden transition-all flex flex-row items-center gap-5 backdrop-blur-md cursor-pointer hover:scale-[1.01] active:scale-[0.99]
-        ${isOverdue 
-          ? 'bg-red-950/40 border-red-600 shadow-red-600/20 animate-pulse' 
-          : isUrgent
-            ? 'bg-amber-950/30 border-amber-500 shadow-amber-600/10'
-            : 'bg-zinc-900 border-zinc-800'
-        }`}
-      >
-        <div className="absolute top-0 right-0 p-4 opacity-5">
-          {isOverdue ? <AlertTriangle size={40} className="text-red-500" /> : <Calendar size={40} className="text-zinc-600" />}
-        </div>
-
-        <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shrink-0 shadow-lg relative z-10
-          ${isOverdue ? 'bg-red-600 text-white shadow-red-600/40' : 'bg-zinc-800 text-zinc-400'}
-        `}>
-          <Activity size={32} />
-        </div>
-        
-        <div className="flex-1 text-left relative z-10">
-          <p className={`text-[8px] font-black uppercase tracking-[0.2em] italic mb-1
-            ${isOverdue ? 'text-red-500' : 'text-zinc-500'}
-          `}>
-            {isOverdue ? "MISSÃO OBRIGATÓRIA ATRASADA" : "AVALIAÇÃO FÍSICA COMPLETA"}
-          </p>
-          <h3 className="text-xs font-black italic uppercase tracking-widest text-white leading-tight">
-            Próxima Auditoria Corporal
-          </h3>
-          <div className="mt-1 flex items-center gap-2">
-             <span className={`text-[9px] font-black uppercase italic
-               ${isOverdue ? 'text-red-500' : isUrgent ? 'text-amber-500' : 'text-zinc-400'}
-             `}>
-               {isOverdue 
-                 ? `ATRASADO ${Math.abs(diffDays)} DIAS` 
-                 : `DAQUI A ${diffDays} DIAS`
-               }
-             </span>
-             <span className="text-[8px] font-black text-white/30 uppercase italic">Ref: {nextDate.toLocaleDateString('pt-BR')}</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <ErrorBoundary>
       <BackgroundWrapper>
@@ -2960,7 +2971,13 @@ export default function App() {
             isOpen={isSidebarOpen} 
             onClose={() => setIsSidebarOpen(false)} 
             activeView={view} 
-            onNavigate={setView}
+            onNavigate={(targetView) => {
+              if (targetView === 'NOTIFICATIONS') {
+                setShowNotificationsModal(true);
+              } else {
+                setView(targetView);
+              }
+            }}
             isProfessor={isCoach}
             userPhoto={studentForView?.photoUrl}
           />
@@ -3049,7 +3066,14 @@ export default function App() {
               <button onClick={toggleSidebar} className="p-3 bg-zinc-900 rounded-2xl text-zinc-500 hover:text-white transition-colors shadow-lg">
                 <Menu size={20}/>
               </button>
-              <WeatherWidget />
+              <div className="flex items-center gap-3">
+                <NotificationBadge 
+                  notifications={studentNotifications} 
+                  onClick={() => setShowNotificationsModal(true)} 
+                  alwaysVisible={true}
+                />
+                <WeatherWidget />
+              </div>
             </header>
             
             <Logo size="text-4xl" subSize="text-[8px] sm:text-[10px]" />
@@ -3062,13 +3086,17 @@ export default function App() {
                  <div className="absolute -bottom-1 -right-1 bg-red-600 p-2.5 rounded-full border-2 border-black shadow-lg shadow-red-600/40"> <Camera size={14} className="text-white" /> </div>
                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
                </div>
-               <div className="absolute -top-3 -right-4"> <NotificationBadge notifications={studentNotifications} /> </div>
+               <div className="absolute -top-3 -right-4"> 
+                 <NotificationBadge 
+                   notifications={studentNotifications} 
+                   onClick={() => setShowNotificationsModal(true)} 
+                   alwaysVisible={true}
+                 /> 
+               </div>
             </div>
             <p className="text-xl font-black text-white italic uppercase tracking-[0.3em] mt-2">{studentForView.nome}</p>
             
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
-              <AssessmentAlert student={studentForView} />
-
               {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
                 const targetSets = studentForView.activePlan?.targetSets || 18;
@@ -3205,7 +3233,13 @@ export default function App() {
         {view === 'FEED' && <WorkoutFeed history={globalFeedHistory} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} isProfessor={isCoach} onAddPost={!isCoach ? handleAddPost : undefined} />}
         {view === 'WORKOUTS' && studentForView && <WorkoutSessionView user={studentForView} onBack={handleBackNavigation} onSave={handleSaveData} onFinishWorkout={handleFinishWorkout} isCoach={isCoach} />}
         {view === 'COACH_AI' && <AICoach onBack={isCoach ? handleBackNavigation : undefined} />}
-        {view === 'SETTINGS' && <SettingsView onBack={isCoach ? () => setView('PROFESSOR_DASH') : toggleSidebar} />}
+        {view === 'SETTINGS' && (
+          <SettingsView 
+            onBack={isCoach ? () => setView('PROFESSOR_DASH') : toggleSidebar} 
+            onOpenNotifications={() => setShowNotificationsModal(true)}
+            notifications={studentNotifications}
+          />
+        )}
         {view === 'STUDENT_PERIODIZATION' && studentForView && <StudentPeriodizationView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'RUNTRACK_STUDENT' && studentForView && <RunTrackStudentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
@@ -3249,6 +3283,19 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* Modal de Notificações Interativo (Alertas de Treino, Avaliações e Renovação) */}
+        <NotificationsModal
+          isOpen={showNotificationsModal}
+          onClose={() => setShowNotificationsModal(false)}
+          notifications={studentNotifications}
+          onMarkAsRead={markNotificationAsRead}
+          onMarkAllAsRead={markAllNotificationsAsRead}
+          onNavigateToView={(targetView) => {
+            setShowNotificationsModal(false);
+            setView(targetView);
+          }}
+        />
 
         {/* Engine e Player Flutuante de Música Global (Persiste em Todas as Telas/Treinos) */}
         <GlobalMusicPlayer 

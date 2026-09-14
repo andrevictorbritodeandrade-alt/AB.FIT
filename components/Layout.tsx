@@ -124,6 +124,7 @@ export function SideNav({
   // Mapeamento de cores idêntico ao Dashboard em App.tsx
   const studentItems: NavItem[] = [
     { id: 'DASHBOARD', label: 'Home Dashboard', icon: LayoutGrid, color: 'zinc' },
+    { id: 'NOTIFICATIONS', label: 'Notificações', icon: Bell, color: 'red' },
     { id: 'WORKOUTS', label: 'Planilhas Ativas', icon: Dumbbell, color: 'orange' },
     { id: 'RUNTRACK_STUDENT', label: 'ABFIT RUN', icon: Footprints, color: 'rose' },
     { id: 'MUSIC_PLAYER', label: 'ABFIT MUSIC', icon: Headphones, color: 'emerald' },
@@ -318,16 +319,38 @@ export function GlobalSyncIndicator({ status }: { status: 'synced' | 'syncing' |
   );
 }
 
-export function NotificationBadge({ notifications, onClick }: { notifications: AppNotification[], onClick?: () => void }) {
+export function NotificationBadge({ 
+  notifications, 
+  onClick, 
+  alwaysVisible = true 
+}: { 
+  notifications: AppNotification[], 
+  onClick?: () => void,
+  alwaysVisible?: boolean 
+}) {
   const unreadCount = notifications.filter(n => !n.read).length;
-  if (unreadCount === 0) return null;
+  if (unreadCount === 0 && !alwaysVisible) return null;
 
   return (
-    <button onClick={onClick} className="relative p-2 bg-card border border-border rounded-full text-muted-foreground hover:text-red-600 transition-colors">
-      <Bell size={20} />
-      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-background animate-bounce">
-        {unreadCount}
-      </span>
+    <button 
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        if (onClick) onClick();
+      }} 
+      className="relative min-w-[44px] min-h-[44px] p-2.5 bg-zinc-900/90 hover:bg-zinc-800 border border-zinc-700/80 rounded-2xl text-zinc-400 hover:text-white transition-all shadow-xl active:scale-95 cursor-pointer flex items-center justify-center group"
+      title="Central de Notificações"
+      aria-label="Notificações"
+    >
+      <Bell 
+        size={20} 
+        className={`transition-colors ${unreadCount > 0 ? 'text-red-500 animate-pulse' : 'text-zinc-400 group-hover:text-white'}`} 
+      />
+      {unreadCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-red-600 rounded-full text-[10px] font-black text-white flex items-center justify-center border-2 border-zinc-950 shadow-md shadow-red-600/50 animate-bounce">
+          {unreadCount}
+        </span>
+      )}
     </button>
   );
 }
@@ -355,13 +378,47 @@ export function WeatherWidget() {
       );
       const wData = await weatherRes.json();
 
-      // 2. Fetch Location Name (Reverse Geocoding free)
-      const geoRes = await fetch(
-        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`
-      );
-      const gData = await geoRes.json();
+      // 2. Localização exata usando OpenStreetMap Nominatim (bairro / cidade reais)
+      let locationName = '';
+      try {
+        const nomRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=15&addressdetails=1`
+        );
+        if (nomRes.ok) {
+          const nomData = await nomRes.json();
+          const addr = nomData.address || {};
+          const neighborhood = addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || addr.residential;
+          const city = addr.city || addr.town || addr.municipality || addr.village;
+          
+          if (neighborhood && city && neighborhood.toLowerCase() !== city.toLowerCase()) {
+            locationName = `${neighborhood}, ${city}`;
+          } else if (neighborhood) {
+            locationName = neighborhood;
+          } else if (city) {
+            locationName = city;
+          }
+        }
+      } catch (e) {
+        console.warn('Nominatim geocode fallback:', e);
+      }
 
-      const city = gData.city || gData.locality || "Localização";
+      // Fallback para BigDataCloud se necessário
+      if (!locationName) {
+        try {
+          const geoRes = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`
+          );
+          if (geoRes.ok) {
+            const gData = await geoRes.json();
+            locationName = gData.locality || gData.city || gData.principalSubdivision || '';
+          }
+        } catch (e) {}
+      }
+
+      // Filtro rigoroso: nunca exibir "Região Metropolitana" ou termos genéricos
+      if (!locationName || /regi[aã]o\s+metropolitana/i.test(locationName) || /regi[aã]o\s+geogr[aá]fica/i.test(locationName)) {
+        locationName = 'Rio de Janeiro, RJ';
+      }
 
       setWeather({
         temp: Math.round(wData.current.temperature_2m),
@@ -370,7 +427,7 @@ export function WeatherWidget() {
         max: Math.round(wData.daily.temperature_2m_max[0]),
         rainProb: wData.daily.precipitation_probability_max[0],
         condition: getWeatherCondition(wData.current.weather_code),
-        location: city
+        location: locationName
       });
       setError(null);
     } catch (err) {
@@ -454,8 +511,8 @@ export function WeatherWidget() {
           </span>
         </div>
         <div className="flex items-center gap-2 mt-1">
-           <MapPin size={8} className="text-red-600" />
-           <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest truncate max-w-[100px]">{weather.location}</span>
+           <MapPin size={8} className="text-red-600 shrink-0" />
+           <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest truncate max-w-[160px]" title={weather.location}>{weather.location}</span>
            <span className="text-[8px] text-muted-foreground">|</span>
            <div className="flex items-center gap-1">
              <Thermometer size={8} className="text-orange-500" />
