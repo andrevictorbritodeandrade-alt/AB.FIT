@@ -3260,13 +3260,6 @@ export default function App() {
                  <div className="absolute -bottom-1 -right-1 bg-red-600 p-2.5 rounded-full border-2 border-black shadow-lg shadow-red-600/40"> <Camera size={14} className="text-white" /> </div>
                  <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handlePhotoUpload} />
                </div>
-               <div className="absolute -top-3 -right-4"> 
-                 <NotificationBadge 
-                   notifications={studentNotifications} 
-                   onClick={() => setShowNotificationsModal(true)} 
-                   alwaysVisible={true}
-                 /> 
-               </div>
             </div>
             <p className="text-xl font-black text-white italic uppercase tracking-[0.3em] mt-2">{studentForView.nome}</p>
             
