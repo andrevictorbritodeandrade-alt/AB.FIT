@@ -1,6 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { 
-  getFirestore, 
+  initializeFirestore, 
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc, 
   getDocFromServer,
   collection,
@@ -27,7 +29,14 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+// Initialize Firestore with a background synchronization queue using IndexedDB.
+// This ensures workout data and progress are saved locally when offline 
+// and automatically synced to Firestore once connection is restored.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+}, firebaseConfig.firestoreDatabaseId);
+
 export const storage = getStorage(app);
 
 export { ref, uploadBytes, getDownloadURL };
