@@ -2344,8 +2344,9 @@ export function StudentAssessmentView({ student, onBack, onSave, onToggleMenu, i
 
           // Recomendações e Ajustes alinhados cirurgicamente à Periodização Científica e Perfil Clínico
           const isAndre = student.id === 'fixed-andre' || student.nome?.toLowerCase().includes('andré') || student.nome?.toLowerCase().includes('andre');
+          const isMarcelly = student.id === 'fixed-marcelly' || student.nome?.toLowerCase().includes('marcelly');
 
-          if (isAndre || student.periodization) {
+          if (isAndre || isMarcelly || student.periodization) {
             recommendations.push("Foco Estrito em Musculação (Sem Corrida): Manter a estrutura de 9 exercícios diários (4 membros inferiores, 4 membros superiores e 1 de core), divididos em Treino A (Cadeia Anterior) e Treino B (Cadeia Posterior). Corrida totalmente contraindicada devido à tendinopatia no joelho esquerdo; atividade aeróbica complementar, se houver, deve ser estritamente de baixo/zero impacto (apenas caminhada leve, elíptico ou bicicleta).");
 
             recommendations.push("Gestão de Carga Programada (Fase 1 - 18 Sessões): Treinos 1 ao 6 com carga rigorosamente estável para adaptação neuromuscular após 3 meses de inatividade física. A partir do Treino 7, aplicar o 1º ajuste/aumento gradual de sobrecarga. A partir do Treino 13, aplicar o 2º aumento de carga com foco em hipertrofia e estabilização articular. Conclusão no Treino 18.");
@@ -2786,7 +2787,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
         </div>
 
         {/* PROPOSTA DA PRÓXIMA PERIODIZAÇÃO (FASE 2) */}
-        {(plan.proximaPeriodizacaoProposta || student.id === 'fixed-andre') && (
+        {(plan.proximaPeriodizacaoProposta || student.id === 'fixed-andre' || student.id === 'fixed-marcelly') && (
           <div className="mt-8">
             <Card className="p-6 bg-gradient-to-br from-rose-950/30 via-zinc-900 to-black border border-rose-900/30 rounded-3xl relative overflow-hidden">
               <div className="flex items-center justify-between gap-3 mb-4">

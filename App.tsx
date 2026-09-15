@@ -1693,124 +1693,176 @@ export default function App() {
           },
           sexo: 'Feminino',
           periodization: {
-            id: 'per-marcelly-01',
-            titulo: 'Periodização Científica',
-            startDate: '2026-04-30T10:00:00Z',
+            id: 'per-marcelly-18sessoes',
+            titulo: 'Periodização Científica - Fase 1: Retorno & Adaptação (18 Sessões)',
+            startDate: '2026-09-09T00:00:00.000Z',
             type: 'STRENGTH',
-            phaseTitle: 'Macrociclo de Hipertrofia Progressiva e Choque Tensional - 12 Semanas',
-            generalStrategy: "A periodização de Marcelly foca no ganho de 2kg de massa muscular limpa (hipertrofia) otimizando uma janela de 60 minutos diários, 5 vezes por semana. A fisiologia da hipertrofia exige tensão mecânica, estresse metabólico e dano muscular. O plano utiliza uma Periodização Ondulatória para garantir estímulos constantes. Considerando o quadro suspeito de TDAH, o treinamento foi estruturado com alta densidade, métodos avançados dinâmicos e pausas ativas ou curtas para manter altos níveis de dopamina e noradrenalina, otimizando o engajamento cognitivo e o foco durante as sessões.",
+            phaseTitle: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+            generalStrategy: "Retorno de inatividade física de 3 meses. Frequência mínima de 5 vezes na semana (com flexibilidade para treinar 6 ou 7 dias sempre que possível). Foco estrito em musculação com 9 exercícios por sessão (4 membros inferiores, 4 membros superiores e 1 de core), divididos em Cadeia Anterior (Treino A) e Cadeia Posterior (Treino B). Duração rigorosamente limitada a no máximo 1 hora (60 minutos) devido ao perfil neurodivergente (Autista e TDAH), para evitar fadiga e desestabilização sensorial pelo ambiente. Progressão de carga estruturada: Treinos 1 ao 6 com carga estável; 1º ajuste/aumento de carga a partir do Treino 7; 2º aumento a partir do Treino 13; encerramento no Treino 18 com Avaliação Física Obrigatória para validar a transição para a Fase 2.",
+            frequenciaSemanal: "Mínimo de 5 vezes na semana (sempre que possível, 6 a 7 dias)",
+            limiteTempoSessao: "Máximo 1 hora (60 minutos) - Teto inegociável por regulação sensorial (Autismo e TDAH)",
+            restricoesOrtopedicas: "Tendinopatia no joelho esquerdo. Dificuldade de execução de corrida (contraindicada). Cardio restrito a baixo/zero impacto: no máximo caminhada, elíptico ou bicicleta.",
+            regraAvaliacaoFisica: "Avaliação física obrigatória sempre que precisar mudar a série de treino, ou seja, no final de cada periodização (ao término do 18º treino).",
+            proximaPeriodizacaoProposta: {
+              titulo: "Fase 2: Força & Sobrecarga Tensional (24 Sessões / 3x11 reps)",
+              sessoes: 24,
+              reps: "11 repetições (3x11)",
+              descanso: "30 segundos entre as séries",
+              estruturaExercicios: "11 exercícios por treino (+1 de membro inferior e +1 de membro superior em cada série: 5 inferiores, 5 superiores, 1 core)",
+              objetivo: "Potencializar aumento de força neuromuscular e progressão de cargas",
+              tempoLimite: "Máximo de 60 minutos por sessão",
+              gatilhoAtivacao: "Realização e validação da avaliação física completa no 18º treino da Fase 1"
+            },
             clinicalSafety: [
-              "Nutrição e Composição Corporal: Para atingir a meta de +2kg de massa magra, é indispensável dieta hipercalórica leve (+200 a 300kcal/dia) com ingestão proteica entre 1.8g/kg e 2.2g/kg.",
-              "Manejo do TDAH (Suspeito): Evitar pausas longas e passivas. Substituir por descansos ativos (alongamentos leves, mobilidade) ou métodos de alta densidade para manter a estimulação dopaminérgica contínua. Fones de ouvido com música estimulante são altamente recomendados.",
-              "Recuperação e Modulação do Estresse: Atenção rigorosa à higiene do sono (mínimo de 7-8h). O sono de qualidade é crucial para a liberação noturna de GH, testosterona e reparo do dano muscular.",
-              "Biomecânica: Focar em amplitude completa de movimento (ADM) e controle da cadência (ex: 3 segundos na fase excêntrica) para maximizar o tempo sob tensão sem sobrecarregar as articulações com cargas excessivas."
+              "Treinos 1 ao 6: Carga estável. Adaptação neuromuscular e consolidação técnica pós-inatividade de 3 meses.",
+              "Treino 7: 1º Ponto de Ajuste de Carga. Elevação moderada de sobrecarga nos 9 exercícios.",
+              "Treino 13: 2º Ponto de Ajuste de Carga. Nova progressão de carga mantendo 13 repetições.",
+              "Treino 18: Fechamento da Fase 1. Realização obrigatória de Avaliação Física para mudança de série.",
+              "Limite de 1 Hora: Sessão de treino com teto estrito de 60 minutos (Autismo e TDAH - prevenção de sobrecarga sensorial).",
+              "Joelho Esquerdo: Tendinopatia patelar/joelho esquerdo. Sem corrida. Cardio permitido apenas caminhada, elíptico ou bicicleta ergométrica.",
+              "Frequência Semanal: Mínimo 5 dias na semana, com possibilidade de treinar mais dias sempre que viável."
             ],
             bioInsight: {
-              context: "Embasamento Científico: Schoenfeld, B. J. (2010). The mechanisms of muscle hypertrophy and their application to resistance training. Journal of Strength and Conditioning Research, 24(10), 2857-2872. | American College of Sports Medicine (ACSM) (2009). Progression Models in Resistance Training for Healthy Adults. Medicine & Science in Sports & Exercise, 41(3), 687-708. | Ratey, J. J. (2008). Spark: The Revolutionary New Science of Exercise and the Brain. Little, Brown Spark.",
+              context: "Periodização Científica personalizada para Marcelly Bispo: Retorno de inatividade de 3 meses, frequência mínima de 5x/semana (até 7 dias), sessões de no máximo 1 hora (Autismo/TDAH), 9 exercícios diários (4 inf, 4 sup, 1 core) divididos em Anterior e Posterior. Carga estável nos treinos 1 a 6, aumento a partir do treino 7, novo aumento a partir do 13, conclusão no treino 18. Avaliação física obrigatória no final da periodização para transição para a Fase 2 (24 sessões de 11 reps com 30s de descanso e +1 exercício inferior e +1 superior).",
               tips: [
-                "Semanas 1-4: Adaptação Anatômica e Hipertrofia Base. Intensidade: 70-75% 1RM (RIR 2-3). Volume: 12-14 séries semanais por grupamento, 8-12 repetições. Método: Pirâmide crescente e drop-sets eventuais.",
-                "Semanas 5-8: Tensão Mecânica e Hipertrofia Miofibrilar. Intensidade: 80-85% 1RM (RIR 1-2). Volume: 14-16 séries semanais por grupamento, 6-8 repetições. Método: Rest-Pause (Pausa-Descanso).",
-                "Semanas 9-11: Estresse Metabólico e Overreaching Funcional. Intensidade: 65-75% 1RM (RIR 0 - Falha Momentânea). Volume: 18-20 séries semanais por grupamento, 12-15 repetições. Método: Bi-sets agonista-antagonista e cluster sets.",
-                "Semana 12: Supercompensação e Dissipação de Fadiga (Deload). Intensidade: 50-60% 1RM (RIR 3-4). Volume: 8-10 séries semanais por grupamento, 10-12 repetições. Método: Séries tradicionais com foco em conexão mente-músculo."
+                "Treinos 1 a 6: Carga estável. Adaptação articular e neuromuscular sem aumentar peso precipitadamente.",
+                "Treino 7: 1º Ajuste de Carga. Aumentar moderadamente a carga nos 9 exercícios mantendo cadência controlada.",
+                "Treino 13: 2º Ajuste de Carga. Nova progressão de peso para maximizar hipertrofia e força.",
+                "Treino 18: Término da 1ª Periodização -> Avaliação Física Completa Obrigatória.",
+                "Transição Fase 2: 24 sessões por série, 11 repetições, descanso de 30s e 11 exercícios por treino (+1 inferior e +1 superior)."
               ]
             },
             targetVolume: {
-              "Peito": 13,
-              "Costas e Cintura Escapular": 13,
-              "Ombro": 13,
-              "Biceps": 13,
-              "Triceps": 13,
-              "Quadríceps e Adutores": 13,
-              "Glúteos e Posteriores": 13,
-              "Core e Abdomen": 13
+              "Peito": 6,
+              "Costas e Cintura Escapular": 9,
+              "Ombro": 3,
+              "Biceps": 3,
+              "Triceps": 3,
+              "Quadríceps e Adutores": 12,
+              "Glúteos e Posteriores": 12,
+              "Core e Abdomen": 6
             },
             microciclos: [
               {
-                id: 'm1-marcelly',
+                id: 'm-1-6-marcelly',
                 semanas: 'Treinos 1 a 6',
-                titulo: 'FASE INICIAL DE HIPERTROFIA (3x13)',
-                intensidade: 'RPE 7-8 / Desc: 30s',
-                volume: '3 x 13 (24 treinos)',
-                metodo: 'SÉRIES RETAS (30s descanso)',
-                descricao: 'Na 6ª execução: lembrete para ajustar e aumentar a carga.'
+                titulo: 'FASE INICIAL: ADAPTAÇÃO & CARGA ESTÁVEL',
+                metodo: 'Séries retas 3x13 (9 exercícios: 4 inf, 4 sup, 1 core)',
+                intensidade: 'Carga Estável / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 (Cadeia Anterior & Posterior)',
+                descricao: 'Retorno de 3 meses parado. Manter carga rigorosamente estável dos treinos 1 a 6 para adaptação tendínea e articular.'
               },
               {
-                id: 'm2-marcelly',
+                id: 'm-7-12-marcelly',
                 semanas: 'Treinos 7 a 12',
-                titulo: 'PROGRESSÃO DE CARGA 1 (3x13)',
-                intensidade: 'RPE 8-8.5 / Desc: 30s',
-                volume: '3 x 13 (24 treinos)',
-                metodo: 'SÉRIES RETAS COM SOBRECARGA',
-                descricao: 'Na 12ª execução: lembrete para ajustar e aumentar a carga.'
+                titulo: 'PROGRESSÃO: 1º AJUSTE DE CARGA (A PARTIR DO TREINO 7)',
+                metodo: 'Séries retas 3x13 com sobrecarga progressiva',
+                intensidade: 'Aumento gradual de carga / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 (9 exercícios)',
+                descricao: 'A partir do treino 7: primeiro aumento gradual de carga nos exercícios. Frequência mínima 5x/semana.'
               },
               {
-                id: 'm3-marcelly',
+                id: 'm-13-18-marcelly',
                 semanas: 'Treinos 13 a 18',
-                titulo: 'PROGRESSÃO DE CARGA 2 (3x13)',
-                intensidade: 'RPE 8.5-9 / Desc: 30s',
-                volume: '3 x 13 (24 treinos)',
-                metodo: 'SÉRIES RETAS COM SOBRECARGA',
-                descricao: 'Na 18ª execução: lembrete para ajustar e aumentar a carga.'
-              },
-              {
-                id: 'm4-marcelly',
-                semanas: 'Treinos 19 a 24',
-                titulo: 'CONSOLIDAÇÃO E TRANSIÇÃO (3x13)',
-                intensidade: 'RPE 9-9.5 / Desc: 30s',
-                volume: '3 x 13 (24 treinos)',
-                metodo: 'SÉRIES RETAS DE CONSOLIDAÇÃO',
-                descricao: 'Na 24ª execução: aviso de último treino e necessidade de trocar de treino.'
+                titulo: 'CONSOLIDAÇÃO: 2º AJUSTE DE CARGA & AVALIAÇÃO FÍSICA FINAL',
+                metodo: 'Séries retas 3x13 -> Reavaliação no Treino 18',
+                intensidade: 'Sobrecarga Máxima / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 -> Término no Treino 18',
+                descricao: 'A partir do treino 13: segundo aumento de carga. No treino 18: término da 1ª periodização e Avaliação Física Obrigatória para mudança de série.'
               }
             ]
           },
-          faseAjusteA: 0,
-          faseAjusteB: 0,
+          faseAjusteA: 1,
+          faseAjusteB: 2,
           faseAjusteC: 0,
-          totalGlobalA: 0,
-          totalGlobalB: 0,
+          totalGlobalA: 1,
+          totalGlobalB: 2,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 0, targetCount: 48 },
+          trainingProgress: { completedCount: 3, targetCount: 36 },
           activePlan: {
             id: 'current',
-            phaseName: 'Mesociclo - Hipertrofia (24 Treinos)',
-            targetSets: 24,
-            progress: { A: 0, B: 0, C: 0 }
+            phaseName: 'Mesociclo 16 - Hipertrofia',
+            targetSets: 18,
+            progress: { A: 1, B: 2, C: 0 }
+          },
+          periodizationProgress: {
+            '3 x 13': { A: 1, B: 2, C: 0 }
           },
           workouts: [
             {
               id: 'treino-a-marcelly',
-              title: 'TREINO A (Membros Inferiores)',
-              projectedSessions: 24,
+              title: 'TREINO A (terças, quintas e sábados)',
+              projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
-              description: '24 treinos (3x13). Lembrete de aumento de carga na 6ª, 12ª e 18ª execução. Na 24ª execução: troca de treino.',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'm-a-1', name: 'Leg press horizontal máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-2', name: 'Leg press horizontal máquina unilateral', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-3', name: 'Extensão de quadril máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-4', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-5', name: 'Agachamento no aparelho hack machine em pé', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-6', name: 'Agachamento sumô na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-7', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-a-8', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' }
+                { id: 'm-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-marcelly',
-              title: 'TREINO B (Membros Superiores)',
-              projectedSessions: 24,
+              title: 'TREINO B (quartas, sábados e domingos)',
+              projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
-              description: '24 treinos (3x13). Lembrete de aumento de carga na 6ª, 12ª e 18ª execução. Na 24ª execução: troca de treino.',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'm-b-1', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-2', name: 'Desenvolvimento aberto na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-3', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-4', name: 'Puxada com triângulo no pulley alto', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-5', name: 'Tríceps em pé no cross com barra reta', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-6', name: 'Bíceps em pé no cross com barra reta', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-7', name: 'Abdominal crunch na máquina', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' },
-                { id: 'm-b-8', name: 'Abdominal supra no solo', sets: '3', reps: '13', rest: '30s', executionType: 'Simples' }
+                { id: 'm-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
+              ]
+            },
+            {
+              id: 'treino-intervalado-confortavel-marcelly',
+              title: 'INTERVALADO (Confortável) - Seg/Sex',
+              projectedSessions: 20,
+              frequencyWeekly: 2,
+              status: 'published',
+              exercises: [
+                { id: 'ex-aq-1-m', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
+                { id: 'ex-b1-1-m', name: 'Bloco 1: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
+                { id: 'ex-tr-1-m', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
+                { id: 'ex-b2-1-m', name: 'Bloco 2: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
+                { id: 'ex-dq-1-m', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
+              ]
+            },
+            {
+              id: 'treino-intervalado-desconfortavel-marcelly',
+              title: 'INTERVALADO (Desconfortável) - Qua',
+              projectedSessions: 10,
+              frequencyWeekly: 1,
+              status: 'published',
+              exercises: [
+                { id: 'ex-aq-2-m', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
+                { id: 'ex-b1-2-m', name: 'Bloco 1: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
+                { id: 'ex-tr-2-m', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
+                { id: 'ex-b2-2-m', name: 'Bloco 2: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
+                { id: 'ex-dq-2-m', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
+              ]
+            },
+            {
+              id: 'treino-rodagem-marcelly',
+              title: 'RODAGEM - Ter/Qui',
+              projectedSessions: 20,
+              frequencyWeekly: 2,
+              status: 'published',
+              exercises: [
+                { id: 'ex-rod-1-m', name: 'Caminhada Contínua a 5,5 km/h', sets: '1', reps: '60 min', rest: '0s', executionType: 'Simples' }
               ]
             }
           ]
@@ -2139,16 +2191,27 @@ export default function App() {
                   
                   // Force clean workouts for Marcelly
                   if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      if ((rawData as any)._planRevision !== '24-sessoes-3x13-marcelly-v1') {
-                          (rawData as any)._planRevision = '24-sessoes-3x13-marcelly-v1';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-marcelly-exact-andre') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-marcelly-exact-andre';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
+                          rawData.faseAjusteA = Math.max(rawData.faseAjusteA || 0, 1);
+                          rawData.faseAjusteB = Math.max(rawData.faseAjusteB || 0, 2);
+                          rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
+                          rawData.totalGlobalA = Math.max(rawData.totalGlobalA || 0, 1);
+                          rawData.totalGlobalB = Math.max(rawData.totalGlobalB || 0, 2);
+                          rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = {
                             id: 'current',
-                            phaseName: 'Mesociclo - Hipertrofia (24 Treinos)',
-                            targetSets: 24,
-                            progress: { A: 0, B: 0, C: 0 }
+                            phaseName: 'Mesociclo 16 - Hipertrofia',
+                            targetSets: 18,
+                            progress: { A: 1, B: 2, C: 0 }
+                          };
+                          rawData.trainingProgress = { completedCount: 3, targetCount: 36 };
+                          rawData.periodizationProgress = {
+                            ...(rawData.periodizationProgress || {}),
+                            '3 x 13': { A: 1, B: 2, C: 0 }
                           };
                           workoutsModified = true;
                           hasCloudChanges = true;
@@ -2348,7 +2411,10 @@ export default function App() {
               merged[existingIndex].photoUrl = def.photoUrl;
             }
             
-            if (!existing.periodization && def.periodization) {
+            if (def.id === 'fixed-marcelly' || def.id === 'fixed-andre') {
+                merged[existingIndex].periodization = def.periodization;
+                merged[existingIndex].activePlan = def.activePlan;
+            } else if (!existing.periodization && def.periodization) {
                 merged[existingIndex].periodization = def.periodization;
             } else if (existing.periodization && def.periodization && merged[existingIndex].periodization) {
                 merged[existingIndex].periodization = {
