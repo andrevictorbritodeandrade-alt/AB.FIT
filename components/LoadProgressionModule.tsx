@@ -24,9 +24,10 @@ interface ExerciseAnalysis {
 
 interface LoadProgressionModuleProps {
   history: any[];
+  prescribedExercises?: string[];
 }
 
-export function LoadProgressionModule({ history }: LoadProgressionModuleProps) {
+export function LoadProgressionModule({ history, prescribedExercises }: LoadProgressionModuleProps) {
   const analysis = useMemo(() => {
     const exerciseMap: Record<string, SessionData[]> = {};
 
@@ -48,10 +49,12 @@ export function LoadProgressionModule({ history }: LoadProgressionModuleProps) {
 
     sortedHistory.forEach(session => {
       session.exercises?.forEach((ex: any) => {
-        const name = ex.name;
+        const name = ex.name || ex.exercicio;
+        if (!name) return;
+        
         if (!exerciseMap[name]) exerciseMap[name] = [];
         
-        const load = parseLoad(ex.load);
+        const load = parseLoad(ex.load || ex.carga);
         const sets = parseValue(ex.sets);
         const reps = parseValue(ex.reps);
         const volume = load * sets * reps;
@@ -75,7 +78,15 @@ export function LoadProgressionModule({ history }: LoadProgressionModuleProps) {
       });
     });
 
-    const results: ExerciseAnalysis[] = Object.entries(exerciseMap).map(([name, data]) => {
+    const results: ExerciseAnalysis[] = Object.entries(exerciseMap)
+      .filter(([name]) => {
+        // If we have prescribed exercises, only show those to avoid showing old/deleted data
+        if (prescribedExercises && prescribedExercises.length > 0) {
+          return prescribedExercises.some(p => p.toLowerCase().trim() === name.toLowerCase().trim());
+        }
+        return true;
+      })
+      .map(([name, data]) => {
       const lastSession = data[data.length - 1];
       const prevSession = data[data.length - 2];
       

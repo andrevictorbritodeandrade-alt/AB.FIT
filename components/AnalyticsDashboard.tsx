@@ -17,10 +17,22 @@ interface AnalyticsProps {
 export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsProps) {
   const [periodFilter, setPeriodFilter] = useState<'7d' | '30d' | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'Treino A' | 'Treino B' | 'Treino C'>('all');
-  const [periodizationFilter, setPeriodizationFilter] = useState<string>('current');
+  const [periodizationFilter, setPeriodizationFilter] = useState<string>('all');
   const [logs, setLogs] = useState<any[]>([]);
 
   const currentPeriodizationKey = student.periodization?.phaseTitle || student.workouts?.[0]?.exercises?.[0]?.reps || '13/11/9';
+
+  const prescribedExercises = useMemo(() => {
+    const names = new Set<string>();
+    student.workouts?.forEach(w => {
+      if (typeFilter === 'all' || w.title === typeFilter) {
+        w.exercises?.forEach(ex => {
+          if (ex.name) names.add(ex.name);
+        });
+      }
+    });
+    return Array.from(names);
+  }, [student.workouts, typeFilter]);
 
   useEffect(() => {
     const logsRef = collection(db, 'alunos', student.id, 'logsTreino');
@@ -54,7 +66,7 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
                 date: new Date(timestamp).toLocaleDateString('pt-BR'),
                 duration: log.duracaoMinutos ? `${log.duracaoMinutos}:00` : '00:00',
                 type: 'STRENGTH',
-                exercises: log.exercises || [],
+                exercises: log.exercises || (log.cargas ? log.cargas.map((c: any) => ({ name: c.exercicio, load: c.carga, sets: '3', reps: '10' })) : []),
                 periodization: log.periodization
             });
         }
@@ -372,8 +384,11 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
       </div>
 
       {/* NOVO MÓDULO DE ANÁLISE DE PROGRESSÃO DE CARGA (GRANULAR) */}
-      <div className="mb-10">
-         <LoadProgressionModule history={history} />
+      <div className="mb-10 px-4">
+         <LoadProgressionModule 
+           history={history} 
+           prescribedExercises={prescribedExercises} 
+         />
       </div>
 
       {/* HISTÓRICO DE TREINOS (Mantido para referência rápida) */}

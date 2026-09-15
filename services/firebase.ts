@@ -16,6 +16,7 @@ import {
   getDocs,
   serverTimestamp,
   runTransaction,
+  writeBatch,
   increment,
   where,
   orderBy,
@@ -57,6 +58,7 @@ export {
   getDocs,
   serverTimestamp,
   runTransaction,
+  writeBatch,
   increment,
   where,
   orderBy,
@@ -135,6 +137,17 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.warn('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  const safeJsonStringify = (obj: any) => {
+    const cache = new Set();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value)) return;
+        cache.add(value);
+      }
+      return value;
+    }, 2);
+  };
+
+  console.warn('Firestore Error: ', safeJsonStringify(errInfo));
+  throw new Error(safeJsonStringify(errInfo));
 }

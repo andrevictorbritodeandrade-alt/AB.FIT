@@ -954,6 +954,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       };
     });
 
+    const periodKey = user.periodization?.phaseTitle || currentReps || '13';
+
     const entry: WorkoutHistoryEntry = {
       id: Date.now().toString(),
       workoutId: activeWorkout.id,
@@ -963,7 +965,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       timestamp: Date.now(),
       photoUrl: selfieUrl || undefined,
       type: 'STRENGTH',
-      exercises: mappedExercises
+      exercises: mappedExercises,
+      periodization: periodKey
     };
 
     const targetSets = user.activePlan?.targetSets || activeWorkout.projectedSessions || 18;

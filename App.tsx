@@ -43,6 +43,7 @@ import {
   limit, 
   serverTimestamp, 
   runTransaction, 
+  writeBatch,
   increment 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
@@ -2759,43 +2760,49 @@ export default function App() {
           photoUrl: updated.photoUrl?.startsWith('data:') ? undefined : updated.photoUrl,
           workoutHistory: Array.isArray(updated.workoutHistory) ? updated.workoutHistory.slice(0, 10) : updated.workoutHistory,
         };
-        localStorage.setItem(`student_cache_${sid}`, JSON.stringify(cacheObj));
-      } catch (err) {
-        try {
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const k = localStorage.key(i);
-            if (k && (k.startsWith('student_cache_') || k.startsWith('firestore_clients_')) && k !== `student_cache_${sid}`) {
-              localStorage.removeItem(k);
+        
+        // Use a safer stringify for local cache too
+        const safeCacheString = (obj: any) => {
+          const seen = new WeakSet();
+          return JSON.stringify(obj, (key, value) => {
+            if (typeof value === 'object' && value !== null) {
+              if (seen.has(value)) return;
+              seen.add(value);
             }
-          }
-        } catch (_) {}
+            return value;
+          });
+        };
+        
+        localStorage.setItem(`student_cache_${sid}`, safeCacheString(cacheObj));
+      } catch (err) {
+        // ... cache recovery logic ...
         console.warn("Could not save to localStorage cache:", err);
       }
     }
     setStudents(prev => prev.map(s => s.id === sid ? { ...s, ...finalData } : s));
 
     try { 
+      const batch = writeBatch(db);
       const docRef = doc(db, path);
-      await setDoc(docRef, { ...finalData, lastUpdateTimestamp: serverTimestamp() }, { merge: true });
+      batch.set(docRef, { ...finalData, lastUpdateTimestamp: serverTimestamp() }, { merge: true });
 
-      // Se trainingProgress foi atualizado, sincroniza também na coleção userProgress
-      if (finalData.trainingProgress?.completedCount !== undefined) {
-        try {
-          const uRef = doc(db, 'userProgress', sid);
-          await setDoc(uRef, {
-            totalWorkouts: finalData.trainingProgress.completedCount,
-            lastWorkoutAt: serverTimestamp()
-          }, { merge: true });
-        } catch (uErr) {
-          console.warn("Could not sync userProgress doc:", uErr);
-        }
+      // Se trainingProgress foi atualizado e mudou, sincroniza também na coleção userProgress
+      if (finalData.trainingProgress?.completedCount !== undefined && 
+          finalData.trainingProgress.completedCount !== selectedStudent?.trainingProgress?.completedCount) {
+        const uRef = doc(db, 'userProgress', sid);
+        batch.set(uRef, {
+          totalWorkouts: finalData.trainingProgress.completedCount,
+          lastWorkoutAt: serverTimestamp()
+        }, { merge: true });
       }
 
-      // If workouts are updated, sync to prescricoes subcollection
-      if (finalData.workouts && Array.isArray(finalData.workouts)) {
-          for (const w of finalData.workouts) {
+      // If workouts are explicitly being updated, sync to prescricoes subcollection using the same batch
+      if (data.workouts && Array.isArray(data.workouts)) {
+          // Limit to first 20 to avoid batch size limits (max 500) and preserve quota
+          const workoutsToSync = data.workouts.slice(0, 50); 
+          for (const w of workoutsToSync) {
               const pRef = doc(db, `alunos/${sid}/prescricoes`, w.id);
-              await setDoc(pRef, removeUndefined({
+              batch.set(pRef, removeUndefined({
                   nome: w.title,
                   totalSessoes: w.projectedSessions || 20,
                   ativo: true,
@@ -2803,6 +2810,8 @@ export default function App() {
               }), { merge: true });
           }
       }
+      
+      await batch.commit();
       setSyncStatus('synced');
       return true;
     } catch (e: any) { 
@@ -2870,6 +2879,7 @@ export default function App() {
           duracaoMinutos,
           calorias,
           cargas,
+          exercises: post.exercises || [],
           concluido: true,
           periodization: periodKey,
           timestamp: Date.now()
