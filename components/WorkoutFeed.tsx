@@ -178,11 +178,17 @@ export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false
                       <p className="text-[9px] text-white font-black uppercase italic truncate">{post.name}</p>
                     </>
                   ) : (
-                    <h4 className="text-[11px] font-black uppercase italic text-white tracking-tight">{post.name}</h4>
+                    <h4 className="text-[12px] font-black uppercase italic text-white tracking-tight drop-shadow-md">{post.name}</h4>
                   )}
-                  <p className="text-[8px] text-zinc-500 font-bold uppercase">
-                    {formatWorkoutDate(post.date, post.timestamp)} • {post.type === 'RUNNING' ? 'CORRIDA' : post.type === 'POST' ? 'ATUALIZAÇÃO' : 'FORÇA'}
-                  </p>
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider bg-zinc-950/95 text-amber-300 border border-amber-400/40 shadow-lg shadow-black/60 backdrop-blur-md">
+                      <span className="text-white/80">📅</span>
+                      <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">{formatWorkoutDate(post.date, post.timestamp)}</span>
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-red-300 bg-red-950/90 border border-red-500/50 shadow-md">
+                      {post.type === 'RUNNING' ? 'CORRIDA' : post.type === 'POST' ? 'ATUALIZAÇÃO' : 'FORÇA'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -233,7 +239,7 @@ export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false
                              return (
                                <div key={i} className="flex justify-between items-center text-[10px] text-zinc-400 font-bold border-b border-white/[0.03] pb-0.5">
                                   <span className="truncate pr-2">{ex.name}</span>
-                                  <span className="font-mono text-white font-black shrink-0">
+                                  <span className="text-white font-bold tracking-tight shrink-0 text-[11px]">
                                     {loadVal ? `${loadVal} ${ex.loadUnit || 'Kg'}` : `-- ${ex.loadUnit || 'Kg'}`}
                                   </span>
                                </div>

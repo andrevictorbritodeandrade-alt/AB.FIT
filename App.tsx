@@ -2858,15 +2858,16 @@ export default function App() {
       }
 
       console.log("Finishing workout for:", studentForView.id, "Updates:", updates);
-      await handleSaveData(studentForView.id, updates);
-
-      // Manually update local state immediately for faster UI feedback
+      
+      // Atualiza estado local imediatamente para feedback visual instantâneo
       const updatedStudent = {
           ...studentForView,
           ...updates
       };
-      
       setSelectedStudent(updatedStudent);
+      setStudents(prev => prev.map(s => s.id === studentForView.id ? updatedStudent : s));
+
+      await handleSaveData(studentForView.id, updates);
     } catch (err) {
       console.error("Erro ao finalizar treino:", err);
     }

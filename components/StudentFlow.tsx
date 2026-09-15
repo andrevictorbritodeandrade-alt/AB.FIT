@@ -644,6 +644,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const [prescreveAIExercise, setPrescreveAIExercise] = useState<string | null>(null);
 
   const [localCounters, setLocalCounters] = useState({ A: 0, B: 0, C: 0 });
+  const [workoutSuccessBanner, setWorkoutSuccessBanner] = useState<{ type: string; count: number; total: number; message: string } | null>(null);
 
   useEffect(() => {
     setLocalCounters(getContagemTreinos());
@@ -683,9 +684,9 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     return { a, b, c };
   }, [user.workoutHistory, periodKey]);
 
-  const countA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : historyCounts.a);
-  const countB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : historyCounts.b);
-  const countC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : historyCounts.c);
+  const countA = Math.max(localCounters.A || 0, user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : historyCounts.a));
+  const countB = Math.max(localCounters.B || 0, user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : historyCounts.b));
+  const countC = Math.max(localCounters.C || 0, user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : historyCounts.c));
 
   const totalCompleted = countA + countB + countC;
 
@@ -911,76 +912,86 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   };
 
   const finishSession = async () => {
-    if (!activeWorkout) return;
+    if (!activeWorkout || isFinishing) return;
     setIsFinishing(true);
-    
-    // Para o timer imediatamente para feedback visual
-    setSessionStartTime(null);
+
+    const title = (activeWorkout.title || '').toLowerCase();
+    let workoutType: 'A' | 'B' | 'C' = 'A';
+    if (title.includes('treino b') || activeWorkout.id.includes('-b') || activeWorkout.id.toLowerCase().endsWith('b')) {
+      workoutType = 'B';
+    } else if (title.includes('treino c') || activeWorkout.id.includes('-c') || activeWorkout.id.toLowerCase().endsWith('c')) {
+      workoutType = 'C';
+    }
+
+    // 1. Incrementa e sincroniza a contagem local de forma atômica e imediata
+    const currentVal = workoutType === 'A' ? countA : workoutType === 'B' ? countB : countC;
+    const novoContador = Math.max(currentVal + 1, incrementarTreino(workoutType));
+    const novasContagens = {
+      ...getContagemTreinos(),
+      [workoutType]: novoContador
+    };
+    salvarContagemTreinos(novasContagens);
+    setLocalCounters(novasContagens);
+
+    // 2. Limpa dados de sessão ativa no localStorage para nunca recarregar treino encerrado
+    try {
+      localStorage.removeItem(`workout_start_${user.id}`);
+      localStorage.removeItem(`active_workout_id_${user.id}`);
+      localStorage.removeItem(`workout_progress_${user.id}`);
+    } catch (_) {}
+
     const finalElapsedTime = elapsedTime || 0;
     const duracaoMinutos = Math.max(1, Math.ceil(finalElapsedTime / 60));
     const calorias = duracaoMinutos * 7;
-    const cargas = (activeWorkout.exercises || []).map(ex => {
+    const now = new Date();
+
+    const mappedExercises = (activeWorkout.exercises || []).map(ex => {
       const saved = carregarCarga(ex.id || '', ex.name);
       const finalLoad = ex.load || saved || lastLoads[ex.name] || '';
       return {
-        exercicio: ex.name || 'Exercício',
-        carga: finalLoad || '0',
-        unidade: ex.loadUnit || 'Kg'
+        ...ex,
+        load: finalLoad
       };
     });
 
+    const entry: WorkoutHistoryEntry = {
+      id: Date.now().toString(),
+      workoutId: activeWorkout.id,
+      name: activeWorkout.title,
+      duration: formatTime(finalElapsedTime),
+      date: now.toLocaleDateString('pt-BR'),
+      timestamp: Date.now(),
+      photoUrl: selfieUrl || undefined,
+      type: 'STRENGTH',
+      exercises: mappedExercises
+    };
+
+    const targetSets = user.activePlan?.targetSets || activeWorkout.projectedSessions || 18;
+
+    let alertMsg = `Treino ${workoutType} concluído com sucesso!`;
+    if (novoContador === 6 || novoContador === 12) {
+      alertMsg = `Atenção: Você concluiu o Treino ${workoutType} pela ${novoContador}ª vez! Hora de ajustar e aumentar as cargas.`;
+    } else if (novoContador >= targetSets) {
+      alertMsg = `Parabéns! Você concluiu todos os ${targetSets} treinos do Treino ${workoutType}. Ciclo finalizado com sucesso!`;
+    }
+
+    // Define banner de feedback na lista de treinos
+    setWorkoutSuccessBanner({
+      type: workoutType,
+      count: novoContador,
+      total: targetSets,
+      message: alertMsg
+    });
+
+    // 3. Volta IMEDIATAMENTE para a tela anterior (a lista de treinos com Treino A e Treino B)
+    setActiveWorkout(null);
+    setSessionStartTime(null);
+    setShowCompletionModal(false);
+    setShowPhotoStep(false);
+    setIsFinishing(false);
+
+    // 4. Salva no banco de dados e histórico de forma assíncrona robusta
     try {
-      const now = new Date();
-      const mappedExercises = (activeWorkout.exercises || []).map(ex => {
-        const saved = carregarCarga(ex.id || '', ex.name);
-        const finalLoad = ex.load || saved || lastLoads[ex.name] || '';
-        return {
-          ...ex,
-          load: finalLoad
-        };
-      });
-
-      const entry: WorkoutHistoryEntry = {
-        id: Date.now().toString(),
-        workoutId: activeWorkout.id,
-        name: activeWorkout.title,
-        duration: formatTime(finalElapsedTime),
-        date: now.toLocaleDateString('pt-BR'),
-        timestamp: Date.now(),
-        photoUrl: selfieUrl || undefined,
-        type: 'STRENGTH',
-        exercises: mappedExercises
-      };
-
-      let result: any = { 
-        total: (user.totalGlobalA || 0) + 1, 
-        totalGlobal: (user.trainingProgress?.completedCount || 0) + 1,
-        metaGlobal: 60 
-      };
-      
-      try {
-        const response = await fetch('/api/finalizarTreino', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            userId: user.id, 
-            treinoId: activeWorkout.id,
-            duracaoMinutos,
-            calorias,
-            cargas
-          }),
-        });
-        
-        if (response.ok) {
-          const apiResult = await response.json();
-          result = { ...result, ...apiResult };
-        }
-      } catch (apiErr) {
-        console.warn("API de finalização falhou, usando fallback local:", apiErr);
-      }
-
       if (onFinishWorkout) {
         await onFinishWorkout(entry);
       } else {
@@ -999,72 +1010,66 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
         const updatedAnalytics = {
           ...currentAnalytics,
-          sessionsCompleted: result.totalGlobal || (currentAnalytics.sessionsCompleted || 0) + 1,
+          sessionsCompleted: (user.trainingProgress?.completedCount || 0) + 1,
           lastSessionDate: now.toLocaleDateString('pt-BR'),
           exercises: newExercises
         };
+
+        const currentA = workoutType === 'A' ? novoContador : countA;
+        const currentB = workoutType === 'B' ? novoContador : countB;
+        const currentC = workoutType === 'C' ? novoContador : countC;
+
+        const periodKey = user.periodization?.phaseTitle || currentReps || '13';
+        const prog = user.periodizationProgress || {};
+        const currentPeriodProg = { ...(prog[periodKey] || { A: 0, B: 0, C: 0 }) };
+        currentPeriodProg[workoutType] = novoContador;
 
         const updates: any = {
           workoutHistory: updatedHistory,
           protocolStartDate: updatedProtocolDate,
           analytics: updatedAnalytics,
           trainingProgress: {
-            completedCount: result.totalGlobal || (user.trainingProgress?.completedCount || 0) + 1,
-            targetCount: result.metaGlobal || 60
+            completedCount: (user.trainingProgress?.completedCount || 0) + 1,
+            targetCount: user.trainingProgress?.targetCount || 60
+          },
+          [`faseAjuste${workoutType}`]: novoContador,
+          [`totalGlobal${workoutType}`]: ((user as any)[`totalGlobal${workoutType}`] || 0) + 1,
+          activePlan: {
+            ...(user.activePlan || { id: 'current', phaseName: 'Mesociclo 16 - Hipertrofia', targetSets }),
+            targetSets,
+            progress: {
+              A: currentA,
+              B: currentB,
+              C: currentC
+            }
+          },
+          periodizationProgress: {
+            ...prog,
+            [periodKey]: currentPeriodProg
           }
         };
 
-        const title = (activeWorkout.title || '').toLowerCase();
-        console.log("Título do treino finalizado:", title);
-        if (title.includes('treino a')) {
-          updates.faseAjusteA = (user.faseAjusteA || 0) + 1;
-          updates.totalGlobalA = result.total || (user.totalGlobalA || 0) + 1;
-          const novoA = incrementarTreino('A');
-          setLocalCounters(prev => ({ ...prev, A: novoA }));
-        } else if (title.includes('treino b')) {
-          updates.faseAjusteB = (user.faseAjusteB || 0) + 1;
-          updates.totalGlobalB = result.total || (user.totalGlobalB || 0) + 1;
-          const novoB = incrementarTreino('B');
-          setLocalCounters(prev => ({ ...prev, B: novoB }));
-        } else if (title.includes('treino c')) {
-          updates.faseAjusteC = (user.faseAjusteC || 0) + 1;
-          updates.totalGlobalC = result.total || (user.totalGlobalC || 0) + 1;
-          const novoC = incrementarTreino('C');
-          setLocalCounters(prev => ({ ...prev, C: novoC }));
-        }
-
         await onSave(user.id, updates);
-        
-        let messageToDisplay = result.mensagem;
-        if (!messageToDisplay) {
-          const wType = title.includes('treino a') ? 'A' : title.includes('treino b') ? 'B' : 'C';
-          const currentCount = wType === 'A' ? updates.faseAjusteA : wType === 'B' ? updates.faseAjusteB : updates.faseAjusteC;
-          const target = user.activePlan?.targetSets || activeWorkout.projectedSessions || 24;
-          if (currentCount === 6 || currentCount === 12 || currentCount === 18) {
-            messageToDisplay = `Atenção: Você concluiu o treino ${wType} pela ${currentCount}ª vez. Hora de ajustar e aumentar a carga!`;
-          } else if (currentCount === target) {
-            messageToDisplay = `Parabéns! Você concluiu os ${target} treinos do Treino ${wType}. Este é o seu último treino desse ciclo e você precisa trocar de treino!`;
-          }
-        }
-
-        if (messageToDisplay) {
-            alert(messageToDisplay);
-        }
       }
+
+      // Sincroniza endpoint backend em background
+      fetch('/api/finalizarTreino', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userId: user.id, 
+          treinoId: activeWorkout.id,
+          duracaoMinutos,
+          calorias,
+          cargas: mappedExercises.map(ex => ({
+            exercicio: ex.name || 'Exercício',
+            carga: ex.load || '0',
+            unidade: ex.loadUnit || 'Kg'
+          }))
+        }),
+      }).catch(e => console.warn("Background API sync:", e));
     } catch (error) {
-      console.error("Erro ao finalizar sessão:", error);
-    } finally {
-      try {
-        localStorage.removeItem(`workout_start_${user.id}`);
-        localStorage.removeItem(`active_workout_id_${user.id}`);
-        localStorage.removeItem(`workout_progress_${user.id}`);
-      } catch (_) {}
-      setSessionStartTime(null);
-      setActiveWorkout(null);
-      setSelfieUrl(null);
-      setIsFinishing(false);
-      setShowPhotoStep(false);
-      setShowCompletionModal(false);
+      console.error("Erro ao salvar treino em segundo plano:", error);
     }
   };
 
@@ -1099,20 +1104,53 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
   if (showCompletionModal) {
     return (
-      <div className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-        <Card className="w-full max-w-xs bg-card border-red-600/30 p-6 text-center shadow-3xl animate-in zoom-in-95">
-          <div className="w-20 h-20 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-red-600/30">
-            <Trophy className="text-white" size={40} />
+      <div className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+        <Card className="w-full max-w-sm bg-card border border-border p-6 text-center shadow-3xl animate-in zoom-in-95 rounded-3xl">
+          <div className="w-16 h-16 bg-emerald-600/20 border border-emerald-500/30 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <Trophy size={32} />
           </div>
-          <h3 className="text-xl font-black italic uppercase text-foreground tracking-tighter leading-none mb-2">Protocolo Vencido!</h3>
-          <p className="text-muted-foreground text-[11px] font-black uppercase tracking-widest mb-8">Sua performance foi gravada com sucesso.</p>
-          <div className="bg-background/60 p-4 rounded-2xl mb-8 border border-border shadow-inner">
-             <p className="text-[11px] font-black text-muted-foreground uppercase tracking-widest mb-1 italic">Tempo Total</p>
-             <p className="text-xl font-black text-foreground italic tracking-tighter leading-none">{formatTime(elapsedTime)}</p>
+          <h3 className="text-xl font-black italic uppercase text-foreground tracking-tighter leading-none mb-1.5">
+            Finalizar Treino
+          </h3>
+          <p className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-5">
+            Salvar cargas e contabilizar evolução
+          </p>
+          <div className="bg-muted/40 p-3.5 rounded-2xl mb-6 border border-border flex items-center justify-around">
+             <div>
+               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Tempo</p>
+               <p className="text-base sm:text-lg font-black text-foreground italic tracking-tight">{formatTime(elapsedTime)}</p>
+             </div>
+             <div className="w-px h-7 bg-border" />
+             <div>
+               <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-0.5">Treino</p>
+               <p className="text-base sm:text-lg font-black text-emerald-500 italic tracking-tight uppercase truncate max-w-[120px]">{activeWorkout?.title || 'Sessão'}</p>
+             </div>
           </div>
-          <div className="flex flex-col gap-3">
-            <button onClick={() => { setShowCompletionModal(false); setShowPhotoStep(true); }} className="w-full py-4 bg-red-600 rounded-xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-red-700 transition-all">Gravar Selfie ABFIT</button>
-            <button onClick={() => { setShowCompletionModal(false); finishSession(); }} className="w-full py-4 bg-card border border-border rounded-xl font-black uppercase text-xs tracking-widest hover:bg-muted transition-all">Finalizar sem Foto</button>
+          <div className="flex flex-col gap-2.5">
+            <button 
+              onClick={() => finishSession()} 
+              disabled={isFinishing}
+              className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-2xl font-black uppercase text-xs tracking-widest text-white shadow-xl shadow-emerald-900/30 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              {isFinishing ? (
+                <span className="flex items-center gap-2"><Loader2 className="animate-spin" size={16} /> SALVANDO...</span>
+              ) : (
+                <><CheckCircle2 size={16} /> SALVAR E CONTABILIZAR AGORA</>
+              )}
+            </button>
+            <button 
+              onClick={() => { setShowCompletionModal(false); setShowPhotoStep(true); }} 
+              className="w-full py-3 bg-card border border-border hover:bg-muted rounded-2xl font-black uppercase text-xs tracking-widest text-muted-foreground hover:text-foreground transition-all flex items-center justify-center gap-2"
+            >
+              <Camera size={15} className="text-red-500" />
+              <span>Tirar Selfie do Treino (Opcional)</span>
+            </button>
+            <button 
+              onClick={() => setShowCompletionModal(false)} 
+              className="text-[11px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground py-1.5 transition-colors"
+            >
+              Continuar Treinando
+            </button>
           </div>
         </Card>
       </div>
@@ -1161,7 +1199,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   if (!activeWorkout) {
     return (
       <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in">
-        <header className="flex flex-col mb-10 sticky top-0 bg-transparent backdrop-blur-md py-4 z-40 -mx-6 px-6 border-b border-border">
+        <header className="flex flex-col mb-6 sticky top-0 bg-transparent backdrop-blur-md py-4 z-40 -mx-6 px-6 border-b border-border">
            <div className="flex items-center justify-between mb-4">
               <button onClick={onBack} className="p-2 bg-card rounded-full shadow-lg text-foreground hover:bg-red-600 transition-colors shadow-xl">
                 <ArrowLeft size={20}/>
@@ -1175,6 +1213,25 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
              <HeaderTitle text="Planilhas de Treino" />
            </h2>
         </header>
+
+        {workoutSuccessBanner && (
+          <div className="mb-6 p-4 bg-emerald-950/40 border border-emerald-500/40 rounded-2xl flex items-center justify-between shadow-xl animate-in slide-in-from-top-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-emerald-900/30">
+                <CheckCircle2 size={22} />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-emerald-400">Treino {workoutSuccessBanner.type} Salvo e Contabilizado!</p>
+                <p className="text-xs sm:text-sm font-bold text-foreground mt-0.5">{workoutSuccessBanner.message}</p>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Evolução Atualizada: {workoutSuccessBanner.count} de {workoutSuccessBanner.total} sessões</p>
+              </div>
+            </div>
+            <button onClick={() => setWorkoutSuccessBanner(null)} className="p-1.5 text-muted-foreground hover:text-foreground">
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
         <div className="space-y-4">
           {(user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).length > 0 ? (
             (user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).map(w => {
@@ -1264,13 +1321,16 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
            <span className="text-[8px] sm:text-[10px] font-black uppercase text-muted-foreground tracking-widest mt-0.5">Tempo</span>
         </div>
 
-        <div className={`${allExercisesCompleted ? 'flex-1' : 'shrink-0 sm:flex-1'} flex flex-col items-end min-w-0`}>
+        <div className="flex-1 flex flex-col items-end min-w-0">
            {allExercisesCompleted ? (
-             <button onClick={() => setShowCompletionModal(true)} className="bg-emerald-600 px-3 sm:px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg shadow-emerald-900/30 text-white tracking-widest sm:animate-pulse hover:bg-emerald-700 transition-all shrink-0">
+             <button onClick={() => setShowCompletionModal(true)} className="bg-emerald-600 hover:bg-emerald-700 px-3 sm:px-6 py-2 rounded-full font-black text-xs uppercase shadow-lg shadow-emerald-900/30 text-white tracking-widest sm:animate-pulse transition-all shrink-0">
                 SALVAR
              </button>
            ) : (
-             <span className="text-[9px] font-black uppercase text-muted-foreground tracking-widest hidden sm:block">ANDAMENTO</span>
+             <button onClick={() => setShowCompletionModal(true)} className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 px-3 sm:px-4 py-1.5 rounded-full font-black text-[11px] uppercase text-zinc-300 tracking-wider transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95">
+                <CheckCircle2 size={13} className="text-emerald-500" />
+                <span>SALVAR</span>
+             </button>
            )}
         </div>
       </header>
