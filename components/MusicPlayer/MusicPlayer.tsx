@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { musicCategories, MusicCategory, Song } from '../../data/musicData';
 import { audioService, AudioPlayerState } from '../../services/youtubeAudioService';
 import { 
@@ -25,9 +25,10 @@ import {
 
 interface MusicPlayerProps {
   onBack?: () => void;
+  userName?: string;
 }
 
-export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
+export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack, userName }) => {
   const [playerState, setPlayerState] = useState<AudioPlayerState>(audioService.getState());
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'tudo' | 'estilos' | 'musicas' | 'favoritos'>('tudo');
@@ -58,13 +59,70 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
     playbackKey
   } = playerState;
 
-  // Saudação no estilo Spotify
+  // Toast feedback para curtidas
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<any>(null);
+
+  const showToast = (message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(message);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 2800);
+  };
+
+  const handleToggleFavorite = (song: Song) => {
+    const isNowFavorite = audioService.toggleFavorite(song.id, song);
+    if (isNowFavorite) {
+      showToast(`"${song.title}" salva na lista de favoritas ❤️`);
+    } else {
+      showToast(`"${song.title}" removida das favoritas`);
+    }
+  };
+
+  // Identificar o dono do perfil atual (André, Marcelly, etc.)
+  const profileOwnerName = useMemo(() => {
+    // 1. Se recebido diretamente via prop
+    if (userName && userName.trim()) {
+      const first = userName.trim().split(' ')[0];
+      return first.charAt(0).toUpperCase() + first.slice(1);
+    }
+    // 2. Fallback de verificação pelo localStorage da sessão do app
+    try {
+      const sessionStr = localStorage.getItem('elite_session_v2');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (session.selectedStudentId) {
+          const cached = localStorage.getItem(`student_cache_${session.selectedStudentId}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.nome) {
+              const first = parsed.nome.trim().split(' ')[0];
+              return first.charAt(0).toUpperCase() + first.slice(1);
+            }
+          }
+          if (session.selectedStudentId === 'fixed-andre') return 'André';
+          if (session.selectedStudentId === 'fixed-marcelly') return 'Marcelly';
+        }
+        if (session.isCoach) return 'Treinador';
+      }
+    } catch (e) {}
+    return '';
+  }, [userName]);
+
+  // Saudação no estilo Spotify personalizada com o nome do usuário
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return 'Bom dia';
-    if (hour >= 12 && hour < 18) return 'Boa tarde';
-    return 'Boa noite';
-  }, []);
+    let salutation = 'Boa tarde';
+    if (hour >= 5 && hour < 12) salutation = 'Bom dia';
+    else if (hour >= 12 && hour < 18) salutation = 'Boa tarde';
+    else salutation = 'Boa noite';
+
+    if (profileOwnerName) {
+      return `${salutation}, ${profileOwnerName}`;
+    }
+    return salutation;
+  }, [profileOwnerName]);
 
   // Formatação de minutos:segundos e horas
   const formatTime = (secs: number) => {
@@ -195,9 +253,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
           </button>
 
           <button
-            onClick={() => audioService.playFavorites()}
+            onClick={() => audioService.openFavorites()}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-300 hover:text-white hover:border-red-600/60 transition-all active:scale-95 cursor-pointer"
-            title="Tocar Músicas Curtidas"
+            title="Ver Músicas Curtidas"
           >
             <Heart size={14} className={favorites.length > 0 ? 'text-red-500 fill-red-500' : 'text-zinc-400'} />
             <span className="hidden md:inline">{favorites.length} curtidas</span>
@@ -215,7 +273,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
           <div>
             {/* HERO DA PLAYLIST (GRADIENTE + CAPA GIGANTE + DADOS) */}
             <div className={`rounded-3xl p-6 md:p-8 bg-gradient-to-b ${selectedCategory.gradient || 'from-red-900 via-zinc-900 to-zinc-950'} border border-zinc-800/80 shadow-2xl relative overflow-hidden mb-8`}>
-              <div className="absolute top-4 left-4">
+              <div className="absolute top-4 left-4 z-10">
                 <button
                   onClick={() => audioService.setSelectedCategory(null)}
                   className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-zinc-300 hover:text-white bg-black/40 hover:bg-black/60 px-3 py-1.5 rounded-full backdrop-blur-md transition-all cursor-pointer"
@@ -226,16 +284,27 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
               <div className="flex flex-col md:flex-row items-center md:items-end gap-6 pt-10 md:pt-6">
                 {/* Capa da Playlist */}
-                <div className="relative w-44 h-44 md:w-56 md:h-56 rounded-2xl overflow-hidden shadow-2xl shadow-black/80 border border-white/10 shrink-0 group">
-                  <img
-                    src={`https://img.youtube.com/vi/${selectedCategory.songs[0]?.id || ''}/hqdefault.jpg`}
-                    alt={selectedCategory.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e: any) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4">
+                <div className={`relative w-44 h-44 md:w-56 md:h-56 rounded-2xl overflow-hidden shadow-2xl shadow-black/80 border border-white/10 shrink-0 group ${
+                  selectedCategory.id === 'favoritos' ? 'bg-gradient-to-br from-rose-600 via-purple-700 to-indigo-950 flex items-center justify-center' : ''
+                }`}>
+                  {selectedCategory.id === 'favoritos' ? (
+                    <div className="flex flex-col items-center justify-center text-center p-4">
+                      <Heart size={64} className="text-white fill-white drop-shadow-2xl group-hover:scale-110 transition-transform duration-500" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/90 mt-2 bg-black/40 px-2.5 py-0.5 rounded-full">
+                        FAVORITAS
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={`https://img.youtube.com/vi/${selectedCategory.songs[0]?.id || ''}/hqdefault.jpg`}
+                      alt={selectedCategory.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e: any) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex items-end p-4 pointer-events-none">
                     <span className="text-[10px] font-black uppercase tracking-widest text-red-500 bg-black/80 px-2 py-0.5 rounded">
                       ABFIT
                     </span>
@@ -245,7 +314,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
                 {/* Informações da Playlist */}
                 <div className="flex-1 text-center md:text-left">
                   <p className="text-[11px] font-black uppercase tracking-[0.25em] text-white/80 mb-2">
-                    PLAYLIST OFICIAL DE TREINO
+                    {selectedCategory.id === 'favoritos' ? 'SUA COLEÇÃO PESSOAL' : 'PLAYLIST OFICIAL DE TREINO'}
                   </p>
                   <h1 className="text-3xl md:text-5xl font-black italic tracking-tight text-white mb-3">
                     {selectedCategory.name}
@@ -266,7 +335,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
               {/* Botões de Ação da Playlist */}
               <div className="flex items-center gap-4 mt-8 pt-4 border-t border-white/10">
                 <button
+                  disabled={selectedCategory.songs.length === 0}
                   onClick={() => {
+                    if (selectedCategory.songs.length === 0) return;
                     const isCurrentCategoryPlaying = isPlaying && queue.some(s => selectedCategory.songs.some(cs => cs.id === s.id));
                     if (isCurrentCategoryPlaying) {
                       audioService.togglePlay();
@@ -274,128 +345,149 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
                       audioService.playCategory(selectedCategory);
                     }
                   }}
-                  className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-xl shadow-red-950/80 hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                  title="Reproduzir Playlist"
+                  className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl shadow-red-950/80 transition-all ${
+                    selectedCategory.songs.length === 0
+                      ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-500 text-white hover:scale-105 active:scale-95 cursor-pointer'
+                  }`}
+                  title={selectedCategory.songs.length === 0 ? "Adicione músicas para reproduzir" : "Reproduzir Playlist"}
                 >
                   {isPlaying && queue.some(s => selectedCategory.songs.some(cs => cs.id === s.id)) ? (
                     <Pause size={26} className="fill-white" />
                   ) : (
-                    <Play size={26} className="fill-white translate-x-0.5" />
+                    <Play size={26} className={`fill-white translate-x-0.5 ${selectedCategory.songs.length === 0 ? 'opacity-30' : ''}`} />
                   )}
                 </button>
 
                 <button
+                  disabled={selectedCategory.songs.length === 0}
                   onClick={() => audioService.toggleShuffle()}
-                  className={`p-3 rounded-full border transition-all cursor-pointer ${
-                    shuffle 
-                      ? 'bg-red-600/20 border-red-500 text-red-500 shadow-md shadow-red-950/40' 
-                      : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
+                  className={`p-3 rounded-full border transition-all ${
+                    selectedCategory.songs.length === 0
+                      ? 'bg-zinc-900/40 border-zinc-800/40 text-zinc-600 cursor-not-allowed'
+                      : shuffle 
+                        ? 'bg-red-600/20 border-red-500 text-red-500 shadow-md shadow-red-950/40 cursor-pointer' 
+                        : 'bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 cursor-pointer'
                   }`}
                   title="Modo Aleatório"
                 >
                   <Shuffle size={20} />
-                </button>
-
-                <button
-                  onClick={() => audioService.playFavorites()}
-                  className="p-3 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-red-500 hover:border-zinc-700 transition-all cursor-pointer"
-                  title="Músicas Curtidas"
-                >
-                  <Heart size={20} />
                 </button>
               </div>
             </div>
 
             {/* TABELA DE MÚSICAS (TRACKLIST SPOTIFY) */}
             <div className="bg-zinc-900/40 border border-zinc-800/80 rounded-2xl p-4 md:p-6 mb-8 backdrop-blur-md">
-              <div className="grid grid-cols-12 text-[10px] font-black uppercase tracking-widest text-zinc-500 border-b border-zinc-800/80 pb-3 mb-2 px-3">
-                <span className="col-span-1 text-center">#</span>
-                <span className="col-span-8 md:col-span-7">TÍTULO</span>
-                <span className="col-span-3 md:col-span-3 hidden md:block">ARTISTA / VIBE</span>
-                <span className="col-span-3 md:col-span-1 text-right flex items-center justify-end">
-                  <Clock size={14} />
-                </span>
-              </div>
+              {selectedCategory.songs.length === 0 ? (
+                <div className="py-12 px-4 text-center">
+                  <div className="w-16 h-16 rounded-full bg-rose-950/60 border border-rose-800/60 flex items-center justify-center mx-auto mb-4 text-rose-500 shadow-lg shadow-rose-950/40">
+                    <Heart size={32} />
+                  </div>
+                  <h3 className="text-base font-black italic uppercase text-white mb-2">
+                    Nenhuma música favoritada ainda
+                  </h3>
+                  <p className="text-xs text-zinc-400 max-w-sm mx-auto mb-5 leading-relaxed">
+                    Navegue pelos estilos musicais ou toque no coração (♡) em qualquer música tocando para salvar diretamente na sua lista de favoritas.
+                  </p>
+                  <button
+                    onClick={() => audioService.setSelectedCategory(null)}
+                    className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-lg shadow-red-950/60 active:scale-95"
+                  >
+                    Explorar Músicas & Estilos
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-12 text-[10px] font-black uppercase tracking-widest text-zinc-500 border-b border-zinc-800/80 pb-3 mb-2 px-3">
+                    <span className="col-span-1 text-center">#</span>
+                    <span className="col-span-8 md:col-span-7">TÍTULO</span>
+                    <span className="col-span-3 md:col-span-3 hidden md:block">ARTISTA / VIBE</span>
+                    <span className="col-span-3 md:col-span-1 text-right flex items-center justify-end">
+                      <Clock size={14} />
+                    </span>
+                  </div>
 
-              <div className="space-y-1">
-                {selectedCategory.songs.map((song, index) => {
-                  const isCurrent = currentSong?.id === song.id;
-                  const isFav = favorites.includes(song.id);
+                  <div className="space-y-1">
+                    {selectedCategory.songs.map((song, index) => {
+                      const isCurrent = currentSong?.id === song.id;
+                      const isFav = favorites.includes(song.id);
 
-                  return (
-                    <div
-                      key={song.id}
-                      onClick={() => audioService.playSong(song, selectedCategory.songs)}
-                      className={`grid grid-cols-12 items-center px-3 py-3 rounded-xl cursor-pointer transition-all group ${
-                        isCurrent 
-                          ? 'bg-red-950/50 border border-red-600/50 text-white shadow-inner' 
-                          : 'hover:bg-zinc-800/50 border border-transparent text-zinc-300'
-                      }`}
-                    >
-                      {/* Número da faixa ou Play/Equalizador */}
-                      <div className="col-span-1 flex items-center justify-center">
-                        {isCurrent && isPlaying ? (
-                          <div className="flex items-end gap-0.5 h-4">
-                            <span className="w-1 bg-red-500 animate-pulse h-full rounded" />
-                            <span className="w-1 bg-red-500 animate-pulse h-2 rounded" style={{ animationDelay: '200ms' }} />
-                            <span className="w-1 bg-red-500 animate-pulse h-3 rounded" style={{ animationDelay: '400ms' }} />
-                          </div>
-                        ) : (
-                          <span className="text-xs font-bold text-zinc-500 group-hover:hidden">
-                            {index + 1}
-                          </span>
-                        )}
-                        <Play size={14} className="hidden group-hover:block text-white fill-white" />
-                      </div>
-
-                      {/* Capa + Título */}
-                      <div className="col-span-8 md:col-span-7 flex items-center gap-3 pr-2">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700/50 relative">
-                          <img
-                            src={`https://img.youtube.com/vi/${song.id}/mqdefault.jpg`}
-                            alt={song.title}
-                            className="w-full h-full object-cover"
-                            onError={(e: any) => { e.target.style.display = 'none'; }}
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-xs md:text-sm font-bold truncate ${isCurrent ? 'text-red-500 font-black' : 'text-white'}`}>
-                            {song.title}
-                          </p>
-                          <p className="text-[11px] text-zinc-400 truncate">
-                            {song.artist || selectedCategory.name}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Vibe / Artista */}
-                      <div className="col-span-3 hidden md:block text-xs text-zinc-400 truncate">
-                        {selectedCategory.name}
-                      </div>
-
-                      {/* Ações (Coração + Duração) */}
-                      <div className="col-span-3 md:col-span-1 flex items-center justify-end gap-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            audioService.toggleFavorite(song.id);
-                          }}
-                          className="p-1 text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
-                          title="Favoritar"
+                      return (
+                        <div
+                          key={song.id}
+                          onClick={() => audioService.playSong(song, selectedCategory.songs)}
+                          className={`grid grid-cols-12 items-center px-3 py-3 rounded-xl cursor-pointer transition-all group ${
+                            isCurrent 
+                              ? 'bg-red-950/50 border border-red-600/50 text-white shadow-inner' 
+                              : 'hover:bg-zinc-800/50 border border-transparent text-zinc-300'
+                          }`}
                         >
-                          <Heart 
-                            size={16} 
-                            className={isFav ? 'text-red-500 fill-red-500' : 'opacity-0 group-hover:opacity-100'} 
-                          />
-                        </button>
-                        <span className="text-[11px] font-mono text-zinc-500">
-                          {isCurrent && duration > 0 ? formatTime(duration) : 'Treino'}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          {/* Número da faixa ou Play/Equalizador */}
+                          <div className="col-span-1 flex items-center justify-center">
+                            {isCurrent && isPlaying ? (
+                              <div className="flex items-end gap-0.5 h-4">
+                                <span className="w-1 bg-red-500 animate-pulse h-full rounded" />
+                                <span className="w-1 bg-red-500 animate-pulse h-2 rounded" style={{ animationDelay: '200ms' }} />
+                                <span className="w-1 bg-red-500 animate-pulse h-3 rounded" style={{ animationDelay: '400ms' }} />
+                              </div>
+                            ) : (
+                              <span className="text-xs font-bold text-zinc-500 group-hover:hidden">
+                                {index + 1}
+                              </span>
+                            )}
+                            <Play size={14} className="hidden group-hover:block text-white fill-white" />
+                          </div>
+
+                          {/* Capa + Título */}
+                          <div className="col-span-8 md:col-span-7 flex items-center gap-3 pr-2">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-zinc-800 shrink-0 border border-zinc-700/50 relative">
+                              <img
+                                src={`https://img.youtube.com/vi/${song.id}/mqdefault.jpg`}
+                                alt={song.title}
+                                className="w-full h-full object-cover"
+                                onError={(e: any) => { e.target.style.display = 'none'; }}
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs md:text-sm font-bold truncate ${isCurrent ? 'text-red-500 font-black' : 'text-white'}`}>
+                                {song.title}
+                              </p>
+                              <p className="text-[11px] text-zinc-400 truncate">
+                                {song.artist || selectedCategory.name}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Vibe / Artista */}
+                          <div className="col-span-3 hidden md:block text-xs text-zinc-400 truncate">
+                            {selectedCategory.name}
+                          </div>
+
+                          {/* Ações (Coração + Duração) */}
+                          <div className="col-span-3 md:col-span-1 flex items-center justify-end gap-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleFavorite(song);
+                              }}
+                              className="p-1.5 text-zinc-500 hover:text-red-500 transition-all cursor-pointer active:scale-125"
+                              title={isFav ? "Remover das favoritas" : "Salvar nas favoritas"}
+                            >
+                              <Heart 
+                                size={18} 
+                                className={isFav ? 'text-red-500 fill-red-500 scale-110' : 'text-zinc-500 opacity-60 group-hover:opacity-100 hover:text-white'} 
+                              />
+                            </button>
+                            <span className="text-[11px] font-mono text-zinc-500">
+                              {isCurrent && duration > 0 ? formatTime(duration) : 'Treino'}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -420,7 +512,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
                     key={filter}
                     onClick={() => {
                       setActiveFilter(filter);
-                      if (filter === 'favoritos') audioService.playFavorites();
+                      if (filter === 'favoritos') {
+                        audioService.openFavorites();
+                      }
                     }}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
                       activeFilter === filter
@@ -436,7 +530,50 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
             {/* GRID DE ACESSO RÁPIDO DO SPOTIFY (GRID DE CARDS) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredCategories.slice(0, 8).map(cat => {
+              {/* CARD SPOTIFY: MÚSICAS CURTIDAS */}
+              {(() => {
+                const isFavPlaying = isPlaying && favorites.length > 0 && queue.some(s => favorites.includes(s.id));
+                return (
+                  <div
+                    onClick={() => audioService.openFavorites()}
+                    className="group relative flex items-center bg-gradient-to-r from-rose-950/80 via-purple-950/70 to-zinc-900 border border-rose-900/40 hover:border-rose-700/60 rounded-xl overflow-hidden cursor-pointer transition-all shadow-md active:scale-[0.99]"
+                  >
+                    <div className="w-16 h-16 shrink-0 relative bg-gradient-to-br from-rose-600 via-purple-700 to-indigo-800 flex items-center justify-center shadow-inner">
+                      <Heart size={24} className="text-white fill-white drop-shadow-md group-hover:scale-110 transition-transform" />
+                    </div>
+                    <div className="flex-1 px-4 min-w-0">
+                      <p className="text-xs md:text-sm font-black italic tracking-wide text-white truncate uppercase group-hover:text-rose-400 transition-colors">
+                        MÚSICAS CURTIDAS
+                      </p>
+                      <p className="text-[10px] text-zinc-300 font-semibold">
+                        {favorites.length} {favorites.length === 1 ? 'música salva' : 'músicas salvas'}
+                      </p>
+                    </div>
+                    <div className="pr-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          audioService.playFavorites();
+                        }}
+                        className={`w-10 h-10 rounded-full bg-rose-600 text-white flex items-center justify-center shadow-xl shadow-black/80 transition-all cursor-pointer ${
+                          isFavPlaying
+                            ? 'opacity-100 scale-100'
+                            : 'opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0'
+                        }`}
+                        title="Tocar Favoritas"
+                      >
+                        {isFavPlaying ? (
+                          <Pause size={18} className="fill-white" />
+                        ) : (
+                          <Play size={18} className="fill-white translate-x-0.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {filteredCategories.slice(0, 7).map(cat => {
                 const isCatPlaying = isPlaying && queue.some(s => cat.songs.some(cs => cs.id === s.id));
 
                 return (
@@ -458,7 +595,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
                     {/* Título Central */}
                     <div className="flex-1 px-4 min-w-0">
-                      <p className="text-xs md:text-sm font-black italic tracking-wide text-white truncate group-hover:text-red-400 transition-colors">
+                      <p className="text-xs md:text-sm font-black italic uppercase tracking-wide text-white truncate group-hover:text-red-400 transition-colors">
                         {cat.name}
                       </p>
                       <p className="text-[10px] text-zinc-400 font-medium">
@@ -547,7 +684,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
                       {/* Textos do Card */}
                       <div className="mt-3">
-                        <h3 className="text-xs md:text-sm font-black italic text-white group-hover:text-red-400 transition-colors truncate">
+                        <h3 className="text-xs md:text-sm font-black italic uppercase tracking-wider text-white group-hover:text-red-400 transition-colors truncate">
                           {cat.name}
                         </h3>
                         <p className="text-[11px] text-zinc-400 line-clamp-2 mt-1 leading-tight">
@@ -619,11 +756,12 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          audioService.toggleFavorite(song.id);
+                          handleToggleFavorite(song);
                         }}
-                        className="p-1.5 text-zinc-500 hover:text-red-500 transition-colors cursor-pointer"
+                        className="p-1.5 text-zinc-500 hover:text-red-500 transition-colors cursor-pointer active:scale-125"
+                        title={isFav ? "Remover das favoritas" : "Salvar nas favoritas"}
                       >
-                        <Heart size={16} className={isFav ? 'text-red-500 fill-red-500' : ''} />
+                        <Heart size={16} className={isFav ? 'text-red-500 fill-red-500 scale-110' : 'hover:text-white'} />
                       </button>
                     </div>
                   );
@@ -633,6 +771,14 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
           </div>
         )}
       </main>
+
+      {/* Notificação Toast Flutuante ao Curtir / Descurtir */}
+      {toastMessage && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-zinc-900/95 border border-red-500/50 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-2xl backdrop-blur-md flex items-center gap-2 animate-bounce">
+          <Heart size={16} className="text-red-500 fill-red-500 shrink-0" />
+          <span className="truncate max-w-xs">{toastMessage}</span>
+        </div>
+      )}
 
       {/* ========================================================= */}
       {/* PLAYER FLUTUANTE FIXO INFERIOR (O PLAYER DO SPOTIFY)     */}
@@ -680,13 +826,13 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack }) => {
 
             {currentSong && (
               <button
-                onClick={() => audioService.toggleFavorite(currentSong.id)}
-                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
-                title="Favoritar"
+                onClick={() => handleToggleFavorite(currentSong)}
+                className="p-1.5 text-zinc-400 hover:text-red-500 transition-colors ml-1 cursor-pointer active:scale-125"
+                title={favorites.includes(currentSong.id) ? "Remover das favoritas" : "Salvar nas favoritas"}
               >
                 <Heart 
                   size={18} 
-                  className={favorites.includes(currentSong.id) ? 'text-red-500 fill-red-500' : ''} 
+                  className={favorites.includes(currentSong.id) ? 'text-red-500 fill-red-500 scale-110' : 'hover:text-white'} 
                 />
               </button>
             )}

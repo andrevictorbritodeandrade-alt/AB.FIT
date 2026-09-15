@@ -8,7 +8,8 @@ import {
   Disc3, 
   Music2, 
   Maximize2, 
-  Minimize2 
+  Minimize2,
+  Heart
 } from 'lucide-react';
 
 interface GlobalMusicPlayerProps {
@@ -138,6 +139,21 @@ export const GlobalMusicPlayer: React.FC<GlobalMusicPlayerProps> = ({
                 {currentSong.artist || 'ABFIT Music'}
               </p>
             </div>
+
+            {/* Curtir / Descurtir */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                audioService.toggleFavorite(currentSong.id, currentSong);
+              }}
+              className="p-1.5 text-zinc-400 hover:text-red-500 transition-all rounded-full hover:bg-zinc-800/80 active:scale-125 cursor-pointer shrink-0"
+              title={playerState.favorites.includes(currentSong.id) ? 'Remover das favoritas' : 'Curtir música (salvar nas favoritas)'}
+            >
+              <Heart
+                size={16}
+                className={playerState.favorites.includes(currentSong.id) ? 'text-red-500 fill-red-500 scale-110' : 'text-zinc-400 hover:text-white'}
+              />
+            </button>
           </div>
 
           {/* Right: Controls */}

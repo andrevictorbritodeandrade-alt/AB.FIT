@@ -3351,7 +3351,12 @@ export default function App() {
         {view === 'STUDENT_PERIODIZATION' && studentForView && <StudentPeriodizationView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
         {view === 'RUNTRACK_STUDENT' && studentForView && <RunTrackStudentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
-        {view === 'MUSIC_PLAYER' && <MusicPlayer onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
+        {view === 'MUSIC_PLAYER' && (
+          <MusicPlayer 
+            onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} 
+            userName={studentForView?.nome || selectedStudent?.nome || (isCoach ? 'Treinador' : undefined)}
+          />
+        )}
         {view === 'CORRE_RJ' && <CorreRJView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'ANALYTICS' && studentForView && <AnalyticsDashboard student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'ABOUT_ABFIT' && <AboutView onBack={handleBackNavigation} />}

@@ -46,16 +46,17 @@ export interface MusicCategory {
 export const musicCategories: MusicCategory[] = [
   {
     id: 'pagodao-baiano',
-    name: 'Pagodão Baiano',
+    name: 'PAGODÃO BAIANO',
     description: 'Swingueira pesada, metralhadora e groove acelerado para elevar sua frequência cardíaca.',
     color: '#dc2626',
     gradient: 'from-red-600 to-amber-600',
     songs: [
-      { id: 'AljJx6atPDg', title: 'Pagodão Baiano 1', artist: 'ABFIT Seleção Bahia' },
-      { id: '4iFfuyOUM1Q', title: 'Pagodão Baiano 2', artist: 'ABFIT Seleção Bahia' },
-      { id: 'mju1KPxhO8I', title: 'Pagodão Baiano 3', artist: 'ABFIT Seleção Bahia' },
-      { id: 'GsJuSSxmz30', title: 'Pagodão Baiano 4', artist: 'ABFIT Seleção Bahia' },
-      { id: 'AOSAE_AebgA', title: 'Pagodão Baiano 5', artist: 'ABFIT Seleção Bahia' }
+      { id: 'T7RsHot9MBU', title: 'Léo Santana - Promo Outubro 2026 (Repertório Atualizado)', artist: 'Léo Santana' },
+      { id: 'AljJx6atPDg', title: 'Igor Kannário Ao Vivão - Copa Vela 2026', artist: 'Igor Kannário' },
+      { id: '4iFfuyOUM1Q', title: 'Tony Salles Ao Vivo - Repertório Atualizado', artist: 'Tony Salles' },
+      { id: 'mju1KPxhO8I', title: 'Tony Salles em Guanambi - Arrastão do Pai', artist: 'Tony Salles' },
+      { id: 'GsJuSSxmz30', title: 'Léo Santana - Dale Pagodão Atualizado', artist: 'Léo Santana' },
+      { id: 'AOSAE_AebgA', title: 'É O Tchan - 30 Anos Só Sucessos', artist: 'É O Tchan' }
     ]
   },
   {
@@ -65,51 +66,45 @@ export const musicCategories: MusicCategory[] = [
     color: '#ec4899',
     gradient: 'from-pink-600 via-purple-600 to-indigo-600',
     songs: [
-      { id: 'M2-MZz1k8Ew', title: 'LGBTQIAPN+ 1', artist: 'ABFIT Pride Beats' }
-    ]
-  },
-  {
-    id: 'brasilidades',
-    name: 'Brasilidades',
-    description: 'O melhor do samba, MPB dançante, afrobeat e ritmos tropicais do Brasil.',
-    color: '#059669',
-    gradient: 'from-emerald-600 to-yellow-600',
-    songs: [
-      { id: 'H-Yrgs_OMio', title: 'Brasilidades 1', artist: 'ABFIT Tropical' },
-      { id: 'xX-q3drj7lo', title: 'Brasilidades 2', artist: 'ABFIT Tropical' },
-      { id: '_KW4hB4Frsg', title: 'Brasilidades 3', artist: 'ABFIT Tropical' },
-      { id: 'kEw4URp6qFU', title: 'Brasilidades 4', artist: 'ABFIT Tropical' },
-      { id: 'IryEziyPw5M', title: 'Brasilidades 5', artist: 'ABFIT Tropical' }
+      { id: 'QIgym0tzrMw', title: 'Gloria Groove - A Fantástica Máquina do Groove', artist: 'Gloria Groove' },
+      { id: 'jmTjugfL_pU', title: 'Gloria Groove - Serenata Da GG, Vol. 2 (Ao Vivo)', artist: 'Gloria Groove' },
+      { id: '0uo9YF-fRFM', title: 'Ludmilla - Bloco Numanice (Ao Vivo)', artist: 'Ludmilla' },
+      { id: 'M2-MZz1k8Ew', title: 'NATHYsteps - Pra Gays e Garotas (Pop Workout)', artist: 'NathySteps' }
     ]
   },
   {
     id: 'deep-house',
-    name: 'Deep House',
+    name: 'DEEP HOUSE',
     description: 'Linhas de baixo contínuas, bpm constante e atmosfera imersiva para foco absoluto.',
     color: '#3b82f6',
     gradient: 'from-blue-600 to-indigo-800',
     songs: [
-      { id: 'edtPzxsRMi0', title: 'Deep House 1', artist: 'ABFIT Electronic' }
+      { id: 'edtPzxsRMi0', title: 'Deep House Vibes - Berlin After Hours & Neon Echoes', artist: 'Pink Noir' },
+      { id: 'QBC0KZ7ZQro', title: 'Alok Mix - Melhores Músicas Eletrônicas (Alive Set)', artist: 'Alok / Nova Records' },
+      { id: 'b3XJ4qwIFjM', title: 'Summer Eletrohits Remixes - Sequência Mixada Especial', artist: 'DJ MorpheuZ' },
+      { id: 'nO67YZitN3g', title: 'Vintage Culture & Friends - Só Track Boa (As Melhores do Verão)', artist: 'Vintage Culture, Liu & Dubdogz' }
     ]
   },
   {
     id: 'amapiano',
-    name: 'Amapiano & Afrobeats',
+    name: 'AMAPIANO & AFROBEATS',
     description: 'Log drums profundos, batidas africanas, pianos envolventes e o melhor do Afrobeat.',
     color: '#f59e0b',
     gradient: 'from-amber-600 to-orange-700',
     songs: [
-      { id: 'T7RsHot9MBU', title: 'Amapiano 1', artist: 'ABFIT Afro Vibe' },
-      { id: '0zQnScWo3Ww', title: 'Amapiano & Afrobeats 2', artist: 'ABFIT Afro Vibe' },
-      { id: 'UxXoVc5DT44', title: 'Amapiano & Afrobeats 3', artist: 'ABFIT Afro Vibe' },
-      { id: 'ewLGbGqXdpY', title: 'Amapiano & Afrobeats 4', artist: 'ABFIT Afro Vibe' },
-      { id: 'YpFZZKF85aw', title: 'Amapiano & Afrobeats 5', artist: 'ABFIT Afro Vibe' },
-      { id: 'O1sU1F6dZNk', title: 'Amapiano & Afrobeats 6', artist: 'ABFIT Afro Vibe' }
+      { id: 'O1sU1F6dZNk', title: 'DJ Phaphane - Amapiano To The World (Paris Nights)', artist: 'DJ Phaphane' },
+      { id: 'ewLGbGqXdpY', title: 'Afrobeats, Reggae & Caribbean Vibes DJ Set', artist: 'DJ Lonely Star' },
+      { id: 'UxXoVc5DT44', title: 'Tems Best of Rumba & Chill Afrobeats', artist: 'Tems' },
+      { id: '0zQnScWo3Ww', title: 'Black Stage Session II', artist: 'BlackStageBand' },
+      { id: 'YpFZZKF85aw', title: 'R&B, Afrobeats & Hip Hop Playlist', artist: 'Mike O\'Leary' },
+      { id: 'GSq7DYZMBZA', title: 'Tems & Chill | Soulful Afrobeat & R&B Mix', artist: 'DJ Webaba' },
+      { id: 'AiKyuf9z0dE', title: 'Africanize Sessions | Afrobeats, Amapiano & Afrohouse', artist: 'DJ Shine' },
+      { id: 'NzBXWH8Ve4Y', title: 'Africanize Sessions | Amapiano, Afrobeats & Afrohouse', artist: 'DJ Shine' }
     ]
   },
   {
     id: 'pagode',
-    name: 'Pagode',
+    name: 'PAGODE',
     description: 'Cavaquinho, pandeiro e aquele pagode de responsa para embalar seu treino de força.',
     color: '#ef4444',
     gradient: 'from-red-600 to-rose-700',
@@ -121,13 +116,107 @@ export const musicCategories: MusicCategory[] = [
     ]
   },
   {
-    id: 'npr-music',
-    name: 'NPR MUSIC',
-    description: 'Sessões ao vivo acústicas e envolventes do NPR Tiny Desk Concert para um treino com alta vibe e ritmo orgânico.',
+    id: 'tiny-desk',
+    name: 'TINY DESK',
+    description: 'Sessões ao vivo intimistas e envolventes do Tiny Desk Concert e Tiny Desk Brasil com alta vibração orgânica.',
     color: '#8b5cf6',
     gradient: 'from-purple-600 via-indigo-700 to-zinc-950',
     songs: [
-      { id: 'enAyZlFjKss', title: 'NPR Tiny Desk Concert 1', artist: 'NPR Music Live' }
+      { id: 'R2eOU7c7G_4', title: 'Mon Rovîa: Tiny Desk Concert', artist: 'Mon Rovîa' },
+      { id: 'SG0ifZpDswg', title: 'E.U.: Tiny Desk Concert', artist: 'E.U.' },
+      { id: 'kVzaq0RRYPQ', title: 'Isaiah Rashad: Tiny Desk Concert', artist: 'Isaiah Rashad' },
+      { id: '2Szdo6fRc5c', title: 'The War and Treaty: Tiny Desk Concert', artist: 'The War and Treaty' },
+      { id: 'mbRycM-xgxo', title: 'Vince Staples: Tiny Desk Concert', artist: 'Vince Staples' },
+      { id: 'fEqGjypP5qY', title: 'Shaboozey: Tiny Desk Concert', artist: 'Shaboozey' },
+      { id: 'AzgbNvW793Q', title: 'Bow Wow: Tiny Desk Concert', artist: 'Bow Wow' },
+      { id: 'gQXf0PNreCo', title: '8Ball & MJG: Tiny Desk Concert', artist: '8Ball & MJG' },
+      { id: 'CymCVrKpLzw', title: 'Eve: Tiny Desk Concert', artist: 'Eve' },
+      { id: 'YCbFsAwwyyg', title: 'Joe: Tiny Desk Concert', artist: 'Joe' },
+      { id: 'h4JVg4JDxMU', title: 'Ayra Starr: Tiny Desk Concert', artist: 'Ayra Starr' },
+      { id: 'XYhtkxR5sV8', title: 'GENA: Tiny Desk Concert', artist: 'GENA' },
+      { id: 'KsCV94MQs34', title: 'Floetry: Tiny Desk Concert', artist: 'Floetry' },
+      { id: '3azRJPBhZLU', title: 'Cure For Paranoia: 2026 Contest Winner', artist: 'Cure For Paranoia' },
+      { id: 'YUhWCGUVp4A', title: 'Annahstasia: Tiny Desk Concert', artist: 'Annahstasia' },
+      { id: 'p7YpVl35pac', title: 'Milo J: Tiny Desk Concert', artist: 'Milo J' },
+      { id: 'wdeWKd9rjt4', title: 'Infinity Song: Tiny Desk Concert', artist: 'Infinity Song' },
+      { id: '5AVYDHTOixU', title: 'De La Soul: Tiny Desk Concert', artist: 'De La Soul' },
+      { id: 'm5XxOLdMSS8', title: 'Buddy Guy: Tiny Desk Concert', artist: 'Buddy Guy' },
+      { id: 'KcOweHh_DMI', title: 'Immanuel Wilkins: Tiny Desk Concert', artist: 'Immanuel Wilkins' },
+      { id: 'kP3cAAU-AHk', title: 'John P. Kee & New Life: Tiny Desk Concert', artist: 'John P. Kee & New Life' },
+      { id: 'Br7beKBJFLE', title: 'Coco Jones: Tiny Desk Concert', artist: 'Coco Jones' },
+      { id: 'rMWjbb2l5BE', title: 'Daniel Caesar: Tiny Desk Concert', artist: 'Daniel Caesar' },
+      { id: 'DISMiACmkeA', title: 'Tiny Desk Brasil: João Gomes', artist: 'João Gomes' },
+      { id: 'j22KzIF34Xo', title: 'GIVĒON: Tiny Desk Concert', artist: 'GIVĒON' },
+      { id: 'vTx1ITE67g4', title: 'Odeal: Tiny Desk Concert', artist: 'Odeal' },
+      { id: 'Xcv0O44zfeU', title: 'Kokoroko: Tiny Desk Concert', artist: 'Kokoroko' },
+      { id: '_p8T7JT8LK0', title: 'Bloc Party: Tiny Desk Concert', artist: 'Bloc Party' },
+      { id: 'f7gIBB7jKc0', title: 'Clipse: Tiny Desk Concert', artist: 'Clipse' },
+      { id: 'kfUcI82SZv4', title: 'Rico Nasty: Tiny Desk Concert', artist: 'Rico Nasty' },
+      { id: 'bzAI4F_ks5s', title: 'Living Colour: Tiny Desk Concert', artist: 'Living Colour' },
+      { id: 'Uap53lFWEJw', title: 'Beenie Man: Tiny Desk Concert', artist: 'Beenie Man' },
+      { id: 't4p20PsP3cw', title: 'CeCe Winans: Tiny Desk Concert', artist: 'CeCe Winans' },
+      { id: 'grWRQ0cONXA', title: 'Wiz Khalifa: Tiny Desk Concert', artist: 'Wiz Khalifa' },
+      { id: 'ouuPSxE1hK4', title: 'Bad Bunny: Tiny Desk Concert', artist: 'Bad Bunny' },
+      { id: 'QWhezn3nB_M', title: 'REBOLU: Tiny Desk x globalFEST', artist: 'REBOLU' },
+      { id: 'kIzhoZAf6QQ', title: 'Elida Almeida: Tiny Desk x globalFEST', artist: 'Elida Almeida' },
+      { id: 'oakGqyUPK0c', title: 'IZA: Tiny Desk Brasil', artist: 'IZA' },
+      { id: 's3w6Qst7ee4', title: 'Gloria Groove: Tiny Desk Brasil', artist: 'Gloria Groove' },
+      { id: 'X0yHGC0ChrI', title: 'Duquesa: Tiny Desk Brasil', artist: 'Duquesa' },
+      { id: 'IiE7MAFu2Kw', title: 'Gilberto Gil, Flor e Bento: Tiny Desk Brasil', artist: 'Gilberto Gil' },
+      { id: 'T1ycoaPqRhM', title: 'Alceu Valença: Tiny Desk Brasil', artist: 'Alceu Valença' },
+      { id: 'mB64XGyZFv8', title: 'Liniker: Tiny Desk Brasil', artist: 'Liniker' },
+      { id: '5XVLtuMtH74', title: 'Sandra Sá: Tiny Desk Brasil', artist: 'Sandra Sá' },
+      { id: 'axeUDhmIieg', title: 'Tássia Reis: Tiny Desk Brasil', artist: 'Tássia Reis' },
+      { id: 'yvG_sA6DTdU', title: 'Ney Matogrosso: Tiny Desk Brasil', artist: 'Ney Matogrosso' },
+      { id: 'JwvHyWfMm_U', title: 'Péricles: Tiny Desk Brasil', artist: 'Péricles' },
+      { id: 'kKk1_ZKedXE', title: 'Metá Metá & Negro Leo: Tiny Desk Brasil', artist: 'Metá Metá & Negro Leo' }
+    ]
+  },
+  {
+    id: 'mpb',
+    name: 'MÚSICA POPULAR BRASILEIRA',
+    description: 'Harmonias sofisticadas, poesia, soul brasileiro, afrobeat e ritmos tropicais da MPB.',
+    color: '#10b981',
+    gradient: 'from-emerald-600 via-teal-700 to-zinc-950',
+    songs: [
+      { id: 'jrVyJnR-mHI', title: 'Tiago Iorc - Acústico MTV (Ao Vivo)', artist: 'Tiago Iorc' },
+      { id: 'zZ1V8B98WkU', title: 'Alpha Sessions: Luedji Luna (Ao Vivo Completo)', artist: 'Luedji Luna' },
+      { id: '8cX2xEmsAd4', title: 'Luedji Luna, Céu, Larissa Luz e Joyce Alane - Cantam Cazuza', artist: 'Prêmio Música Brasileira' },
+      { id: 'a6thqDb8-us', title: 'Pedro Nass - O Puro Suco do Djavan', artist: 'Pedro Nass / Djavan' },
+      { id: 'Gw9M3KaRKRM', title: 'Anitta - EQUILIBRIVM (Ao Vivo)', artist: 'Anitta' },
+      { id: 'E0sTBHZeGvQ', title: 'Medley Fat Family - Tali 2026', artist: 'Tali / Fat Family' },
+      { id: 'jUj_cIP0bJQ', title: 'Lilás (Djavan) - Marcela Reis (Sala do Groove V)', artist: 'Marcela Reis' },
+      { id: 'BE6BnSPoGts', title: 'Gilsons - Beijo Na Boca (Clipe Oficial)', artist: 'Gilsons' },
+      { id: 'H-Yrgs_OMio', title: 'Groove Brasileiro Mix - Caetano Veloso, Tim Maia, Gilberto Gil', artist: 'Pantaleao Music' },
+      { id: 'xX-q3drj7lo', title: 'Afrobeat Brasil - IZA, Ludmilla, Xamã, Rael', artist: 'DJ Sidaum' },
+      { id: '_KW4hB4Frsg', title: 'Bebeto Rei do Swing - Especial Samba Rock', artist: 'DJ Fabio Vargas' },
+      { id: 'kEw4URp6qFU', title: 'Bossa Nova Vibrant & Smooth - Foco & Ritmo', artist: 'ELIJAZZ' },
+      { id: 'IryEziyPw5M', title: 'Rachel Reis - Divina Casca (Álbum Completo)', artist: 'Rachel Reis' }
+    ]
+  },
+  {
+    id: 'rnb-rhythm-and-blues',
+    name: 'R&B - RHYTHM AND BLUES',
+    description: 'Grooves sedutores, vocais aveludados, neo-soul e os maiores clássicos contemporâneos de R&B.',
+    color: '#6366f1',
+    gradient: 'from-indigo-600 via-purple-800 to-zinc-950',
+    songs: [
+      { id: 'PAFAfhod9TU', title: 'H.E.R. - Damage (Official Video)', artist: 'H.E.R.' },
+      { id: 'rhXCNHOMp_8', title: 'Bela Maria - Difícil Lembrar, né?', artist: 'Bela Maria' },
+      { id: 'u6hlObFT60A', title: 'Black Pumas – Amazon Music Songline (Full Concert)', artist: 'Black Pumas' },
+      { id: 'AnSZs-22a7A', title: 'Coco Jones | The 1st TERRELL Show Concert (Full Show)', artist: 'Coco Jones' },
+      { id: 'eUzar_3afCo', title: 'Top Hits, R&B & Afrobeats Mix Vol. 8', artist: 'DJ JC Llamas' },
+      { id: '_2ugLP3nfKc', title: 'Héron Love | R&B Lovers (House Party Experience 2)', artist: 'Héron Love' },
+      { id: 'dG4gjJVGJMw', title: 'R&B Essentials | A COLORS MIX', artist: 'A COLORS SHOW' },
+      { id: 'L8W75wsLx3o', title: 'Os Garotin - Calor e Arrepio (Clipe Oficial)', artist: 'Os Garotin' },
+      { id: 'cJyl5rc2Qvk', title: 'Os Garotin, Anchietx - Maldade (Live Session)', artist: 'Os Garotin' },
+      { id: 'Qp80R3efukg', title: 'Os Garotin - Queda Livre (Live Session)', artist: 'Os Garotin' },
+      { id: 'OGpSkX8VV5w', title: 'Os Garotin, Leo Guima - Coração de Lata (Live Session)', artist: 'Os Garotin' },
+      { id: '3DMDo1nAILc', title: 'Os Garotin - Pouco a Pouco (Live Session)', artist: 'Os Garotin' },
+      { id: 'VWHit-A3M-Y', title: 'Os Garotin - Hoje Eu Vou Me Dar Bem (Ao Vivo no Estúdio)', artist: 'Os Garotin' },
+      { id: 'KkOnlUc7-bI', title: 'Os Garotin de São Gonçalo - Álbum Completo', artist: 'Os Garotin' },
+      { id: 'rq_2gjb2d0A', title: 'Os Garotin - Calor do Momento (Clipe Oficial)', artist: 'Os Garotin' },
+      { id: '1x40hmS6O74', title: 'Lucas - Anchietx, Os Garotin (Live Session)', artist: 'Os Garotin' }
     ]
   }
 ];

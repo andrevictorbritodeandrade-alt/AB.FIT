@@ -44,9 +44,31 @@ class YouTubeAudioService {
 
   constructor() {
     this.loadFavorites();
+    this.loadSongMetadata();
     if (typeof window !== 'undefined') {
       this.setupMessageListener();
       this.initYouTubeApiScript();
+    }
+  }
+
+  private songMetadataCache: Record<string, Song> = {};
+
+  private loadSongMetadata() {
+    try {
+      const saved = localStorage.getItem('abfit-music-fav-metadata');
+      if (saved) {
+        this.songMetadataCache = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('[ABFIT Music] Erro ao carregar metadados dos favoritos:', e);
+    }
+  }
+
+  private saveSongMetadata() {
+    try {
+      localStorage.setItem('abfit-music-fav-metadata', JSON.stringify(this.songMetadataCache));
+    } catch (e) {
+      console.warn('[ABFIT Music] Erro ao salvar metadados dos favoritos:', e);
     }
   }
 
@@ -340,20 +362,49 @@ class YouTubeAudioService {
     }
   }
 
+  public getFavoritesCategory(favIds: string[] = this.state.favorites): MusicCategory {
+    const allKnownSongs = musicCategories.flatMap((c) => c.songs);
+    const seen = new Set<string>();
+    const favSongs: Song[] = [];
+
+    for (const id of favIds) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      const fromCat = allKnownSongs.find((s) => s.id === id);
+      if (fromCat) {
+        favSongs.push(fromCat);
+      } else if (this.songMetadataCache[id]) {
+        favSongs.push(this.songMetadataCache[id]);
+      } else if (this.state.currentSong && this.state.currentSong.id === id) {
+        favSongs.push(this.state.currentSong);
+      } else {
+        favSongs.push({ id, title: 'Faixa Curtida', artist: 'ABFIT Music' });
+      }
+    }
+
+    return {
+      id: 'favoritos',
+      name: 'MÚSICAS CURTIDAS',
+      description: favSongs.length > 0 
+        ? `${favSongs.length} ${favSongs.length === 1 ? 'música salva' : 'músicas salvas'} na sua lista de favoritas para impulsionar seus treinos.`
+        : 'Você ainda não tem músicas curtidas. Toque no coração (♡) em qualquer faixa para salvá-la aqui!',
+      color: '#e11d48',
+      gradient: 'from-rose-900 via-purple-950 to-zinc-950',
+      songs: favSongs,
+    };
+  }
+
+  public openFavorites() {
+    const favCategory = this.getFavoritesCategory();
+    this.updateState({ selectedCategory: favCategory });
+  }
+
   public playFavorites() {
-    const allSongs = musicCategories.flatMap((c) => c.songs);
-    const favSongs = allSongs.filter((s) => this.state.favorites.includes(s.id));
-    if (favSongs.length > 0) {
-      const favCategory: MusicCategory = {
-        id: 'favoritos',
-        name: 'Músicas Curtidas',
-        description: 'Sua seleção pessoal de faixas favoritas para treinar.',
-        color: '#dc2626',
-        gradient: 'from-purple-900 via-red-900 to-zinc-950',
-        songs: favSongs,
-      };
-      this.updateState({ selectedCategory: favCategory });
-      this.playSong(favSongs[0], favSongs);
+    const favCategory = this.getFavoritesCategory();
+    this.updateState({ selectedCategory: favCategory });
+    if (favCategory.songs.length > 0) {
+      this.playSong(favCategory.songs[0], favCategory.songs);
     }
   }
 
@@ -494,13 +545,42 @@ class YouTubeAudioService {
     this.updateState({ repeat: !this.state.repeat });
   }
 
-  public toggleFavorite(songId: string) {
+  public toggleFavorite(songId: string, songObj?: Song): boolean {
     const exists = this.state.favorites.includes(songId);
-    const updated = exists
-      ? this.state.favorites.filter((id) => id !== songId)
-      : [...this.state.favorites, songId];
-    this.updateState({ favorites: updated });
+    let updated: string[];
+    let isNowFavorite = false;
+
+    if (exists) {
+      updated = this.state.favorites.filter((id) => id !== songId);
+      isNowFavorite = false;
+    } else {
+      updated = [songId, ...this.state.favorites];
+      isNowFavorite = true;
+
+      // Cache metadata to ensure song details are permanently preserved
+      const songData = songObj || 
+        (this.state.currentSong?.id === songId ? this.state.currentSong : undefined) ||
+        musicCategories.flatMap(c => c.songs).find(s => s.id === songId);
+
+      if (songData) {
+        this.songMetadataCache[songId] = songData;
+        this.saveSongMetadata();
+      }
+    }
+
+    // Se estiver visualizando a playlist de favoritos, atualiza a lista em tempo real
+    let newSelectedCategory = this.state.selectedCategory;
+    if (this.state.selectedCategory?.id === 'favoritos') {
+      newSelectedCategory = this.getFavoritesCategory(updated);
+    }
+
+    this.updateState({ 
+      favorites: updated,
+      selectedCategory: newSelectedCategory 
+    });
     this.saveFavorites();
+
+    return isNowFavorite;
   }
 }
 
