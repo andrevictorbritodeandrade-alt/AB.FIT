@@ -217,7 +217,7 @@ export function CorreRJView({ onBack }: { onBack: () => void }) {
       const raceList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       // Verifica se a quantidade de corridas no banco é diferente do esperado e se o seeding já não está rodando
-      if (raceList.length !== INITIAL_PREDICTIONS.length && !seedingRef.current) {
+      if (raceList.length !== INITIAL_PREDICTIONS.length && !seedingRef.current && !(window as any)._hasQuotaExceeded) {
         console.log("Detectadas provas faltando ou sobrando. Iniciando sincronização...");
         seedingRef.current = true;
         seedInitialData(raceList).then(() => {
@@ -262,11 +262,15 @@ export function CorreRJView({ onBack }: { onBack: () => void }) {
     
     // Insere ou atualiza as corridas da lista
     for (const race of INITIAL_PREDICTIONS) {
+      if ((window as any)._hasQuotaExceeded) break;
       const raceId = `seed_${race.dataIso}_${race.nome.toLowerCase().replace(/\s/g, '_').normalize("NFD").replace(/[\u0300-\u036f]/g, "")}`;
       const path = `artifacts/${appId}/public/data/races/${raceId}`;
       try {
         await setDoc(doc(db, path), { ...race, lastScrape: new Date().toISOString() }, { merge: true });
-      } catch (e) {
+      } catch (e: any) {
+        if (e?.message?.includes('resource-exhausted') || e?.code === 'resource-exhausted') {
+            (window as any)._hasQuotaExceeded = true;
+        }
         try {
           handleFirestoreError(e, OperationType.WRITE, path);
         } catch (err) {

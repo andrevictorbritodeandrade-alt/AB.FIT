@@ -2292,7 +2292,7 @@ export default function App() {
                   }
 
                   // If we detected that local defaults were missing from cloud, sync them up
-                  if (hasCloudChanges) {
+                  if (hasCloudChanges && !(window as any)._hasQuotaExceeded) {
                       const docRefSave = doc(db, path);
                       try {
                         console.log(`Sincronizando dados base de ${rawData.nome} para a nuvem...`);
@@ -2328,6 +2328,9 @@ export default function App() {
                         }
                       } catch (e: any) {
                         console.warn("Silent sync error:", e);
+                        if (e?.code === 'resource-exhausted') {
+                          (window as any)._hasQuotaExceeded = true;
+                        }
                       }
                   }
               }
