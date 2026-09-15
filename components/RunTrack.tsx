@@ -1357,12 +1357,13 @@ function parseWorkoutSegments(workout: WorkoutModel): WorkoutSegment[] {
     return segments;
 }
 
-export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: { student: Student, onBack: () => void, onSave: (id: string, data: any) => void, onToggleMenu?: () => void }) {
+export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu, onNavigate }: { student: Student, onBack: () => void, onSave: (id: string, data: any) => void, onToggleMenu?: () => void, onNavigate?: (v: string) => void }) {
     const [workouts, setWorkouts] = useState<WorkoutModel[]>(() => getDefaultWorkouts(student.id));
     const [runnerCount, setRunnerCount] = useState(1);
     const [loggingWorkout, setLoggingWorkout] = useState<WorkoutModel | null>(null);
     const [liveWorkout, setLiveWorkout] = useState<WorkoutModel | null>(null);
     const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'HISTORY'>('OVERVIEW');
+    const [showPlanilha, setShowPlanilha] = useState(false);
 
     useEffect(() => {
         if (!student.id) return;
@@ -1809,6 +1810,45 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                     </div>
                 </div>
                 
+                {/* AVALIAÇÃO FÍSICA SUMMARY */}
+                {!isWatch && onNavigate && student.physicalAssessments && student.physicalAssessments.length > 0 && (() => {
+                    const latest = [...student.physicalAssessments].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())[0];
+                    return (
+                        <div 
+                            onClick={() => onNavigate('STUDENT_ASSESSMENT')}
+                            className="bg-zinc-900 border border-emerald-500/20 rounded-[2rem] p-6 shadow-xl cursor-pointer hover:bg-zinc-800 transition-all active:scale-95 group relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-600/10 blur-2xl -mr-10 -mt-10 group-hover:bg-emerald-600/20 transition-all" />
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-emerald-950 flex items-center justify-center border border-emerald-500/30">
+                                        <Activity size={18} className="text-emerald-500" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-black italic uppercase text-white tracking-widest leading-none">Avaliação & Evolução</h3>
+                                        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Parecer ABFIT Liberado</p>
+                                    </div>
+                                </div>
+                                <ChevronRight className="text-zinc-500 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                            </div>
+                            <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/5">
+                                <div>
+                                    <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Peso Atual</p>
+                                    <p className="text-sm font-black italic text-white tracking-tighter">{latest.peso} kg</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Gordura</p>
+                                    <p className="text-sm font-black italic text-white tracking-tighter">{latest.gordura?.value || latest.bio_percentual_gordura || '--'}%</p>
+                                </div>
+                                <div>
+                                    <p className="text-[9px] text-zinc-500 font-black uppercase tracking-widest">Massa Magra</p>
+                                    <p className="text-sm font-black italic text-white tracking-tighter">{latest.pesoMassaMuscular?.value || latest.registroMassaMuscular?.value || '--'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* QUICK LOG SECTION */}
                 {!isWatch && (
                     <div className="bg-zinc-900 border border-white/5 rounded-[2rem] p-6 shadow-xl">
@@ -1930,23 +1970,32 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu }: {
                     )}
 
                     {!isWatch && (
-                        <div className="space-y-6">
-                            <div className="flex items-center gap-3 mb-4 pl-2">
-                                <Calculator size={24} className="text-red-600"/>
-                                <h3 className="text-2xl font-black italic uppercase text-white tracking-tighter">Sua Planilha</h3>
+                        <div className="space-y-4 pt-4 border-t border-zinc-800">
+                            <div className="flex items-center justify-between px-2 cursor-pointer" onClick={() => setShowPlanilha(!showPlanilha)}>
+                                <div className="flex items-center gap-3">
+                                    <Calculator size={22} className="text-red-600"/>
+                                    <h3 className="text-xl font-black italic uppercase text-white tracking-tighter">Sua Planilha</h3>
+                                </div>
+                                <button className="text-[10px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-800 px-3 py-1.5 rounded-xl hover:text-white transition-colors">
+                                    {showPlanilha ? 'Ocultar Planilha' : 'Exibir Planilha'}
+                                </button>
                             </div>
-                            {uniqueWorkoutsByDay.map(w => {
-                                const isTodayWorkout = normalizeDay(w.dayOfWeek).includes(normalizeDay(todayName));
-                                return (
-                                    <div key={w.id} onClick={() => !w.isDayOff && setLoggingWorkout(w)} className={w.isDayOff ? 'opacity-50 grayscale' : 'cursor-pointer'}>
-                                        <WorkoutCard 
-                                            workout={w} 
-                                            isToday={isTodayWorkout}
-                                            isCompleted={student.workoutHistory?.some(h => h.workoutId === w.id && h.date === new Date().toLocaleDateString('pt-BR'))}
-                                        />
-                                    </div>
-                                );
-                            })}
+                            {showPlanilha && (
+                                <div className="space-y-4 animate-in fade-in duration-300">
+                                    {uniqueWorkoutsByDay.map(w => {
+                                        const isTodayWorkout = normalizeDay(w.dayOfWeek).includes(normalizeDay(todayName));
+                                        return (
+                                            <div key={w.id} onClick={() => !w.isDayOff && setLoggingWorkout(w)} className={w.isDayOff ? 'opacity-50 grayscale' : 'cursor-pointer'}>
+                                                <WorkoutCard 
+                                                    workout={w} 
+                                                    isToday={isTodayWorkout}
+                                                    isCompleted={student.workoutHistory?.some(h => h.workoutId === w.id && h.date === new Date().toLocaleDateString('pt-BR'))}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     )}
 

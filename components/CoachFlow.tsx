@@ -8,7 +8,7 @@ import {
   Users, Info, Sparkles, LayoutGrid, Calendar, Clock, Play, FileText, Folder,
   ChevronDown, Lightbulb, Bell, CalendarClock, Search, Check, Layers, Video, X, Eye, EyeOff,
   BarChart3, ZapIcon, Settings2, Link as LinkIcon, Send, Menu, Layout, AlertTriangle, Scan, Upload, Copy,
-  CheckCircle2, MapPin, History, Download, Headphones
+  CheckCircle2, MapPin, History, Download, Headphones, Shield, ShieldCheck
 } from 'lucide-react';
 import { Card, AppFooter, Logo, HeaderTitle, NotificationBadge, WeatherWidget } from './Layout';
 import { callAI } from '../services/gemini';
@@ -16,7 +16,6 @@ import { Student, Exercise, PhysicalAssessment, Workout, AppNotification, Period
 import { analyzeExerciseAndGenerateImage, extractWorkoutFromImage, generateBioInsight } from '../services/gemini';
 import { RunTrackCoachView } from './RunTrack';
 import { EXERCISE_DATABASE, MUSCLE_GROUPS } from '../constants/exercises';
-import ProgressBarABFIT from './ProgressBarABFIT';
 
 export { RunTrackCoachView as RunTrackManager } from './RunTrack';
 
@@ -451,7 +450,7 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
         )}
       </header>
 
-      {/* MENU VERTICAL COMPLETO (IDÊNTICO AO ALUNO) */}
+      {/* MENU DE GERENCIAMENTO DO COACH */}
       <div className="space-y-3 mb-10">
         
         {/* Planilhas Ativas - Scroll para lista abaixo */}
@@ -484,17 +483,6 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
             ))}
         </div>
 
-        {/* Spotify */}
-        <button onClick={() => onNavigate('SPOTIFY_PLAYER')} className="w-full p-3.5 mt-4 rounded-3xl bg-emerald-950/20 border border-emerald-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-emerald-600/50">
-           <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-[#1DB954] flex items-center justify-center shadow-lg shadow-emerald-600/20">
-                 <Headphones size={18} className="text-black" />
-              </div>
-              <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Spotify Free</span>
-           </div>
-           <ChevronRight className="text-[#1DB954] group-hover:translate-x-1 transition-transform" />
-        </button>
-
         {/* Periodização */}
         <button onClick={() => onNavigate('PERIODIZATION')} className="w-full p-3.5 rounded-3xl bg-indigo-950/20 border border-indigo-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-indigo-600/50">
            <div className="flex items-center gap-4">
@@ -504,9 +492,6 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
               <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Periodização</span>
            </div>
            <ChevronRight className="text-indigo-600 group-hover:translate-x-1 transition-transform" />
-        </button>
-        <button onClick={() => onSave(student.id, { periodization: { ...student.periodization, startDate: new Date().toISOString() } })} className="w-full mt-2 p-2 bg-red-900/50 text-[10px] uppercase font-black tracking-widest text-white rounded-xl shadow-lg active:scale-95 transition-all">
-          Reiniciar Macrociclo (Semana 1)
         </button>
 
         {/* Avaliação Física */}
@@ -518,17 +503,6 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
               <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Avaliação Física</span>
            </div>
            <ChevronRight className="text-emerald-600 group-hover:translate-x-1 transition-transform" />
-        </button>
-
-        {/* Corre RJ 2026 */}
-        <button onClick={() => onNavigate('CORRE_RJ')} className="w-full p-4 rounded-3xl bg-yellow-950/20 border border-yellow-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-yellow-600/50">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-600/20">
-                 <MapPin size={20} className="text-white" />
-              </div>
-              <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Corre RJ 2026</span>
-           </div>
-           <ChevronRight className="text-yellow-600 group-hover:translate-x-1 transition-transform" />
         </button>
 
         {/* Feed Performance */}
@@ -553,56 +527,9 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
            <ChevronRight className="text-blue-600 group-hover:translate-x-1 transition-transform" />
         </button>
 
-        {/* Histórico de Treinos */}
-        <button onClick={() => onNavigate('WORKOUT_HISTORY')} className="w-full p-4 rounded-3xl bg-emerald-950/20 border border-emerald-600/20 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-emerald-600/50">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-600/20">
-                 <History size={20} className="text-white" />
-              </div>
-              <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Histórico de Treinos</span>
-           </div>
-           <ChevronRight className="text-emerald-600 group-hover:translate-x-1 transition-transform" />
-        </button>
-
-        {/* Sobre a ABFIT */}
-        <button onClick={() => onNavigate('ABOUT_ABFIT')} className="w-full p-4 rounded-3xl bg-zinc-900 border border-zinc-800 flex items-center justify-between group active:scale-95 transition-all shadow-lg hover:border-zinc-700">
-           <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center shadow-lg shadow-zinc-800/20">
-                 <Info size={20} className="text-white" />
-              </div>
-              <span className="font-black italic uppercase text-foreground tracking-wider text-sm">Sobre a ABFIT</span>
-           </div>
-           <ChevronRight className="text-zinc-500 group-hover:translate-x-1 transition-transform" />
-        </button>
-
       </div>
 
-      {/* Progresso: Ajuste de Treino */}
-      {(student.faseAjusteA !== undefined || student.faseAjusteB !== undefined) && (
-        <div className="mt-8 space-y-4">
-          <div className="flex items-center justify-between px-2">
-            <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] italic">📊 Progresso: Ajuste de Treino</h3>
-          </div>
-          <div className="space-y-3">
-            {student.faseAjusteA !== undefined && (
-              <ProgressBarABFIT 
-                label="Treino A" 
-                atual={student.faseAjusteA} 
-                totalFase={20} 
-                totalGlobal={student.totalGlobalA || 0} 
-              />
-            )}
-            {student.faseAjusteB !== undefined && (
-              <ProgressBarABFIT 
-                label="Treino B" 
-                atual={student.faseAjusteB} 
-                totalFase={20} 
-                totalGlobal={student.totalGlobalB || 0} 
-              />
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Planilhas Atuais - Lista Expansível / Atalho Rápido */}
       <div className="mt-8 space-y-4" ref={workoutsRef}>
@@ -957,118 +884,16 @@ export function WorkoutEditorView({ student, workoutToEdit, onBack, onSave }: { 
   );
 }
 
-import { BioimpedanceView } from './BioimpedanceView';
+import { StudentAssessmentView } from './StudentFlow';
 
 export function CoachAssessmentView({ student, onBack, onSave }: { student: Student, onBack: () => void, onSave: (id: string, data: any) => void }) {
-  const [weight, setWeight] = useState<string>('');
-  const [height, setHeight] = useState<string>('');
-  const [bodyFat, setBodyFat] = useState<string>('');
-  const [saving, setSaving] = useState(false);
-  const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
-
-  if (selectedAssessment && (selectedAssessment.type === 'BIOIMPEDANCE' || selectedAssessment.type === 'BIOIMPEDANCIA')) {
-    return <BioimpedanceView assessment={selectedAssessment} allAssessments={student.physicalAssessments} onBack={() => setSelectedAssessment(null)} />;
-  }
-
-  const handleSave = async () => {
-    if (!weight || !bodyFat) return; // Simple validation
-    setSaving(true);
-    
-    const newAssessment = {
-      id: Date.now().toString(),
-      data: new Date().toISOString(),
-      peso: weight,
-      altura: height || (student.height as string) || '',
-      bio_percentual_gordura: bodyFat
-    };
-
-    const updatedAssessments = [newAssessment, ...(student.physicalAssessments || [])];
-    
-    // Update assessments and current stats
-    await onSave(student.id, { 
-      physicalAssessments: updatedAssessments,
-      weight: weight,
-      height: height || student.height
-    });
-    
-    setSaving(false);
-    onBack();
-  };
-
   return (
-    <div className="p-6 text-foreground bg-background h-screen overflow-y-auto custom-scrollbar text-left transition-colors">
-      <header className="flex items-center gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-md z-50 py-4 -mx-6 px-6 border-b border-border">
-        <button onClick={onBack} className="p-2 bg-card rounded-full hover:bg-red-600 transition-colors shadow-lg"><ArrowLeft size={20}/></button>
-        <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
-          <HeaderTitle text="Nova Avaliação" />
-        </h2>
-      </header>
-
-      <Card className="p-6 bg-card/50 border-border space-y-6">
-        <div>
-          <label className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2 block">Peso Corporal (kg)</label>
-          <input 
-            type="number" 
-            value={weight} 
-            onChange={e => setWeight(e.target.value)} 
-            placeholder="0.0"
-            className="w-full bg-background border border-border p-4 rounded-2xl text-foreground font-black italic text-lg outline-none focus:border-red-600"
-          />
-        </div>
-        <div>
-           <label className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2 block">Altura (cm)</label>
-           <input 
-             type="number" 
-             value={height} 
-             onChange={e => setHeight(e.target.value)} 
-             placeholder={String(student.height || '')}
-             className="w-full bg-background border border-border p-4 rounded-2xl text-foreground font-black italic text-lg outline-none focus:border-red-600"
-           />
-        </div>
-        <div>
-           <label className="text-[9px] font-black uppercase text-muted-foreground tracking-[0.2em] mb-2 block">Gordura Corporal (%)</label>
-           <input 
-             type="number" 
-             value={bodyFat} 
-             onChange={e => setBodyFat(e.target.value)} 
-             placeholder="0.0"
-             className="w-full bg-background border border-border p-4 rounded-2xl text-foreground font-black italic text-lg outline-none focus:border-red-600"
-           />
-        </div>
-
-        <button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="w-full py-4 bg-red-600 rounded-3xl font-black uppercase tracking-widest text-sm shadow-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 text-white"
-        >
-          {saving ? <Loader2 className="animate-spin" /> : <Save size={18} />}
-          Salvar Avaliação
-        </button>
-      </Card>
-      
-      {/* History List */}
-      <div className="mt-8 space-y-4">
-        <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em] pl-2">Histórico Recente</h3>
-        {(student.physicalAssessments || []).map(a => (
-           <div 
-             key={a.id} 
-             onClick={() => setSelectedAssessment(a)}
-             className="flex justify-between items-center p-4 bg-card rounded-2xl border border-border cursor-pointer hover:bg-card/80 transition-colors active:scale-95"
-           >
-              <div>
-                 <div className="flex items-center gap-2 mb-1">
-                   <p className="text-xs font-black text-foreground">{new Date(a.data).toLocaleDateString('pt-BR')}</p>
-                   {(a.type === 'BIOIMPEDANCE' || a.type === 'BIOIMPEDANCIA') && (
-                     <span className="bg-white/10 text-white border border-white/30 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">Bioimpedância</span>
-                   )}
-                 </div>
-                 <p className="text-[10px] text-muted-foreground">{a.peso}kg • {a.gordura?.value || a.bio_percentual_gordura}% Gordura</p>
-              </div>
-              <ChevronRight size={16} className="text-muted-foreground" />
-           </div>
-        ))}
-      </div>
-    </div>
+    <StudentAssessmentView 
+      student={student} 
+      onBack={onBack} 
+      onSave={onSave}
+      isCoach={true}
+    />
   );
 }
 
@@ -1077,6 +902,10 @@ export function PeriodizationView({ student, onBack, onProceedToWorkout, onSave 
    
    const [phaseTitle, setPhaseTitle] = useState(p.phaseTitle || '');
    const [generalStrategy, setGeneralStrategy] = useState(p.generalStrategy || '');
+   const [frequenciaSemanal, setFrequenciaSemanal] = useState(p.frequenciaSemanal || 'Mínimo de 5 vezes na semana (sempre que possível, 6 a 7 dias)');
+   const [limiteTempoSessao, setLimiteTempoSessao] = useState(p.limiteTempoSessao || 'Máximo 1 hora (60 minutos) - Teto inegociável por regulação sensorial (Autismo e TDAH)');
+   const [restricoesOrtopedicas, setRestricoesOrtopedicas] = useState(p.restricoesOrtopedicas || 'Tendinopatia no joelho esquerdo. Dificuldade de execução de corrida (contraindicada). Cardio no máximo caminhada, elíptico ou bicicleta.');
+   const [regraAvaliacaoFisica, setRegraAvaliacaoFisica] = useState(p.regraAvaliacaoFisica || 'Avaliação física obrigatória sempre que precisar mudar a série de treino, ou seja, no final de cada periodização.');
    const [safetyNotes, setSafetyNotes] = useState(p.clinicalSafety ? p.clinicalSafety.join('\n') : '');
    const [bioContext, setBioContext] = useState(p.bioInsight?.context || '');
    const [bioTips, setBioTips] = useState(p.bioInsight?.tips ? p.bioInsight.tips.join('\n') : '');
@@ -1104,6 +933,20 @@ export function PeriodizationView({ student, onBack, onProceedToWorkout, onSave 
          startDate: p.startDate || new Date().toISOString(),
          phaseTitle,
          generalStrategy,
+         frequenciaSemanal,
+         limiteTempoSessao,
+         restricoesOrtopedicas,
+         regraAvaliacaoFisica,
+         proximaPeriodizacaoProposta: p.proximaPeriodizacaoProposta || {
+            titulo: "Fase 2: Força & Sobrecarga Tensional (24 Sessões / 3x11 reps)",
+            sessoes: 24,
+            reps: "11 repetições (3x11)",
+            descanso: "30 segundos entre as séries",
+            estruturaExercicios: "11 exercícios por treino (+1 de membro inferior e +1 de membro superior em cada série: 5 inferiores, 5 superiores, 1 core)",
+            objetivo: "Potencializar aumento de força neuromuscular e progressão de cargas",
+            tempoLimite: "Máximo de 60 minutos por sessão",
+            gatilhoAtivacao: "Realização e validação da avaliação física completa no 18º treino da Fase 1"
+         },
          clinicalSafety: safetyNotes.split('\n').filter((s: string) => s.trim()),
          bioInsight: {
             context: bioContext,
@@ -1143,6 +986,43 @@ export function PeriodizationView({ student, onBack, onProceedToWorkout, onSave 
             </div>
          </Card>
 
+         {/* DIRETRIZES CLÍNICAS E RESTRIÇÕES */}
+         <Card className="p-6 bg-card/50 border-border space-y-4">
+            <div className="flex items-center gap-2 text-foreground mb-1">
+               <Shield size={16} className="text-red-600" />
+               <h3 className="text-[10px] font-black uppercase tracking-widest">Pilares Clínicos & Rotina</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                  <label className="text-[8px] font-black uppercase text-muted-foreground block mb-1">Frequência Semanal</label>
+                  <input type="text" value={frequenciaSemanal} onChange={e => setFrequenciaSemanal(e.target.value)} className="w-full bg-background border border-border p-3 rounded-xl text-foreground text-xs font-bold outline-none focus:border-red-600" />
+               </div>
+               <div>
+                  <label className="text-[8px] font-black uppercase text-muted-foreground block mb-1">Limite por Sessão</label>
+                  <input type="text" value={limiteTempoSessao} onChange={e => setLimiteTempoSessao(e.target.value)} className="w-full bg-background border border-border p-3 rounded-xl text-foreground text-xs font-bold outline-none focus:border-red-600" />
+               </div>
+            </div>
+            <div>
+               <label className="text-[8px] font-black uppercase text-muted-foreground block mb-1">Restrições Ortopédicas / Articulares</label>
+               <input type="text" value={restricoesOrtopedicas} onChange={e => setRestricoesOrtopedicas(e.target.value)} className="w-full bg-background border border-border p-3 rounded-xl text-foreground text-xs font-bold outline-none focus:border-red-600" />
+            </div>
+            <div>
+               <label className="text-[8px] font-black uppercase text-muted-foreground block mb-1">Regra de Avaliação Física</label>
+               <input type="text" value={regraAvaliacaoFisica} onChange={e => setRegraAvaliacaoFisica(e.target.value)} className="w-full bg-background border border-border p-3 rounded-xl text-foreground text-xs font-bold outline-none focus:border-red-600" />
+            </div>
+         </Card>
+
+         {/* PROPOSTA DA PRÓXIMA PERIODIZAÇÃO */}
+         <Card className="p-6 bg-gradient-to-br from-rose-950/20 via-card/50 to-background border-rose-900/30 space-y-4">
+            <div className="flex items-center gap-2 text-rose-500 mb-1">
+               <Sparkles size={16} />
+               <h3 className="text-[10px] font-black uppercase tracking-widest">Próxima Periodização Proposta (Fase 2)</h3>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+               Transição para 24 sessões de 11 repetições (3x11) com recuperação de 30 segundos, aumento de cargas e +1 exercício inferior e +1 superior em cada série (11 exercícios por treino), ativada após a avaliação física obrigatória ao final do treino 18.
+            </p>
+         </Card>
+
          {/* VOLUME ALVO POR GRUPO MUSCULAR */}
          <Card className="p-6 bg-card/50 border-border space-y-4">
             <div className="flex items-center gap-2 text-foreground mb-2">
@@ -1170,9 +1050,9 @@ export function PeriodizationView({ student, onBack, onProceedToWorkout, onSave 
          <Card className="p-6 bg-red-950/10 border-red-900/20 space-y-4">
              <div className="flex items-center gap-2 text-red-600 mb-2">
                 <AlertCircle size={16} />
-                <h3 className="text-[10px] font-black uppercase tracking-widest">Segurança Clínica</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-widest">Segurança Clínica & Gestão de Carga</h3>
              </div>
-             <textarea rows={3} value={safetyNotes} onChange={e => setSafetyNotes(e.target.value)} className="w-full bg-background/50 border border-red-900/30 p-4 rounded-2xl text-muted-foreground text-sm outline-none focus:border-red-600 resize-none" placeholder="Uma nota por linha..." />
+             <textarea rows={4} value={safetyNotes} onChange={e => setSafetyNotes(e.target.value)} className="w-full bg-background/50 border border-red-900/30 p-4 rounded-2xl text-muted-foreground text-sm outline-none focus:border-red-600 resize-none" placeholder="Uma nota por linha..." />
          </Card>
 
          <Card className="p-6 bg-gradient-to-br from-indigo-950/20 to-background border-indigo-900/20 space-y-4">

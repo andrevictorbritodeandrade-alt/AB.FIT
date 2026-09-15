@@ -791,6 +791,66 @@ export default function App() {
           medications: 'BUP, Venvanse, Vitaminas bariátricas, Topiramato, Sertralina',
           physicalAssessments: [
             {
+              id: 'bio-andre-20260915',
+              data: '2026-09-15T13:17:02Z',
+              type: 'BIOIMPEDANCIA',
+              notes: 'Avaliação Física Completa (Bio + Relógio + Dobras + Fitas)',
+              peso: 100.0,
+              altura: 180,
+              imc: { value: 30.9, status: 'Obeso', color: 'red' },
+              gordura: { value: 30.0, status: 'Obeso', color: 'red' },
+              bio_percentual_gordura: 30.0,
+              pesoGordura: { value: 30.0, status: 'Obeso', color: 'red' },
+              percentualMassaMuscularEsqueletica: { value: 36.9, status: 'Saudável', color: 'green' },
+              pesoMassaMuscularEsqueletica: { value: 36.9, status: 'Saudável', color: 'green' },
+              registroMassaMuscular: { value: 67.1, status: 'Excelente', color: 'green' },
+              pesoMassaMuscular: { value: 67.1, status: 'Excelente', color: 'green' },
+              aguaPercentual: { value: 51.0, status: 'Baixo', color: 'blue' },
+              pesoAgua: { value: 51.0, status: 'Baixo', color: 'blue' },
+              gorduraVisceral: { value: 19.0, status: 'Obeso', color: 'red' },
+              ossos: { value: 2.93, status: 'Saudável', color: 'green' },
+              metabolismo: { value: 2019.0, status: 'Alto', color: 'yellow' },
+              proteina: { value: 16.1, status: 'Saudável', color: 'green' },
+              obesidade: { value: 42.9, status: 'Moderado', color: 'orange' },
+              idadeMetabolica: 47.0,
+              lbm: 70.03,
+              idadeReal: 37,
+              galaxyWatch: {
+                peso: 100.0,
+                massaGorda: 35.6,
+                musculoEsqueletico: 33.9,
+                aguaCorporal: 47.2,
+                gorduraCorporalPercentual: 35.6,
+                tmb: 1761,
+                imc: 30.9
+              },
+              peitoral: 115.5,
+              torax: 115.5,
+              cintura: 100.0,
+              abdomen: 109.0,
+              quadril: 118.0,
+              coxaProximalDireita: 73.5,
+              coxaDistalDireita: 48.5,
+              coxaProximalEsquerda: 74.0,
+              coxaDistalEsquerda: 49.0,
+              panturrilhaDireita: 40.0,
+              panturrilhaEsquerda: 40.5,
+              bracoDireito: 34.0,
+              bracoEsquerdo: 35.0,
+              antebracoDireito: 26.5,
+              antebracoEsquerdo: 27.5,
+              dobraPeitoral: 15.0,
+              dobraAbdominal: 23.0,
+              dobraCoxa: 20.0,
+              analiseComposicao: {
+                agua: 'Baixo',
+                gordura: 'Obeso',
+                proteina: 'Saudável',
+                ossos: 'Saudável'
+              },
+              observacaoEvolucao: 'Avaliação atualizada via AI. Analisar composição detalhadamente.'
+            },
+            {
               id: 'bio-andre-20260520',
               data: '2026-05-20T12:00:00Z',
               type: 'BIOIMPEDANCIA',
@@ -1282,27 +1342,42 @@ export default function App() {
           sexo: 'Masculino', 
           periodization: {
             id: 'per-andre-18sessoes',
-            titulo: 'Periodização Científica - 18 Sessões (3x13 reps)',
+            titulo: 'Periodização Científica - Fase 1: Retorno & Adaptação (18 Sessões)',
             startDate: '2026-09-09T00:00:00.000Z',
             type: 'STRENGTH',
-            phaseTitle: 'Mesociclo 18 Sessões - Hipertrofia & Força Estabilizadora (3x13 reps)',
-            generalStrategy: "Mesociclo de 6 semanas (18 treinos por plano, 3x na semana). Foco em volume de 3x13 para hipertrofia com proteção articular patelar. Marcos de ajuste de sobrecarga programados nas sessões 6 e 12. Na sessão 18, transição de volume para 11 repetições, com manutenção dos exercícios e no máximo substituição de aparelhos por pesos livres onde indicado.",
+            phaseTitle: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+            generalStrategy: "Retorno de inatividade física de 3 meses. Frequência mínima de 5 vezes na semana (com flexibilidade para treinar 6 ou 7 dias sempre que possível). Foco estrito em musculação com 9 exercícios por sessão (4 membros inferiores, 4 membros superiores e 1 de core), divididos em Cadeia Anterior (Treino A) e Cadeia Posterior (Treino B). Duração rigorosamente limitada a no máximo 1 hora (60 minutos) devido ao perfil neurodivergente (Autista e TDAH), para evitar fadiga e desestabilização sensorial pelo ambiente. Progressão de carga estruturada: Treinos 1 ao 6 com carga estável; 1º ajuste/aumento de carga a partir do Treino 7; 2º aumento a partir do Treino 13; encerramento no Treino 18 com Avaliação Física Obrigatória para validar a transição para a Fase 2.",
+            frequenciaSemanal: "Mínimo de 5 vezes na semana (sempre que possível, 6 a 7 dias)",
+            limiteTempoSessao: "Máximo 1 hora (60 minutos) - Teto inegociável por regulação sensorial (Autismo e TDAH)",
+            restricoesOrtopedicas: "Tendinopatia no joelho esquerdo. Dificuldade de execução de corrida (contraindicada). Cardio restrito a baixo/zero impacto: no máximo caminhada, elíptico ou bicicleta.",
+            regraAvaliacaoFisica: "Avaliação física obrigatória sempre que precisar mudar a série de treino, ou seja, no final de cada periodização (ao término do 18º treino).",
+            proximaPeriodizacaoProposta: {
+              titulo: "Fase 2: Força & Sobrecarga Tensional (24 Sessões / 3x11 reps)",
+              sessoes: 24,
+              reps: "11 repetições (3x11)",
+              descanso: "30 segundos entre as séries",
+              estruturaExercicios: "11 exercícios por treino (+1 de membro inferior e +1 de membro superior em cada série: 5 inferiores, 5 superiores, 1 core)",
+              objetivo: "Potencializar aumento de força neuromuscular e progressão de cargas",
+              tempoLimite: "Máximo de 60 minutos por sessão",
+              gatilhoAtivacao: "Realização e validação da avaliação física completa no 18º treino da Fase 1"
+            },
             clinicalSafety: [
-              "Ajuste de Carga Programado: Avaliação e ajuste progressivo de cargas nos treinos 6 e 12 de cada microciclo.",
-              "Transição no Treino 18: Ao completar o 18º treino, transição de repetições para 11 reps (manutenção de exercícios, permitindo troca pontual de máquina para peso livre).",
-              "Biomecânica Patelar: Estabilização articular e proteção de joelho mantida com controle excêntrico rigoroso.",
-              "Treino A: Terças, Quintas e Sábados (3x/semana).",
-              "Treino B: Quartas, Sábados e Domingos (3x/semana)."
+              "Treinos 1 ao 6: Carga estável. Adaptação neuromuscular e consolidação técnica pós-inatividade de 3 meses.",
+              "Treino 7: 1º Ponto de Ajuste de Carga. Elevação moderada de sobrecarga nos 9 exercícios.",
+              "Treino 13: 2º Ponto de Ajuste de Carga. Nova progressão de carga mantendo 13 repetições.",
+              "Treino 18: Fechamento da Fase 1. Realização obrigatória de Avaliação Física para mudança de série.",
+              "Limite de 1 Hora: Sessão de treino com teto estrito de 60 minutos (Autismo e TDAH - prevenção de sobrecarga sensorial).",
+              "Joelho Esquerdo: Tendinopatia patelar/joelho esquerdo. Sem corrida. Cardio permitido apenas caminhada, elíptico ou bicicleta ergométrica.",
+              "Frequência Semanal: Mínimo 5 dias na semana, com possibilidade de treinar mais dias sempre que viável."
             ],
             bioInsight: {
-              context: "Metodologia periodizada para André Brito: 18 sessões de 3x13 reps com ajustes de carga nos treinos 6 e 12, e evolução para 11 reps no treino 18.",
+              context: "Periodização Científica personalizada para André Brito: Retorno de inatividade de 3 meses, frequência mínima de 5x/semana (até 7 dias), sessões de no máximo 1 hora (Autismo/TDAH), 9 exercícios diários (4 inf, 4 sup, 1 core) divididos em Anterior e Posterior. Carga estável nos treinos 1 a 6, aumento a partir do treino 7, novo aumento a partir do 13, conclusão no treino 18. Avaliação física obrigatória no final da periodização para transição para a Fase 2 (24 sessões de 11 reps com 30s de descanso e +1 exercício inferior e +1 superior).",
               tips: [
-                "Treinos 1 a 5: Consolidação técnica e registro de carga base em 3x13.",
-                "Treino 6: 1º Ponto de Ajuste de Carga (+5% a 10% de sobrecarga se RPE < 8).",
-                "Treinos 7 a 11: Estabilização de sobrecarga tensional.",
-                "Treino 12: 2º Ponto de Ajuste de Carga (+5% a 10% de sobrecarga se tolerância articular plena).",
-                "Treinos 13 a 17: Pico de força/hipertrofia na faixa de 13 reps.",
-                "Treino 18: Fechamento das 6 semanas -> Troca de fase para 11 repetições com manutenção de exercícios (no máximo troca de máquinas para alguns pesos livres)."
+                "Treinos 1 a 6: Carga estável. Adaptação articular e neuromuscular sem aumentar peso precipitadamente.",
+                "Treino 7: 1º Ajuste de Carga. Aumentar moderadamente a carga nos 9 exercícios mantendo cadência controlada.",
+                "Treino 13: 2º Ajuste de Carga. Nova progressão de peso para maximizar hipertrofia e força.",
+                "Treino 18: Término da 1ª Periodização -> Avaliação Física Completa Obrigatória.",
+                "Transição Fase 2: 24 sessões por série, 11 repetições, descanso de 30s e 11 exercícios por treino (+1 inferior e +1 superior)."
               ]
             },
             targetVolume: {
@@ -1318,30 +1393,30 @@ export default function App() {
             microciclos: [
               {
                 id: 'm-1-6',
-                semanas: '1-2 (Treinos 1 a 6)',
-                titulo: 'FASE INICIAL & 1º AJUSTE DE CARGA (3x13)',
-                metodo: 'Séries retas 3x13',
-                intensidade: 'RPE 7-8 / Desc: 20s',
-                volume: '3 x 13 (todos os exercícios)',
-                descricao: 'Início da recontagem de 18 treinos. No treino 6: primeiro ajuste programado de carga.'
+                semanas: 'Treinos 1 a 6',
+                titulo: 'FASE INICIAL: ADAPTAÇÃO & CARGA ESTÁVEL',
+                metodo: 'Séries retas 3x13 (9 exercícios: 4 inf, 4 sup, 1 core)',
+                intensidade: 'Carga Estável / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 (Cadeia Anterior & Posterior)',
+                descricao: 'Retorno de 3 meses parado. Manter carga rigorosamente estável dos treinos 1 a 6 para adaptação tendínea e articular.'
               },
               {
                 id: 'm-7-12',
-                semanas: '3-4 (Treinos 7 a 12)',
-                titulo: 'PROGRESSÃO TENSIONAL & 2º AJUSTE DE CARGA (3x13)',
-                metodo: 'Séries retas 3x13 com sobrecarga',
-                intensidade: 'RPE 8-9 / Desc: 20s',
-                volume: '3 x 13 (todos os exercícios)',
-                descricao: 'Treinos 7 a 12. No treino 12: segundo ajuste programado de carga.'
+                semanas: 'Treinos 7 a 12',
+                titulo: 'PROGRESSÃO: 1º AJUSTE DE CARGA (A PARTIR DO TREINO 7)',
+                metodo: 'Séries retas 3x13 com sobrecarga progressiva',
+                intensidade: 'Aumento gradual de carga / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 (9 exercícios)',
+                descricao: 'A partir do treino 7: primeiro aumento gradual de carga nos exercícios. Frequência mínima 5x/semana.'
               },
               {
                 id: 'm-13-18',
-                semanas: '5-6 (Treinos 13 a 18)',
-                titulo: 'CONSOLIDAÇÃO & TRANSIÇÃO PARA 11 REPS',
-                metodo: 'Séries retas 3x13 -> Transição no 18',
-                intensidade: 'RPE 8.5-9.5 / Desc: 20s',
-                volume: '3 x 13 -> 11 reps no treino 18',
-                descricao: 'No treino 18: troca de treino para 11 repetições, manutenção dos exercícios com no máximo troca de aparelhos para alguns livres.'
+                semanas: 'Treinos 13 a 18',
+                titulo: 'CONSOLIDAÇÃO: 2º AJUSTE DE CARGA & AVALIAÇÃO FÍSICA FINAL',
+                metodo: 'Séries retas 3x13 -> Reavaliação no Treino 18',
+                intensidade: 'Sobrecarga Máxima / Descanso: 20s / Sessão máx 1h',
+                volume: '3 x 13 -> Término no Treino 18',
+                descricao: 'A partir do treino 13: segundo aumento de carga. No treino 18: término da 1ª periodização e Avaliação Física Obrigatória para mudança de série.'
               }
             ]
           },
@@ -1798,6 +1873,20 @@ export default function App() {
             if (student.nome?.includes('Marcelly') && student.workouts) {
               student.workouts = student.workouts.filter(w => !((w.title?.toUpperCase() === 'TREINO A') && (!w.exercises || w.exercises.length === 0)));
             }
+            const def = defaultStudentsData.find(s => s.id === student.id || (s.email && student.email && s.email.toLowerCase() === student.email.toLowerCase()));
+            if (def && def.physicalAssessments) {
+              const curAss = student.physicalAssessments ? [...student.physicalAssessments] : [];
+              def.physicalAssessments.forEach(defAss => {
+                if (!curAss.some(a => a.id === defAss.id)) {
+                  curAss.push(defAss);
+                }
+              });
+              curAss.sort((a, b) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime());
+              student.physicalAssessments = curAss;
+              if (curAss.length > 0 && curAss[0].peso) {
+                student.weight = curAss[0].peso;
+              }
+            }
             return applyDynamicPeriodization(student);
           });
           console.log("Updated Students:", updatedStudents);
@@ -2129,8 +2218,12 @@ export default function App() {
                       }
                   });
                   
+                  mergedAssessments.sort((a: any, b: any) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime());
                   if (assessmentsModified || hasCloudChanges) {
                       rawData.physicalAssessments = mergedAssessments;
+                      if (mergedAssessments.length > 0 && mergedAssessments[0].peso) {
+                          rawData.weight = mergedAssessments[0].peso;
+                      }
                       hasCloudChanges = true;
                   }
 
@@ -2323,6 +2416,20 @@ export default function App() {
             if (existing.totalGlobalA === undefined && def.totalGlobalA !== undefined) merged[existingIndex].totalGlobalA = def.totalGlobalA;
             if (existing.totalGlobalB === undefined && def.totalGlobalB !== undefined) merged[existingIndex].totalGlobalB = def.totalGlobalB;
             if (existing.totalGlobalC === undefined && def.totalGlobalC !== undefined) merged[existingIndex].totalGlobalC = def.totalGlobalC;
+
+            // Physical Assessments Sync
+            const existingAssessments = existing.physicalAssessments ? [...existing.physicalAssessments] : [];
+            const defaultAssessments = def.physicalAssessments || [];
+            defaultAssessments.forEach(defAss => {
+                if (!existingAssessments.some((a: any) => a.id === defAss.id)) {
+                    existingAssessments.push(defAss);
+                }
+            });
+            existingAssessments.sort((a: any, b: any) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime());
+            merged[existingIndex].physicalAssessments = existingAssessments;
+            if (existingAssessments.length > 0 && existingAssessments[0].peso) {
+                merged[existingIndex].weight = existingAssessments[0].peso;
+            }
         }
     });
 
@@ -3242,7 +3349,7 @@ export default function App() {
           />
         )}
         {view === 'STUDENT_PERIODIZATION' && studentForView && <StudentPeriodizationView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
-        {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
+        {view === 'STUDENT_ASSESSMENT' && studentForView && <StudentAssessmentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
         {view === 'RUNTRACK_STUDENT' && studentForView && <RunTrackStudentView student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onSave={handleSaveData} onToggleMenu={toggleSidebar} />}
         {view === 'MUSIC_PLAYER' && <MusicPlayer onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}
         {view === 'CORRE_RJ' && <CorreRJView onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} />}

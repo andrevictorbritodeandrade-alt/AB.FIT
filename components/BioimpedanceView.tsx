@@ -29,7 +29,7 @@ export function BioimpedanceView({ assessment, allAssessments = [], onBack }: { 
   const scaleBF = parseFloat(assessment.gordura?.value?.toString() ?? assessment.gordura?.toString() ?? assessment.bio_percentual_gordura?.toString() ?? '0');
   const scaleMMPercent = parseFloat(assessment.percentualMassaMuscularEsqueletica?.value?.toString() ?? assessment.percentualMassaMuscularEsqueletica?.toString() ?? assessment.registroMassaMuscular?.value?.toString() ?? assessment.registroMassaMuscular?.toString() ?? '0');
   const scaleMMWeight = parseFloat(assessment.pesoMassaMuscularEsqueletica?.value?.toString() ?? assessment.pesoMassaMuscularEsqueletica?.toString() ?? assessment.pesoMassaMuscular?.value?.toString() ?? assessment.pesoMassaMuscular?.toString() ?? '0');
-  const scaleWater = parseFloat(assessment.aguaPercentual?.toString() ?? '0');
+  const scaleWater = parseFloat(assessment.aguaPercentual?.value?.toString() ?? assessment.aguaPercentual?.toString() ?? '0');
 
   // 2. Galaxy Watch (Relógio)
   const watchBF = parseFloat(assessment.galaxyWatch?.gorduraCorporalPercentual?.toString() ?? '0');

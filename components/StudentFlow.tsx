@@ -5,7 +5,7 @@ import {
   Loader2, Clock, Target, Award, ShieldCheck, Brain,
   Camera, CheckCircle2, X, Trash2, FastForward, Check,
   Trophy, AlertCircle, Info, ChevronDown, ChevronUp,
-  Zap, Scan, Shield, Maximize2, Calendar, RefreshCw, Menu, Sparkles, AlertTriangle, LayoutGrid, TrendingUp, Bell
+  Zap, Scan, Shield, Maximize2, Calendar, RefreshCw, Menu, Sparkles, AlertTriangle, LayoutGrid, TrendingUp, Bell, Bot
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LabelList 
@@ -1490,7 +1490,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
 import { BioimpedanceView } from './BioimpedanceView';
 
-export function StudentAssessmentView({ student, onBack, onToggleMenu }: { student: Student, onBack: () => void, onToggleMenu?: () => void }) {
+export function StudentAssessmentView({ student, onBack, onSave, onToggleMenu, isCoach }: { student: Student, onBack: () => void, onSave?: (id: string, data: any) => Promise<boolean> | void, onToggleMenu?: () => void, isCoach?: boolean }) {
   const [selectedAssessment, setSelectedAssessment] = useState<any>(null);
   const [chartMetric, setChartMetric] = useState<'peso' | 'gordura' | 'massa'>('peso');
 
@@ -1507,8 +1507,22 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
   const [gorduraVisceralVal, setGorduraVisceralVal] = useState<string>('');
   const [aguaVal, setAguaVal] = useState<string>('');
   const [metabolismoVal, setMetabolismoVal] = useState<string>('');
-  const [ossosVal, setOssosVal] = useState<string>('2.8');
+  const [ossosVal, setOssosVal] = useState<string>('');
   const [dataVal, setDataVal] = useState<string>(new Date().toISOString().split('T')[0]);
+  
+  // Extended Bioimpedance fields
+  const [imcInput, setImcInput] = useState<string>('');
+  const [pesoGorduraInput, setPesoGorduraInput] = useState<string>('');
+  const [percentualMassaMuscularInput, setPercentualMassaMuscularInput] = useState<string>('');
+  const [pesoMassaMuscularEsqueleticaInput, setPesoMassaMuscularEsqueleticaInput] = useState<string>('');
+  const [registroMassaMuscularInput, setRegistroMassaMuscularInput] = useState<string>('');
+  const [pesoMassaMuscularInput, setPesoMassaMuscularInput] = useState<string>('');
+  const [pesoAguaInput, setPesoAguaInput] = useState<string>('');
+  const [proteinaInput, setProteinaInput] = useState<string>('');
+  const [obesidadeInput, setObesidadeInput] = useState<string>('');
+  const [idadeMetabolicaInput, setIdadeMetabolicaInput] = useState<string>('');
+  const [lbmInput, setLbmInput] = useState<string>('');
+  const [idadeRealInput, setIdadeRealInput] = useState<string>('');
 
   // Dobras cutâneas values
   const [dobraPeitoralVal, setDobraPeitoralVal] = useState<string>('');
@@ -1686,7 +1700,7 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
       const massaNum = massaVal ? parseFloat(massaVal) : 38;
 
       const heightInMeters = alturaNum / 100;
-      const imcVal = parseFloat((pesoNum / (heightInMeters * heightInMeters)).toFixed(1));
+      const computedImc = imcInput ? parseFloat(imcInput) : parseFloat((pesoNum / (heightInMeters * heightInMeters)).toFixed(1));
 
       function getIMCStatus(imc: number) {
         if (imc < 18.5) return 'Baixo';
@@ -1722,24 +1736,24 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
         type: 'BIOIMPEDANCIA',
         peso: pesoNum,
         altura: alturaNum,
-        imc: { value: imcVal, status: getIMCStatus(imcVal), color: getIMCColor(imcVal) },
+        imc: { value: computedImc, status: getIMCStatus(computedImc), color: getIMCColor(computedImc) },
         gordura: { value: gorduraNum, status: getFatStatus(gorduraNum), color: getFatColor(gorduraNum) },
         bio_percentual_gordura: gorduraNum,
-        pesoGordura: { value: parseFloat((pesoNum * (gorduraNum / 100)).toFixed(1)), status: getFatStatus(gorduraNum), color: getFatColor(gorduraNum) },
-        percentualMassaMuscularEsqueletica: { value: massaNum, status: 'Saudável', color: 'green' },
-        pesoMassaMuscularEsqueletica: { value: parseFloat((pesoNum * (massaNum / 100)).toFixed(1)), status: 'Saudável', color: 'green' },
-        registroMassaMuscular: { value: massaNum, status: 'Excelente', color: 'green' },
-        pesoMassaMuscular: { value: parseFloat((pesoNum * (massaNum / 100)).toFixed(1)), status: 'Excelente', color: 'green' },
-        aguaPercentual: { value: parseFloat(aguaVal) || 52, status: 'Saudável', color: 'green' },
-        pesoAgua: { value: parseFloat((pesoNum * ((parseFloat(aguaVal) || 52) / 100)).toFixed(1)), status: 'Saudável', color: 'green' },
-        gorduraVisceral: { value: parseFloat(gorduraVisceralVal) || 5, status: 'Saudável', color: 'green' },
-        ossos: { value: parseFloat(ossosVal) || 2.8, status: 'Saudável', color: 'green' },
-        metabolismo: { value: parseFloat(metabolismoVal) || 1500, status: 'Saudável', color: 'green' },
-        proteina: { value: 16.5, status: 'Saudável', color: 'green' },
-        obesidade: { value: 5.0, status: 'Saudável', color: 'green' },
-        idadeMetabolica: student.age ? parseFloat(String(student.age)) - 2 : 30,
-        lbm: parseFloat((pesoNum * (1 - (gorduraNum / 100))).toFixed(2)),
-        idadeReal: student.age ? parseFloat(String(student.age)) : 32,
+        pesoGordura: { value: pesoGorduraInput ? parseFloat(pesoGorduraInput) : parseFloat((pesoNum * (gorduraNum / 100)).toFixed(1)), status: getFatStatus(gorduraNum), color: getFatColor(gorduraNum) },
+        percentualMassaMuscularEsqueletica: { value: percentualMassaMuscularInput ? parseFloat(percentualMassaMuscularInput) : massaNum, status: 'Saudável', color: 'green' },
+        pesoMassaMuscularEsqueletica: { value: pesoMassaMuscularEsqueleticaInput ? parseFloat(pesoMassaMuscularEsqueleticaInput) : parseFloat((pesoNum * (massaNum / 100)).toFixed(1)), status: 'Saudável', color: 'green' },
+        registroMassaMuscular: { value: registroMassaMuscularInput ? parseFloat(registroMassaMuscularInput) : massaNum, status: 'Excelente', color: 'green' },
+        pesoMassaMuscular: { value: pesoMassaMuscularInput ? parseFloat(pesoMassaMuscularInput) : parseFloat((pesoNum * (massaNum / 100)).toFixed(1)), status: 'Excelente', color: 'green' },
+        aguaPercentual: { value: aguaVal ? parseFloat(aguaVal) : 52, status: 'Saudável', color: 'green' },
+        pesoAgua: { value: pesoAguaInput ? parseFloat(pesoAguaInput) : parseFloat((pesoNum * ((parseFloat(aguaVal) || 52) / 100)).toFixed(1)), status: 'Saudável', color: 'green' },
+        gorduraVisceral: { value: gorduraVisceralVal ? parseFloat(gorduraVisceralVal) : 5, status: 'Saudável', color: 'green' },
+        ossos: { value: ossosVal ? parseFloat(ossosVal) : 2.8, status: 'Saudável', color: 'green' },
+        metabolismo: { value: metabolismoVal ? parseFloat(metabolismoVal) : 1500, status: 'Saudável', color: 'green' },
+        proteina: { value: proteinaInput ? parseFloat(proteinaInput) : 16.5, status: 'Saudável', color: 'green' },
+        obesidade: { value: obesidadeInput ? parseFloat(obesidadeInput) : 5.0, status: 'Saudável', color: 'green' },
+        idadeMetabolica: idadeMetabolicaInput ? parseFloat(idadeMetabolicaInput) : (student.age ? parseFloat(String(student.age)) - 2 : 30),
+        lbm: lbmInput ? parseFloat(lbmInput) : parseFloat((pesoNum * (1 - (gorduraNum / 100))).toFixed(2)),
+        idadeReal: idadeRealInput ? parseFloat(idadeRealInput) : (student.age ? parseFloat(String(student.age)) : 32),
         
         // Mapped typed fields
         pescoco: pescocoVal ? parseFloat(pescocoVal) : undefined,
@@ -1787,11 +1801,19 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
       const currentAssessments = student.physicalAssessments || [];
       const updatedAssessments = [newAssessment, ...currentAssessments];
 
-      await setDoc(doc(db, 'alunos', student.id), {
-        physicalAssessments: updatedAssessments,
-        weight: pesoNum,
-        height: alturaNum
-      }, { merge: true });
+      if (onSave) {
+        await onSave(student.id, {
+          physicalAssessments: updatedAssessments,
+          weight: pesoNum,
+          height: alturaNum
+        });
+      } else {
+        await setDoc(doc(db, 'alunos', student.id), {
+          physicalAssessments: updatedAssessments,
+          weight: pesoNum,
+          height: alturaNum
+        }, { merge: true });
+      }
 
       setIsCreating(false);
       resetForm();
@@ -1931,61 +1953,80 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
             )}
 
             {/* Editable values extracted */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4">
               <div>
                 <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Gordura (%)</label>
-                <input 
-                  type="number"
-                  step="0.1"
-                  placeholder="Ex: 18.5"
-                  value={gorduraVal}
-                  onChange={e => setGorduraVal(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center"
-                />
+                <input type="number" step="0.1" placeholder="Ex: 18.5" value={gorduraVal} onChange={e => setGorduraVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
               </div>
               <div>
                 <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Massa Músculo (%)</label>
-                <input 
-                  type="number"
-                  step="0.1"
-                  placeholder="Ex: 38.2"
-                  value={massaVal}
-                  onChange={e => setMassaVal(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center"
-                />
+                <input type="number" step="0.1" placeholder="Ex: 38.2" value={massaVal} onChange={e => setMassaVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
               </div>
               <div>
                 <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Gordura Visceral</label>
-                <input 
-                  type="number"
-                  step="0.5"
-                  placeholder="Ex: 5"
-                  value={gorduraVisceralVal}
-                  onChange={e => setGorduraVisceralVal(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center"
-                />
+                <input type="number" step="0.5" placeholder="Ex: 5" value={gorduraVisceralVal} onChange={e => setGorduraVisceralVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
               </div>
               <div>
                 <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Água (%)</label>
-                <input 
-                  type="number"
-                  step="0.1"
-                  placeholder="Ex: 52"
-                  value={aguaVal}
-                  onChange={e => setAguaVal(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center"
-                />
+                <input type="number" step="0.1" placeholder="Ex: 52" value={aguaVal} onChange={e => setAguaVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
               </div>
-              <div className="col-span-2 md:col-span-1">
-                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Metabolismo</label>
-                <input 
-                  type="number"
-                  step="1"
-                  placeholder="Ex: 1550"
-                  value={metabolismoVal}
-                  onChange={e => setMetabolismoVal(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center"
-                />
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Metabolismo (kcal)</label>
+                <input type="number" step="1" placeholder="Ex: 1550" value={metabolismoVal} onChange={e => setMetabolismoVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              
+              {/* Novos Campos Detalhados */}
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">IMC</label>
+                <input type="number" step="0.1" placeholder="Ex: 24.5" value={imcInput} onChange={e => setImcInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Peso da Gordura (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 15.2" value={pesoGorduraInput} onChange={e => setPesoGorduraInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Massa Musc. Esq. (%)</label>
+                <input type="number" step="0.1" placeholder="Ex: 48.2" value={percentualMassaMuscularInput} onChange={e => setPercentualMassaMuscularInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Peso Massa Musc. Esq (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 35.1" value={pesoMassaMuscularEsqueleticaInput} onChange={e => setPesoMassaMuscularEsqueleticaInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Reg. Massa Musc. (%)</label>
+                <input type="number" step="0.1" placeholder="Ex: 65.4" value={registroMassaMuscularInput} onChange={e => setRegistroMassaMuscularInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Peso Massa Musc. (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 50.2" value={pesoMassaMuscularInput} onChange={e => setPesoMassaMuscularInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Peso da Água (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 42.5" value={pesoAguaInput} onChange={e => setPesoAguaInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Ossos (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 3.2" value={ossosVal} onChange={e => setOssosVal(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Proteína (%)</label>
+                <input type="number" step="0.1" placeholder="Ex: 16.5" value={proteinaInput} onChange={e => setProteinaInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Obesidade (%)</label>
+                <input type="number" step="0.1" placeholder="Ex: 25.0" value={obesidadeInput} onChange={e => setObesidadeInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Idade Metabólica</label>
+                <input type="number" step="1" placeholder="Ex: 30" value={idadeMetabolicaInput} onChange={e => setIdadeMetabolicaInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">LBM (kg)</label>
+                <input type="number" step="0.1" placeholder="Ex: 65.5" value={lbmInput} onChange={e => setLbmInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
+              </div>
+              <div>
+                <label className="text-[9px] text-zinc-500 font-black uppercase tracking-wider block mb-1">Idade Real</label>
+                <input type="number" step="1" placeholder="Ex: 32" value={idadeRealInput} onChange={e => setIdadeRealInput(e.target.value)} className="w-full bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-xs font-black text-white focus:border-red-650 focus:outline-none placeholder:text-zinc-800 text-center" />
               </div>
             </div>
           </Card>
@@ -2225,7 +2266,7 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
 
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center justify-between gap-4 mb-10 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
+      <header className="flex items-center justify-between gap-4 mb-8 sticky top-0 bg-transparent backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
              {onToggleMenu && (
@@ -2254,6 +2295,149 @@ export function StudentAssessmentView({ student, onBack, onToggleMenu }: { stude
       </header>
       
       <div className="space-y-6">
+        {/* IA Feedback & Evolução (A Mais Recente) */}
+        {sortedAssessments.length > 0 && (() => {
+          const current = sortedAssessments[0];
+          const previous = sortedAssessments.length > 1 ? sortedAssessments[1] : null;
+
+          const currentWeight = parseFloat(String(current.peso || 0));
+          const currentFat = parseFloat(String(current.gordura?.value || current.bio_percentual_gordura || 0));
+          const currentMuscle = parseFloat(String(current.pesoMassaMuscular?.value || current.registroMassaMuscular?.value || 0));
+
+          let status = "AVALIAÇÃO INICIAL";
+          let color = "text-blue-500";
+          let bg = "bg-blue-950/20";
+          let evolutionMsg = "Sua primeira avaliação registrada. Comece a seguir os treinos para ver a evolução.";
+          let recommendations: string[] = [];
+
+          if (previous) {
+            const prevWeight = parseFloat(String(previous.peso || 0));
+            const prevFat = parseFloat(String(previous.gordura?.value || previous.bio_percentual_gordura || 0));
+            const prevMuscle = parseFloat(String(previous.pesoMassaMuscular?.value || previous.registroMassaMuscular?.value || 0));
+
+            const fatDiff = currentFat - prevFat;
+            const muscleDiff = currentMuscle - prevMuscle;
+            const weightDiff = currentWeight - prevWeight;
+
+            if (fatDiff < -0.5 && muscleDiff >= -0.5) {
+              status = "EVOLUÇÃO EXCELENTE";
+              color = "text-emerald-500";
+              bg = "bg-emerald-950/20";
+              evolutionMsg = `Você reduziu ${Math.abs(fatDiff).toFixed(1)}% de gordura corporal. Continue assim!`;
+            } else if (fatDiff > 0.5 && muscleDiff < -0.5) {
+              status = "REGRESSO / ATENÇÃO";
+              color = "text-red-500";
+              bg = "bg-red-950/20";
+              evolutionMsg = `Atenção: Aumento de ${fatDiff.toFixed(1)}% de gordura e leve perda muscular.`;
+            } else if (muscleDiff > 0.5) {
+              status = "EVOLUÇÃO (HIPERTROFIA)";
+              color = "text-emerald-500";
+              bg = "bg-emerald-950/20";
+              evolutionMsg = `Você ganhou ${(muscleDiff).toFixed(1)}kg de massa muscular!`;
+            } else {
+               status = "MANUTENÇÃO / ESTÁVEL";
+               color = "text-yellow-500";
+               bg = "bg-yellow-950/20";
+               evolutionMsg = `Seu peso oscilou ${weightDiff > 0 ? '+' : ''}${weightDiff.toFixed(1)}kg com alterações mistas nas métricas.`;
+            }
+          }
+
+          // Recomendações e Ajustes alinhados cirurgicamente à Periodização Científica e Perfil Clínico
+          const isAndre = student.id === 'fixed-andre' || student.nome?.toLowerCase().includes('andré') || student.nome?.toLowerCase().includes('andre');
+
+          if (isAndre || student.periodization) {
+            recommendations.push("Foco Estrito em Musculação (Sem Corrida): Manter a estrutura de 9 exercícios diários (4 membros inferiores, 4 membros superiores e 1 de core), divididos em Treino A (Cadeia Anterior) e Treino B (Cadeia Posterior). Corrida totalmente contraindicada devido à tendinopatia no joelho esquerdo; atividade aeróbica complementar, se houver, deve ser estritamente de baixo/zero impacto (apenas caminhada leve, elíptico ou bicicleta).");
+
+            recommendations.push("Gestão de Carga Programada (Fase 1 - 18 Sessões): Treinos 1 ao 6 com carga rigorosamente estável para adaptação neuromuscular após 3 meses de inatividade física. A partir do Treino 7, aplicar o 1º ajuste/aumento gradual de sobrecarga. A partir do Treino 13, aplicar o 2º aumento de carga com foco em hipertrofia e estabilização articular. Conclusão no Treino 18.");
+
+            recommendations.push("Limite Rígido de Duração (Máximo 1 Hora): Cada sessão de treino deve durar no máximo 60 minutos inegociáveis. Respeito direto ao perfil neurodivergente (Autista e TDAH), prevenindo sobrecarga sensorial e desestabilização provocadas pelo ambiente da academia.");
+
+            recommendations.push("Frequência Semanal Alvo: Manter o ritmo consistente de no mínimo 5 treinos por semana (com flexibilidade para treinar 6 ou 7 dias sempre que possível).");
+
+            recommendations.push("Regra de Ouro da Avaliação Física: A próxima avaliação física completa (bioimpedância + dobras + perímetros) deve ser realizada obrigatoriamente no final desta periodização (ao concluir o 18º treino). Esta avaliação é a condição mandatória para validar a evolução e liberar a transição para a Fase 2 (24 sessões por série, 11 repetições para ganho de força, recuperação estendida para 30 segundos, acréscimo de 1 exercício inferior e 1 superior por treino).");
+          } else {
+            if (currentFat > 28) {
+              recommendations.push("Priorizar controle calórico e musculação progressiva com estímulo metabólico seguro.");
+              recommendations.push("Cardio complementar de baixo impacto (caminhada inclinada ou elíptico, 30-40 min) 3x a 5x por semana.");
+            } else if (currentMuscle > 0 && currentMuscle < (currentWeight * 0.35)) {
+              recommendations.push("Foco principal em hipertrofia: treinar força com sobrecarga progressiva.");
+              recommendations.push("Manter periodização focada em musculação estruturada (4 a 5x na semana).");
+            } else {
+              recommendations.push("Excelente balanço corporal. Manter a estratégia atual de periodização e progressão de cargas.");
+            }
+            recommendations.push("Avaliação Física Obrigatória: Agendar nova avaliação sempre no término da periodização vigente para validar a mudança de série.");
+          }
+
+          return (
+            <div className="space-y-6">
+              <Card className={`p-6 border border-white/5 rounded-3xl shadow-2xl relative overflow-hidden bg-zinc-900`}>
+                <div className={`absolute top-0 right-0 w-32 h-32 blur-3xl -mr-16 -mt-16 transition-all ${bg.replace('/20', '/10')}`} />
+                <div className="relative z-10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Bot size={18} className={color} />
+                    <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest italic">Inteligência Artificial ABFIT • Análise da Periodização</p>
+                  </div>
+                  
+                  <h3 className={`text-xl font-black italic uppercase tracking-tighter leading-none mb-2 ${color}`}>
+                    {status}
+                  </h3>
+                  <p className="text-sm font-medium text-white mb-6 leading-relaxed">
+                    {evolutionMsg}
+                  </p>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest mb-3">Recomendações e Ajustes Científicos (Próximas Semanas):</p>
+                      <ul className="space-y-3">
+                        {recommendations.map((rec, i) => (
+                          <li key={i} className="flex items-start gap-2.5 bg-black/30 p-3 rounded-2xl border border-white/5">
+                            <span className="text-red-500 font-black mt-0.5">•</span>
+                            <span className="text-xs text-zinc-300 leading-relaxed font-medium">{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* CARD DIRETRIZ DE AVALIAÇÃO FÍSICA & TRANSIÇÃO DE SÉRIE */}
+              <Card className="p-6 bg-gradient-to-br from-indigo-950/40 via-zinc-900 to-black border border-indigo-500/20 rounded-3xl shadow-2xl relative overflow-hidden">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                  <div className="flex items-center gap-2">
+                    <Brain className="text-indigo-400" size={20} />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 italic">Diretriz da Periodização Científica</span>
+                  </div>
+                  <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    Regra Mandatória
+                  </span>
+                </div>
+
+                <h4 className="text-lg font-black uppercase italic tracking-tighter text-white mb-2">
+                  Avaliação Física no Final de Cada Periodização
+                </h4>
+                
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  A avaliação física não é arbitrária: ela deve ser realizada <strong className="text-white font-bold">sempre que precisar mudar a série de treino, ou seja, rigorosamente no final de cada periodização</strong>.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+                  <div className="bg-black/40 p-3.5 rounded-2xl border border-white/5">
+                    <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1">Status Atual</p>
+                    <p className="text-xs font-bold text-white mb-1">Fase 1 Vigente (18 Sessões / 3x13)</p>
+                    <p className="text-[11px] text-zinc-400">Avaliação base realizada em 15/09/2026. Carga estável nos treinos 1-6, ajuste a partir do 7 e do 13.</p>
+                  </div>
+                  <div className="bg-indigo-950/20 p-3.5 rounded-2xl border border-indigo-500/20">
+                    <p className="text-[9px] font-black uppercase text-indigo-400 tracking-wider mb-1">Próxima Avaliação</p>
+                    <p className="text-xs font-bold text-indigo-200 mb-1">Ao Concluir a 18ª Sessão de Treino</p>
+                    <p className="text-[11px] text-indigo-300/80">Requisito obrigatório para homologar e liberar a transição para a Fase 2 (24 sessões, 11 reps, descanso de 30s e 11 exercícios).</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          );
+        })()}
+
         {/* Gráfico de Evolução */}
         {chartData.length > 1 && (
           <Card className="p-6 bg-zinc-900 border-zinc-800 rounded-3xl shadow-2xl relative overflow-hidden">
@@ -2515,6 +2699,147 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
           </div>
         )}
 
+        {/* PILARES CLÍNICOS, NEURODIVERGÊNCIA & DIRETRIZES DE ROTINA */}
+        <div className="mt-8 space-y-4">
+          <h3 className="text-lg font-black uppercase tracking-tighter text-white flex items-center gap-2">
+            <ShieldCheck size={20} className="text-red-500" /> Diretrizes Clínicas & Neurodivergência
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-5 bg-zinc-900/60 border-white/5 space-y-3">
+              <div className="flex items-center gap-2 text-amber-500">
+                <Clock size={16} />
+                <span className="text-[11px] font-black uppercase tracking-wider">Limite Estrito de Tempo</span>
+              </div>
+              <p className="text-white text-sm font-bold">
+                {plan.limiteTempoSessao || "Máximo 1 hora (60 minutos) por sessão"}
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Teto inegociável por regulação sensorial (Autismo e TDAH), prevenindo sobrecarga sensorial e desestabilização pelo ambiente.
+              </p>
+            </Card>
+
+            <Card className="p-5 bg-zinc-900/60 border-white/5 space-y-3">
+              <div className="flex items-center gap-2 text-emerald-500">
+                <Calendar size={16} />
+                <span className="text-[11px] font-black uppercase tracking-wider">Frequência Semanal</span>
+              </div>
+              <p className="text-white text-sm font-bold">
+                {plan.frequenciaSemanal || "Mínimo de 5 vezes na semana (até 7 dias sempre que possível)"}
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Constância diária adaptada, permitindo treinar mais dias para manter rotina estável e previsibilidade sensorial.
+              </p>
+            </Card>
+
+            <Card className="p-5 bg-red-950/20 border-red-900/30 space-y-3">
+              <div className="flex items-center gap-2 text-red-500">
+                <AlertTriangle size={16} />
+                <span className="text-[11px] font-black uppercase tracking-wider">Restrição Ortopédica (Joelho)</span>
+              </div>
+              <p className="text-white text-sm font-bold">
+                {plan.restricoesOrtopedicas || "Tendinopatia no Joelho Esquerdo - Sem Corrida"}
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Dificuldade de execução de corrida. Treino aeróbico complementar restrito a baixo impacto: caminhada leve, bicicleta ergométrica ou elíptico.
+              </p>
+            </Card>
+
+            <Card className="p-5 bg-zinc-900/60 border-white/5 space-y-3">
+              <div className="flex items-center gap-2 text-indigo-400">
+                <Dumbbell size={16} />
+                <span className="text-[11px] font-black uppercase tracking-wider">Estrutura dos Treinos (9 Exercícios)</span>
+              </div>
+              <p className="text-white text-sm font-bold">
+                4 Inferiores + 4 Superiores + 1 Core
+              </p>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                Divisão diária equilibrada entre Cadeia Anterior (Treino A) e Cadeia Posterior (Treino B), otimizando recuperação e tempo.
+              </p>
+            </Card>
+          </div>
+        </div>
+
+        {/* REGRA MANDATÓRIA DE AVALIAÇÃO FÍSICA */}
+        <div className="mt-8">
+          <Card className="p-6 bg-gradient-to-br from-indigo-950/40 via-zinc-900 to-black border border-indigo-500/30 rounded-3xl">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="flex items-center gap-2">
+                <Brain className="text-indigo-400" size={20} />
+                <h4 className="text-[11px] font-black uppercase tracking-widest text-indigo-400 italic">
+                  Regra de Ouro da Periodização ABFIT
+                </h4>
+              </div>
+              <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                Critério de Transição
+              </span>
+            </div>
+            
+            <p className="text-base font-black text-white italic uppercase tracking-tight mb-2">
+              Avaliação Física Obrigatória no Final de Cada Periodização
+            </p>
+            
+            <p className="text-xs text-zinc-300 leading-relaxed">
+              O aluno deve realizar avaliação física <strong className="text-white font-bold">sempre que precisar mudar a série de treino, ou seja, ao término de cada periodização</strong> (nesta Fase 1, rigorosamente ao completar o 18º treino). A nova série só entra em vigor após a validação comparativa dos dados da avaliação.
+            </p>
+          </Card>
+        </div>
+
+        {/* PROPOSTA DA PRÓXIMA PERIODIZAÇÃO (FASE 2) */}
+        {(plan.proximaPeriodizacaoProposta || student.id === 'fixed-andre') && (
+          <div className="mt-8">
+            <Card className="p-6 bg-gradient-to-br from-rose-950/30 via-zinc-900 to-black border border-rose-900/30 rounded-3xl relative overflow-hidden">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-2 text-rose-500">
+                  <Sparkles size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest italic">Planejamento Futuro Aprovado</span>
+                </div>
+                <span className="text-[9px] font-black uppercase px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  Próxima Série (Fase 2)
+                </span>
+              </div>
+
+              <h4 className="text-lg font-black uppercase italic tracking-tight text-white mb-2">
+                {plan.proximaPeriodizacaoProposta?.titulo || "Fase 2: Força & Sobrecarga Tensional (24 Sessões / 3x11 reps)"}
+              </h4>
+              <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+                Proposta científica para ativação imediata após a conclusão da 18ª sessão e realização da avaliação física obrigatória.
+              </p>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-black/50 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1">Volume do Ciclo</p>
+                  <p className="text-base font-black text-rose-500">24 Sessões</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Por série de treino</p>
+                </div>
+
+                <div className="bg-black/50 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1">Repetições Alvo</p>
+                  <p className="text-base font-black text-white">11 Repetições</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Séries de 3x11 (cargas maiores)</p>
+                </div>
+
+                <div className="bg-black/50 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1">Recuperação</p>
+                  <p className="text-base font-black text-white">30 Segundos</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">Descanso entre séries</p>
+                </div>
+
+                <div className="bg-black/50 p-4 rounded-2xl border border-white/5">
+                  <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1">Exercícios por Sessão</p>
+                  <p className="text-base font-black text-rose-400">11 Exercícios</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">+1 inferior e +1 superior</p>
+                </div>
+              </div>
+
+              <div className="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between text-xs text-zinc-300">
+                <span><strong>Gatilho de Ativação:</strong> Realização da Avaliação Física ao término do Treino 18.</span>
+                <span className="text-rose-400 font-bold">Máx. 1 Hora por sessão mantido</span>
+              </div>
+            </Card>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
            <Card className="p-6 bg-zinc-900/50 border-white/5 h-full">
               <h3 className="text-[11px] font-black uppercase text-red-600 tracking-widest mb-3 italic">Estratégia Geral</h3>
@@ -2530,7 +2855,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
            </Card>
 
            <Card className="p-6 bg-red-950/10 border-red-900/20 h-full">
-              <h3 className="text-[11px] font-black uppercase text-red-500 tracking-widest mb-4 italic">Segurança Clínica</h3>
+              <h3 className="text-[11px] font-black uppercase text-red-500 tracking-widest mb-4 italic">Segurança Clínica & Cargas</h3>
               <div className="space-y-4">
                  {(plan.clinicalSafety || []).map((item, idx) => (
                    <div key={idx} className="flex gap-3">

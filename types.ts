@@ -111,6 +111,20 @@ export interface PeriodizationPlan {
   phaseTitle?: string;
   generalStrategy?: string;
   clinicalSafety?: string[];
+  frequenciaSemanal?: string;
+  limiteTempoSessao?: string;
+  restricoesOrtopedicas?: string;
+  regraAvaliacaoFisica?: string;
+  proximaPeriodizacaoProposta?: {
+    titulo: string;
+    sessoes: number;
+    reps: string;
+    descanso: string;
+    estruturaExercicios: string;
+    objetivo: string;
+    tempoLimite?: string;
+    gatilhoAtivacao?: string;
+  };
   bioInsight?: {
     context: string;
     tips: string[];
