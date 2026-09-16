@@ -20,11 +20,15 @@ import {
   increment,
   where,
   orderBy,
-  limit
+  limit,
+  setLogLevel
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+// Silence Firestore quota limit exceeded and backoff delay console logs
+setLogLevel('silent');
 
 // Import the Firebase configuration from the auto-generated file
 import firebaseConfig from '../firebase-applet-config.json';

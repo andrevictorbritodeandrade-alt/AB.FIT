@@ -1473,7 +1473,7 @@ export default function App() {
                 { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
+                { id: 'a-b-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
@@ -1792,78 +1792,40 @@ export default function App() {
           workouts: [
             {
               id: 'treino-a-marcelly',
-              title: 'TREINO A (terças, quintas e sábados)',
+              title: 'TREINO A (Membros Inferiores)',
               projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
-              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12.',
               exercises: [
                 { id: 'm-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-marcelly',
-              title: 'TREINO B (quartas, sábados e domingos)',
+              title: 'TREINO B (Membros Superiores)',
               projectedSessions: 18,
               frequencyWeekly: 3,
               status: 'published',
-              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
+              description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12.',
               exercises: [
-                { id: 'm-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'm-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'm-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'm-b-9', name: 'Mata-borrão isométrico no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
-              ]
-            },
-            {
-              id: 'treino-intervalado-confortavel-marcelly',
-              title: 'INTERVALADO (Confortável) - Seg/Sex',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
-              status: 'published',
-              exercises: [
-                { id: 'ex-aq-1-m', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b1-1-m', name: 'Bloco 1: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
-                { id: 'ex-tr-1-m', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b2-1-m', name: 'Bloco 2: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
-                { id: 'ex-dq-1-m', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
-              ]
-            },
-            {
-              id: 'treino-intervalado-desconfortavel-marcelly',
-              title: 'INTERVALADO (Desconfortável) - Qua',
-              projectedSessions: 10,
-              frequencyWeekly: 1,
-              status: 'published',
-              exercises: [
-                { id: 'ex-aq-2-m', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b1-2-m', name: 'Bloco 1: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
-                { id: 'ex-tr-2-m', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b2-2-m', name: 'Bloco 2: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
-                { id: 'ex-dq-2-m', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
-              ]
-            },
-            {
-              id: 'treino-rodagem-marcelly',
-              title: 'RODAGEM - Ter/Qui',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
-              status: 'published',
-              exercises: [
-                { id: 'ex-rod-1-m', name: 'Caminhada Contínua a 5,5 km/h', sets: '1', reps: '60 min', rest: '0s', executionType: 'Simples' }
               ]
             }
           ]
@@ -2160,27 +2122,29 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v20s') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v20s';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v22-crunch-sync') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v22-crunch-sync';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = Math.max(rawData.faseAjusteA || 0, 1);
-                          rawData.faseAjusteB = Math.max(rawData.faseAjusteB || 0, 2);
+                          rawData.faseAjusteA = 4;
+                          rawData.faseAjusteB = 4;
                           rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
-                          rawData.totalGlobalA = Math.max(rawData.totalGlobalA || 0, 1);
-                          rawData.totalGlobalB = Math.max(rawData.totalGlobalB || 0, 2);
+                          rawData.totalGlobalA = 4;
+                          rawData.totalGlobalB = 4;
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = rawData.activePlan || {
                             id: 'current',
                             phaseName: 'Mesociclo 16 - Hipertrofia',
                             targetSets: 18,
-                            progress: { A: 1, B: 2, C: 0 }
+                            progress: { A: 4, B: 4, C: 0 }
                           };
-                          rawData.trainingProgress = { completedCount: 3, targetCount: 36 };
+                          rawData.activePlan.progress.A = 4;
+                          rawData.activePlan.progress.B = 4;
+                          rawData.trainingProgress = { completedCount: 8, targetCount: 36 };
                           rawData.periodizationProgress = {
                             ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 1, B: 2, C: 0 }
+                            '3 x 13': { A: 4, B: 4, C: 0 }
                           };
                           workoutsModified = true;
                           hasCloudChanges = true;
@@ -2192,27 +2156,27 @@ export default function App() {
                   
                   // Force clean workouts for Marcelly
                   if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-marcelly-exact-andre') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-marcelly-exact-andre';
+                      if ((rawData as any)._planRevision !== '18-sessoes-marcelly-split-ab-v4') {
+                          (rawData as any)._planRevision = '18-sessoes-marcelly-split-ab-v4';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = Math.max(rawData.faseAjusteA || 0, 1);
-                          rawData.faseAjusteB = Math.max(rawData.faseAjusteB || 0, 2);
+                          rawData.faseAjusteA = 2;
+                          rawData.faseAjusteB = 2;
                           rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
-                          rawData.totalGlobalA = Math.max(rawData.totalGlobalA || 0, 1);
-                          rawData.totalGlobalB = Math.max(rawData.totalGlobalB || 0, 2);
+                          rawData.totalGlobalA = 2;
+                          rawData.totalGlobalB = 2;
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = {
                             id: 'current',
                             phaseName: 'Mesociclo 16 - Hipertrofia',
                             targetSets: 18,
-                            progress: { A: 1, B: 2, C: 0 }
+                            progress: { A: 2, B: 2, C: 0 }
                           };
-                          rawData.trainingProgress = { completedCount: 3, targetCount: 36 };
+                          rawData.trainingProgress = { completedCount: 4, targetCount: 36 };
                           rawData.periodizationProgress = {
                             ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 1, B: 2, C: 0 }
+                            '3 x 13': { A: 2, B: 2, C: 0 }
                           };
                           workoutsModified = true;
                           hasCloudChanges = true;
@@ -3280,8 +3244,8 @@ export default function App() {
               {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
                 const targetSets = studentForView.activePlan?.targetSets || 18;
-                const countA = studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 1);
-                const countB = studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 2);
+                const countA = studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0);
+                const countB = studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0);
                 const phaseName = studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia";
                 const percentA = Math.min(100, (countA / targetSets) * 100);
                 const percentB = Math.min(100, (countB / targetSets) * 100);
