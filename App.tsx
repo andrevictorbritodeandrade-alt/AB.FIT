@@ -2122,8 +2122,8 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v22-crunch-sync') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v22-crunch-sync';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v23-force-andre-4x4') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v23-force-andre-4x4';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
@@ -2139,6 +2139,7 @@ export default function App() {
                             targetSets: 18,
                             progress: { A: 4, B: 4, C: 0 }
                           };
+                          rawData.activePlan.progress = rawData.activePlan.progress || { A: 4, B: 4, C: 0 };
                           rawData.activePlan.progress.A = 4;
                           rawData.activePlan.progress.B = 4;
                           rawData.trainingProgress = { completedCount: 8, targetCount: 36 };
@@ -3034,12 +3035,57 @@ export default function App() {
     const file = e.target.files?.[0];
     if (file && selectedStudent) {
       setUploadingPhoto(true);
+
+      const compressImage = (f: File): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const MAX_SIZE = 400;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_SIZE) {
+                  height *= MAX_SIZE / width;
+                  width = MAX_SIZE;
+                }
+              } else {
+                if (height > MAX_SIZE) {
+                  width *= MAX_SIZE / height;
+                  height = MAX_SIZE;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx?.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error('Canvas to Blob failed'));
+              }, 'image/jpeg', 0.7);
+            };
+            img.onerror = () => reject(new Error('Image load failed'));
+            if (event.target?.result) img.src = event.target.result as string;
+          };
+          reader.onerror = () => reject(new Error('File read failed'));
+          reader.readAsDataURL(f);
+        });
+      };
+
       try {
+        // Comprime a imagem para reduzir o tamanho do upload drasticamente
+        const compressedBlob = await compressImage(file);
+
         const sanitizeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const storagePath = `profile_pictures/${selectedStudent.id}/${Date.now()}_${sanitizeName}`;
         const imageRef = ref(storage, storagePath);
 
-        const snapshot = await uploadBytes(imageRef, file);
+        const snapshot = await uploadBytes(imageRef, compressedBlob);
         const downloadURL = await getDownloadURL(snapshot.ref);
 
         await handleSaveData(selectedStudent.id, { 
@@ -3050,23 +3096,19 @@ export default function App() {
       } catch (err) {
         console.error("Erro no upload para Firebase Storage, executando fallback de compressão de imagem:", err);
         try {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            const img = new Image();
-            img.onload = async () => {
-              const canvas = document.createElement('canvas');
-              const MAX_SIZE = 400;
-              let width = img.width; let height = img.height;
-              if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
-              else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
-              canvas.width = width; canvas.height = height;
-              const ctx = canvas.getContext('2d'); ctx?.drawImage(img, 0, 0, width, height);
-              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
-              await handleSaveData(selectedStudent.id, { photoUrl: compressedBase64, photoURL: compressedBase64 });
-            };
-            img.src = reader.result as string;
+          // O fallback usa base64 se o storage falhar por causa de regras de segurança/CORS
+          const blobToBase64 = (blob: Blob): Promise<string> => {
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
           };
-          reader.readAsDataURL(file);
+          
+          const compressedBlob = await compressImage(file);
+          const compressedBase64 = await blobToBase64(compressedBlob);
+          await handleSaveData(selectedStudent.id, { photoUrl: compressedBase64, photoURL: compressedBase64 });
         } catch (fallbackErr) {
           console.error("Erro no fallback da foto:", fallbackErr);
           alert("Erro ao enviar a foto. Tente novamente.");
@@ -3244,8 +3286,9 @@ export default function App() {
               {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
                 const targetSets = studentForView.activePlan?.targetSets || 18;
-                const countA = studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0);
-                const countB = studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0);
+                const isAndre = studentForView.id === 'fixed-andre' || studentForView.email === 'andrevictorbritodeandrade@gmail.com';
+                const countA = isAndre ? 4 : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
+                const countB = isAndre ? 4 : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
                 const phaseName = studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia";
                 const percentA = Math.min(100, (countA / targetSets) * 100);
                 const percentB = Math.min(100, (countB / targetSets) * 100);
