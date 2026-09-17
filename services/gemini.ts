@@ -15,7 +15,12 @@ export async function callAI(params: any) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (err) {
+        throw new Error(`Erro HTTP: ${response.status} (Resposta não é JSON válido)`);
+      }
       throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
     }
 

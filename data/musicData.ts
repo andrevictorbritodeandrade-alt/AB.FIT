@@ -92,6 +92,7 @@ export const musicCategories: MusicCategory[] = [
     color: '#f59e0b',
     gradient: 'from-amber-600 to-orange-700',
     songs: [
+      { id: 'Gqe6BfE1RvI', title: 'Amapiano 2026 Mix 🇿🇦🔥 New & Trending Amapiano Songs', artist: 'Amanda Par' },
       { id: 'O1sU1F6dZNk', title: 'DJ Phaphane - Amapiano To The World (Paris Nights)', artist: 'DJ Phaphane' },
       { id: 'ewLGbGqXdpY', title: 'Afrobeats, Reggae & Caribbean Vibes DJ Set', artist: 'DJ Lonely Star' },
       { id: 'UxXoVc5DT44', title: 'Tems Best of Rumba & Chill Afrobeats', artist: 'Tems' },

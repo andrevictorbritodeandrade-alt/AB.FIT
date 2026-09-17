@@ -48,6 +48,7 @@ class YouTubeAudioService {
     if (typeof window !== 'undefined') {
       this.setupMessageListener();
       this.initYouTubeApiScript();
+      this.setupMediaSession();
     }
   }
 
@@ -282,11 +283,37 @@ class YouTubeAudioService {
 
   private updateState(partial: Partial<AudioPlayerState>) {
     this.state = { ...this.state, ...partial };
+    
+    // Update MediaSession API metadata
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      if (this.state.currentSong) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: this.state.currentSong.title,
+          artist: this.state.currentSong.artist || 'ABFIT Music',
+          album: 'ABFIT',
+          artwork: [
+            { src: `https://img.youtube.com/vi/${this.state.currentSong.id}/hqdefault.jpg`, sizes: '480x360', type: 'image/jpeg' }
+          ]
+        });
+      }
+      
+      navigator.mediaSession.playbackState = this.state.isPlaying ? 'playing' : 'paused';
+    }
+    
     this.notify();
   }
 
   private notify() {
     this.listeners.forEach((fn) => fn(this.state));
+  }
+
+  private setupMediaSession() {
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
+      navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
+      navigator.mediaSession.setActionHandler('previoustrack', () => this.handlePrevious());
+      navigator.mediaSession.setActionHandler('nexttrack', () => this.handleNext());
+    }
   }
 
   public subscribe(listener: StateListener): () => void {

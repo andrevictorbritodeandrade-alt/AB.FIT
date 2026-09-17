@@ -5,10 +5,18 @@ import { Card, HeaderTitle, AppFooter, BackgroundCarousel, FITNESS_IMAGES } from
 import { WorkoutHistoryEntry } from '../types';
 
 // Helper para formatar data incluindo dia da semana mesmo para registros legados
-function formatWorkoutDate(dateStr?: string, timestamp?: number): string {
+function formatWorkoutDate(dateStr?: string, timestamp?: any): string {
   let dateObj: Date | null = null;
   if (timestamp) {
-    dateObj = new Date(timestamp);
+    if (typeof timestamp === 'object' && timestamp.seconds) {
+      dateObj = new Date(timestamp.seconds * 1000);
+    } else if (typeof timestamp === 'number') {
+      dateObj = new Date(timestamp);
+    } else if (typeof timestamp.toDate === 'function') {
+      dateObj = timestamp.toDate();
+    } else {
+      dateObj = new Date();
+    }
   } else if (dateStr) {
     const parts = dateStr.split('/');
     if (parts.length === 3) {
@@ -101,7 +109,7 @@ export function WorkoutFeed({ history, onBack, onToggleMenu, isProfessor = false
           </button>
         </div>
         <h2 className="text-xl font-black italic uppercase tracking-tighter">
-          <HeaderTitle text={isProfessor ? "Feed Global ABFIT" : "Meu Feed ABFIT"} />
+          <HeaderTitle text={isProfessor ? "Feed Global ABFIT" : "FEED DE PERFORMANCE"} />
         </h2>
       </header>
 

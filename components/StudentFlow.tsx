@@ -1244,7 +1244,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               </button>
               <div className="bg-card border border-border px-4 py-2 rounded-full flex items-center gap-2">
                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {user.trainingProgress?.targetCount || 40}</span>
+                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {(user.workouts || []).reduce((acc: number, w: any) => acc + (w.projectedSessions || 18), 0)}</span>
               </div>
            </div>
            <h2 className="text-xl font-black italic uppercase tracking-tighter">
@@ -2739,6 +2739,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
         )}
 
         {/* PILARES CLÍNICOS, NEURODIVERGÊNCIA & DIRETRIZES DE ROTINA */}
+        {(student.id === 'fixed-andre' || student.id === 'fixed-marcelly') && (
         <div className="mt-8 space-y-4">
           <h3 className="text-lg font-black uppercase tracking-tighter text-white flex items-center gap-2">
             <ShieldCheck size={20} className="text-red-500" /> Diretrizes Clínicas & Neurodivergência
@@ -2798,8 +2799,10 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
             </Card>
           </div>
         </div>
+        )}
 
         {/* REGRA MANDATÓRIA DE AVALIAÇÃO FÍSICA */}
+        {(student.id === 'fixed-andre' || student.id === 'fixed-marcelly') && (
         <div className="mt-8">
           <Card className="p-6 bg-gradient-to-br from-indigo-950/40 via-zinc-900 to-black border border-indigo-500/30 rounded-3xl">
             <div className="flex items-center justify-between gap-3 mb-3">
@@ -2823,6 +2826,7 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
             </p>
           </Card>
         </div>
+        )}
 
         {/* PROPOSTA DA PRÓXIMA PERIODIZAÇÃO (FASE 2) */}
         {(plan.proximaPeriodizacaoProposta || student.id === 'fixed-andre' || student.id === 'fixed-marcelly') && (

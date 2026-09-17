@@ -601,6 +601,54 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
   );
 }
 
+const BIOMECHANICS_CUES: Record<string, string> = {
+  "Peito": "Foco na adução do úmero. Mantenha as escápulas retraídas e deprimidas (peito estufado) para isolar o peitoral e minimizar a ação do deltoide anterior. Controle a fase excêntrica.",
+  "Ombros": "Alinhe a abdução do ombro ao plano escapular (30° à frente) para proteção articular. Evite encolher os trapézios; concentre a tensão nos feixes laterais e anteriores.",
+  "Costas": "Inicie o movimento pela depressão e retração escapular antes de flexionar os cotovelos. Puxe com os cotovelos e não com as mãos para maior ativação do latíssimo do dorso.",
+  "Bíceps": "Mantenha o cotovelo estabilizado ao lado ou levemente à frente do tronco. A supinação completa maximiza o pico de contração do bíceps braquial.",
+  "Tríceps": "Trave os cotovelos próximos ao corpo. Evite usar o momento (balanço). A extensão completa na fase concêntrica é fundamental para recrutar a cabeça longa.",
+  "Quadríceps": "Priorize a amplitude de movimento (flexão profunda do joelho). Mantenha o core ativado para evitar hiperlordose, com os joelhos alinhados à direção das pontas dos pés.",
+  "Posteriores": "Mantenha uma leve flexão dos joelhos e foque na flexão do quadril com a coluna neutra. A contração do core protege a lombar e maximiza o alongamento isquiotibial.",
+  "Glúteos": "Concentre a força no calcanhar durante movimentos de extensão de quadril (ex: elevação pélvica). Realize a retroversão pélvica no pico da contração para isolar o glúteo máximo.",
+  "Panturrilhas": "Foque na flexão plantar completa. Faça uma pausa de 1-2 segundos no pico da contração e na fase de máximo alongamento para anular o reflexo elástico do tendão.",
+  "Abdômen": "Foque na flexão da coluna e não na flexão do quadril. Expire profundamente na fase concêntrica para ativar ao máximo o transverso e o reto abdominal."
+};
+
+const DEFAULT_CUE = "Mantenha a postura estabilizada, respiração cadenciada e o core ativado para evitar sobrecarga articular.";
+
+const getBiomechanicsCue = (exerciseName: string): { group: string, cue: string } => {
+  const name = exerciseName.toLowerCase();
+  
+  // Tenta encontrar o grupo muscular baseado no EXERCISE_DATABASE
+  let matchedGroup: string | null = null;
+  for (const [group, exercises] of Object.entries(EXERCISE_DATABASE)) {
+    if (exercises.some(ex => name.includes(ex.toLowerCase()) || ex.toLowerCase().includes(name))) {
+      matchedGroup = group;
+      break;
+    }
+  }
+  
+  // Keywords fallback
+  if (!matchedGroup) {
+    if (name.includes('supino') || name.includes('crucifixo') || name.includes('voador')) matchedGroup = 'Peito';
+    else if (name.includes('desenvolvimento') || name.includes('elevação') || name.includes('elevacao')) matchedGroup = 'Ombros';
+    else if (name.includes('remada') || name.includes('puxada')) matchedGroup = 'Costas';
+    else if (name.includes('rosca') || name.includes('bíceps') || name.includes('biceps')) matchedGroup = 'Bíceps';
+    else if (name.includes('tríceps') || name.includes('triceps') || name.includes('testa') || name.includes('francesa') || name.includes('coice')) matchedGroup = 'Tríceps';
+    else if (name.includes('agachamento') || name.includes('leg press') || name.includes('extensora')) matchedGroup = 'Quadríceps';
+    else if (name.includes('flexora') || name.includes('stiff') || name.includes('terra')) matchedGroup = 'Posteriores';
+    else if (name.includes('glúteo') || name.includes('gluteo') || name.includes('pélvica') || name.includes('pelvica') || name.includes('abdutora')) matchedGroup = 'Glúteos';
+    else if (name.includes('panturrilha') || name.includes('gêmeos')) matchedGroup = 'Panturrilhas';
+    else if (name.includes('abdominal') || name.includes('prancha')) matchedGroup = 'Abdômen';
+  }
+  
+  if (matchedGroup && BIOMECHANICS_CUES[matchedGroup]) {
+    return { group: matchedGroup, cue: BIOMECHANICS_CUES[matchedGroup] };
+  }
+  
+  return { group: 'Geral', cue: DEFAULT_CUE };
+};
+
 export function WorkoutEditorView({ student, workoutToEdit, onBack, onSave }: { student: Student, workoutToEdit: Workout | null, onBack: () => void, onSave: (sid: string, data: any) => void }) {
   const [title, setTitle] = useState(workoutToEdit?.title || '');
   // Garante que projectedSessions seja um número
@@ -849,7 +897,9 @@ export function WorkoutEditorView({ student, workoutToEdit, onBack, onSave }: { 
               </div>
            </div>
 
-           {exercises.map((ex, i) => (
+           {exercises.map((ex, i) => {
+             const bio = getBiomechanicsCue(ex.name);
+             return (
              <div key={i} className="flex flex-col gap-2 bg-card p-4 rounded-2xl border border-border animate-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-background rounded-xl overflow-hidden shrink-0 border border-border">
@@ -869,12 +919,25 @@ export function WorkoutEditorView({ student, workoutToEdit, onBack, onSave }: { 
                   </div>
                   <button onClick={() => setExercises(exercises.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-red-600"><Trash2 size={16}/></button>
                 </div>
-                <div className="mt-2 flex items-center gap-2">
-                   <label className="text-[8px] font-black uppercase text-muted-foreground">Descanso:</label>
-                   <input type="text" value={ex.rest} onChange={(e) => updateExerciseRest(i, e.target.value)} className="bg-background border border-border rounded px-2 py-1 text-[10px] text-foreground w-16 text-center outline-none focus:border-red-600" />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                   <div className="flex items-center gap-2">
+                     <label className="text-[8px] font-black uppercase text-muted-foreground">Descanso:</label>
+                     <input type="text" value={ex.rest} onChange={(e) => updateExerciseRest(i, e.target.value)} className="bg-background border border-border rounded px-2 py-1 text-[10px] text-foreground w-16 text-center outline-none focus:border-red-600" />
+                   </div>
+                </div>
+                
+                {/* Biomechanics Insight */}
+                <div className="mt-3 p-3 bg-red-950/10 border border-red-900/20 rounded-xl flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-red-900/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Activity size={12} className="text-red-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-red-500 mb-1">Biomecânica: {bio.group}</p>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">{bio.cue}</p>
+                  </div>
                 </div>
              </div>
-           ))}
+           )})}
            <button onClick={() => onBack()} className="w-full py-6 border-2 border-dashed border-border rounded-3xl text-muted-foreground text-[10px] font-black uppercase hover:border-red-600/30 hover:text-red-600 transition-all">
              Voltar
            </button>

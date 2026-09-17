@@ -75,7 +75,7 @@ export const GlobalMusicPlayer: React.FC<GlobalMusicPlayerProps> = ({
         <iframe
           id="abfit-main-youtube-frame"
           key={`${currentSong.id}-${playbackKey}`}
-          src={`https://www.youtube.com/embed/${currentSong.id}?enablejsapi=1&autoplay=${isPlaying ? '1' : '0'}&playsinline=1&rel=0&modestbranding=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+          src={`https://www.youtube.com/embed/${currentSong.id}?enablejsapi=1&autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
           title="ABFIT Music Player"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
           allowFullScreen

@@ -42,9 +42,6 @@ export interface FinalizarTreinoResult {
 
 /**
  * A Lógica Infalível de Salvar Treino (Transação Atômica no Firestore)
- * 1. Salva o histórico permanentemente em users/{userId}/workout_history
- * 2. Atualiza a contagem atômica em users/{userId}/active_plans/{planId} usando runTransaction
- * 3. Notificações automáticas nas marcas de carga (6, 12) e término (targetSets)
  */
 export async function finalizarTreino(
   userId: string,
@@ -54,40 +51,27 @@ export async function finalizarTreino(
 ): Promise<FinalizarTreinoResult> {
   try {
     const activePlanId = planId || 'current';
-
-    // 1. Salva o histórico permanentemente (Nunca sai dos registros)
-    const historyRef = collection(db, `users/${userId}/workout_history`);
-    const historyDoc = await addDoc(historyRef, {
-      planId: activePlanId,
-      workoutType: tipoTreino,
-      dateCompleted: serverTimestamp(),
-      volumeTotal: dadosDoTreino.volumeTotal || 0.0,
-      workoutName: dadosDoTreino.workoutName || `Treino ${tipoTreino}`,
-      duration: dadosDoTreino.duration || '00:00',
-      duracaoMinutos: dadosDoTreino.duracaoMinutos || 0,
-      calorias: dadosDoTreino.calorias || 0,
-      exercises: dadosDoTreino.exercises || [],
-      photoUrl: dadosDoTreino.photoUrl || null,
-      timestamp: Date.now()
-    });
-
-    // 2. Atualiza a contagem usando uma TRANSAÇÃO (Garante que não vai perder dados)
-    const planRef = doc(db, `users/${userId}/active_plans/${activePlanId}`);
     let notificacaoNecessaria: string | null = null;
     let novaContagem = 1;
     let targetSets = 18;
 
+    const planRef = doc(db, `alunos/${userId}/active_plans/${activePlanId}`);
+    const historyRef = doc(collection(db, `alunos/${userId}/workout_history`));
+    const statsRef = doc(db, `user_stats/${userId}`);
+    const alunoRef = doc(db, 'alunos', userId);
+
     await runTransaction(db, async (transaction) => {
       const planDoc = await transaction.get(planRef);
+      const statsDoc = await transaction.get(statsRef);
+      const alunoDoc = await transaction.get(alunoRef);
       
+      // 1. Atualizar Active Plan
       if (!planDoc.exists()) {
         targetSets = 18;
         novaContagem = 1;
-        const initialProgress = {
-          A: tipoTreino === 'A' ? 1 : 0,
-          B: tipoTreino === 'B' ? 1 : 0,
-          C: tipoTreino === 'C' ? 1 : 0
-        };
+        const initialProgress = { A: 0, B: 0, C: 0 };
+        initialProgress[tipoTreino] = 1;
+        
         transaction.set(planRef, {
           phaseName: "Mesociclo 16 - Hipertrofia",
           targetSets: 18,
@@ -99,45 +83,58 @@ export async function finalizarTreino(
         targetSets = planData.targetSets || 18;
         const progress = planData.progress || { A: 0, B: 0, C: 0 };
         novaContagem = (progress[tipoTreino] || 0) + 1;
-
+        
         transaction.update(planRef, {
           [`progress.${tipoTreino}`]: novaContagem,
           updatedAt: serverTimestamp()
         });
       }
 
-      // 3. Lógica de Notificação (Alerta de Ajuste de Carga e Transição)
-      if (novaContagem === 6 || novaContagem === 12) {
-        notificacaoNecessaria = `Atenção: Você concluiu o treino ${tipoTreino} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
-      } else if (novaContagem === targetSets) {
-        notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${tipoTreino}. Última sessão antes de mudar a periodização!`;
-      }
-    });
+      // 2. Adiciona o histórico
+      transaction.set(historyRef, {
+        planId: activePlanId,
+        workoutType: tipoTreino,
+        dateCompleted: serverTimestamp(),
+        volumeTotal: dadosDoTreino.volumeTotal || 0.0,
+        workoutName: dadosDoTreino.workoutName || `Treino ${tipoTreino}`,
+        duration: dadosDoTreino.duration || '00:00',
+        duracaoMinutos: dadosDoTreino.duracaoMinutos || 0,
+        calorias: dadosDoTreino.calorias || 0,
+        exercises: dadosDoTreino.exercises || [],
+        photoUrl: dadosDoTreino.photoUrl || null
+      });
 
-    // 4. Sincroniza em segundo plano o documento do aluno em alunos/{userId}
-    try {
-      const alunoRef = doc(db, 'alunos', userId);
-      const alunoSnap = await getDoc(alunoRef);
-      if (alunoSnap.exists()) {
+      // 3. Atualizar User Stats Globais
+      const currentGlobalCount = statsDoc.exists() ? (statsDoc.data().totalWorkouts || 0) : 0;
+      transaction.set(statsRef, {
+        totalWorkouts: currentGlobalCount + 1,
+        lastWorkoutAt: serverTimestamp()
+      }, { merge: true });
+
+      // 4. Update fallback inside `alunos` for legacy compatibility
+      if (alunoDoc.exists()) {
+        const aData = alunoDoc.data();
         const pKey = '3 x 13';
-        const aData = alunoSnap.data();
         const prevProg = aData.periodizationProgress || {};
         const subProg = { ...(prevProg[pKey] || { A: 0, B: 0, C: 0 }) };
         subProg[tipoTreino] = novaContagem;
-
-        const updatesToAluno: any = {
+        
+        transaction.update(alunoRef, {
           [`faseAjuste${tipoTreino}`]: novaContagem,
           [`totalGlobal${tipoTreino}`]: (aData[`totalGlobal${tipoTreino}`] || 0) + 1,
           [`activePlan.progress.${tipoTreino}`]: novaContagem,
           [`activePlan.targetSets`]: targetSets,
           [`periodizationProgress.${pKey}`]: subProg,
           lastUpdateTimestamp: serverTimestamp()
-        };
-        await setDoc(alunoRef, updatesToAluno, { merge: true });
+        });
       }
-    } catch (syncErr) {
-      console.warn("Aviso ao sincronizar perfil do aluno em alunos/:", syncErr);
-    }
+
+      if (novaContagem === 6 || novaContagem === 12) {
+        notificacaoNecessaria = `Atenção: Você concluiu o treino ${tipoTreino} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
+      } else if (novaContagem === targetSets) {
+        notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${tipoTreino}. Última sessão antes de mudar a periodização!`;
+      }
+    });
 
     return {
       success: true,
@@ -158,16 +155,12 @@ export async function finalizarTreino(
   }
 }
 
-/**
- * Escuta em tempo real (onSnapshot) o plano ativo do Firestore
- * Garantindo que o Firebase seja a única fonte da verdade
- */
 export function subscribeToActivePlan(
   userId: string,
   onUpdate: (plan: ActivePlan) => void,
   planId: string = 'current'
 ): Unsubscribe {
-  const planRef = doc(db, `users/${userId}/active_plans/${planId || 'current'}`);
+  const planRef = doc(db, `alunos/${userId}/active_plans/${planId}`);
   return onSnapshot(planRef, (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
@@ -183,28 +176,22 @@ export function subscribeToActivePlan(
         updatedAt: data.updatedAt
       });
     } else {
-      // Fallback padrão se ainda não existir
       onUpdate({
         id: 'current',
         phaseName: "Mesociclo 16 - Hipertrofia",
         targetSets: 18,
-        progress: { A: 1, B: 2, C: 0 }
+        progress: { A: 0, B: 0, C: 0 }
       });
     }
-  }, (error) => {
-    console.warn("Erro ao ouvir active_plans:", error);
   });
 }
 
-/**
- * Escuta em tempo real o histórico eterno de treinos de users/{userId}/workout_history
- */
 export function subscribeToWorkoutHistory(
   userId: string,
   onUpdate: (history: WorkoutHistoryRecord[]) => void,
   limitCount: number = 50
 ): Unsubscribe {
-  const historyRef = collection(db, `users/${userId}/workout_history`);
+  const historyRef = collection(db, `alunos/${userId}/workout_history`);
   const q = query(historyRef, orderBy('dateCompleted', 'desc'), limit(limitCount));
   
   return onSnapshot(q, (snapshot) => {
@@ -216,7 +203,19 @@ export function subscribeToWorkoutHistory(
       } as WorkoutHistoryRecord);
     });
     onUpdate(records);
-  }, (error) => {
-    console.warn("Erro ao ouvir workout_history:", error);
+  });
+}
+
+export function subscribeToUserStats(
+  userId: string,
+  onUpdate: (totalWorkouts: number) => void
+): Unsubscribe {
+  const statsRef = doc(db, `user_stats/${userId}`);
+  return onSnapshot(statsRef, (docSnap) => {
+    if (docSnap.exists()) {
+      onUpdate(docSnap.data().totalWorkouts || 0);
+    } else {
+      onUpdate(0);
+    }
   });
 }

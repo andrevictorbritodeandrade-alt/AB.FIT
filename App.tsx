@@ -47,7 +47,7 @@ import {
   increment 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
-import { finalizarTreino, subscribeToActivePlan } from './services/workoutService';
+import { finalizarTreino, subscribeToActivePlan, subscribeToUserStats } from './services/workoutService';
 import { useTheme } from './components/ThemeContext';
 
 const removeUndefined = (obj: any): any => {
@@ -265,6 +265,7 @@ export default function App() {
   const [runningWorkouts, setRunningWorkouts] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+  const [globalWorkoutCount, setGlobalWorkoutCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
@@ -599,182 +600,119 @@ export default function App() {
             lastSessionDate: ''
           },
           sexo: 'Feminino', 
+          activePlan: {
+            id: 'current',
+            phaseName: 'Treino A e Treino B (32 Sessões)',
+            targetSets: 32,
+            progress: { A: 0, B: 0, C: 0 }
+          },
           periodization: {
-            id: 'per-liliane-01',
-            titulo: 'Relatório Científico',
-            startDate: '2026-02-23T00:00:00.000Z',
+            id: 'per-liliane-32',
+            titulo: 'Periodização Liliane Torres - Treino A e Treino B (32 Sessões)',
+            startDate: '2026-04-20T00:00:00.000Z',
             type: 'STRENGTH',
-            phaseTitle: 'Emagrecimento e Controle TDAH',
-            generalStrategy: "Periodização focada em déficit calórico e preservação de massa magra. Usa variação constante de estímulos (circuitos, superséries, EMOM) para engajar o TDAH. Exercícios de baixo impacto protegem o joelho, fortalecendo quadril e core para otimizar a biomecânica e maximizar a perda de gordura.",
+            phaseTitle: 'Treino A e Treino B (32 Sessões cada) - 13 Repetições',
+            generalStrategy: 'Treino A e Treino B, executar 32 sessões em cada um dos treinos; 13 repetições com 20 segundos de recuperação entre as séries, sendo 4 séries nos membros inferiores e 3 séries nos superiores; A cada 8 sessões, fazer ajustes de cargas, para aumentar de maneira que tenha desconforto comparada com a anterior.',
             clinicalSafety: [
-              "Cuidados com o Joelho: Priorizar exercícios em cadeia cinética fechada (Leg Press, Agachamento, Elevação Pélvica). Evitar cadeira extensora com carga alta e atividades de alto impacto (saltos, corrida em esteira). Utilizar elíptico, remo ou bike para cardio.",
-              "Manejo do TDAH: Utilizar métodos dinâmicos (EMOM, AMRAP, PHA) para evitar o tédio. Manter as sessões densas (45-50 minutos) com transições rápidas e metas claras de repetições/tempo para gamificar o treino e aumentar a adesão.",
-              "Monitoramento de Emagrecimento: Como a meta é agressiva (15 kg em 6 meses), o déficit calórico será alto. Monitorar sinais de fadiga excessiva e ajustar a intensidade caso haja piora nas dores articulares ou episódios de desatenção severa."
+              'Ajuste Periódico de Cargas: A cada 8 sessões, fazer ajustes de cargas, para aumentar de maneira que tenha desconforto comparada com a anterior.',
+              'Intervalo Estrito de Recuperação: 20 segundos de recuperação entre as séries.',
+              'Divisão de Séries e Repetições: 13 repetições por série, sendo 4 séries nos membros inferiores e 3 séries nos superiores.',
+              'Prescrição Aeróbica (32 sessões): Seg/Qua/Sex (caminhada escalonada 5 a 6,5 km/h por 35 min) e Ter/Qui/Sáb (35 min contínuos a 6,0 km/h).'
             ],
-            bioInsight: {
-              context: "Liliane Torres é uma aluna com possível TDAH.",
-              tips: ["Estrutura e Previsibilidade...", "Âncoras de Foco Visual...", "Reforço Imediato..."]
-            },
-            targetVolume: {
-              "Quadríceps e Adutores": 6,
-              "Glúteos e Posteriores": 6,
-              "Peito": 2,
-              "Costas e Cintura Escapular": 3,
-              "Ombro": 3,
-              "Biceps": 1,
-              "Triceps": 1,
-              "Core e Abdomen": 8
-            },
+            frequenciaSemanal: 'Treino A e Treino B (32 sessões cada) + Treino Aeróbico (32 sessões)',
+            limiteTempoSessao: '20 segundos de recuperação entre as séries',
             microciclos: [
               {
-                range: "Semana 1-2",
-                focus: "ADAPTAÇÃO ANATÔMICA E ENGAJAMENTO",
-                method: "Circuito Full Body",
-                intensity: "Baixa (50-60% 1RM)",
-                volume: "Médio (60% V.Max)",
-                reps: "15-20 reps",
-                weeklyVolume: "MMII: 12, MMSS: 10, Core: 8",
-                notes: "Foco em estabilização do joelho e transições rápidas entre exercícios para manter o foco (TDAH)."
+                range: 'Sessões 1-8',
+                focus: 'BLOCO 1 (SESSÕES 1 A 8) - CARGAS INICIAIS',
+                method: '13 Repetições | 20s de recuperação | 4 séries MMII / 3 séries MMSS',
+                reps: '13 reps',
+                notes: 'Estabelecer cargas de referência gerando desconforto inicial adequado com 20s de descanso.'
               },
               {
-                range: "Semana 3-4",
-                focus: "RESISTÊNCIA MUSCULAR LOCALIZADA",
-                method: "Agonista-Antagonista (Superséries)",
-                intensity: "Média (60-65% 1RM)",
-                volume: "Alto (75% V.Max)",
-                reps: "12-15 reps",
-                weeklyVolume: "MMII: 14, MMSS: 12, Core: 10",
-                notes: "Utilizar exercícios em cadeia cinética fechada para os membros inferiores visando proteção patelofemoral."
+                range: 'Sessões 9-16',
+                focus: 'BLOCO 2 (SESSÕES 9 A 16) - 1º AJUSTE DE CARGAS',
+                method: '13 Repetições | 20s de recuperação | 4 séries MMII / 3 séries MMSS',
+                reps: '13 reps',
+                notes: 'Fazer ajuste de cargas para aumentar de maneira que tenha desconforto comparada com o bloco anterior.'
               },
               {
-                range: "Semana 5-6",
-                focus: "HIPERTROFIA FUNCIONAL",
-                method: "Tri-sets Dinâmicos",
-                intensity: "Média-Alta (65-75% 1RM)",
-                volume: "Alto (85% V.Max)",
-                reps: "10-12 reps",
-                weeklyVolume: "MMII: 16, MMSS: 14, Core: 10",
-                notes: "Manter alta densidade de treino (descansos curtos) para prender a atenção e elevar o gasto calórico."
+                range: 'Sessões 17-24',
+                focus: 'BLOCO 3 (SESSÕES 17 A 24) - 2º AJUSTE DE CARGAS',
+                method: '13 Repetições | 20s de recuperação | 4 séries MMII / 3 séries MMSS',
+                reps: '13 reps',
+                notes: 'Novo ajuste de cargas para aumentar de maneira que tenha desconforto comparada com a anterior.'
               },
               {
-                range: "Semana 7-8",
-                focus: "CHOQUE METABÓLICO",
-                method: "PHA (Peripheral Heart Action)",
-                intensity: "Alta (70-80% 1RM)",
-                volume: "Muito Alto (100% V.Max)",
-                reps: "8-12 reps",
-                weeklyVolume: "MMII: 18, MMSS: 16, Core: 12",
-                notes: "Alternar exercícios de MMSS e MMII para manter a frequência cardíaca alta sem sobrecarregar os joelhos."
-              },
-              {
-                range: "Semana 9-10",
-                focus: "RECUPERAÇÃO ATIVA E FORÇA BASE",
-                method: "Treino Tradicional + LISS",
-                intensity: "Alta (80-85% 1RM)",
-                volume: "Baixo (50% V.Max)",
-                reps: "6-8 reps",
-                weeklyVolume: "MMII: 10, MMSS: 10, Core: 6",
-                notes: "Reduzir volume para recuperar articulações. Dar foco no fortalecimento de glúteos para estabilizar os joelhos."
-              },
-              {
-                range: "Semana 11-12",
-                focus: "POTÊNCIA E CONDICIONAMENTO",
-                method: "Complexos com Halteres/Kettlebell",
-                intensity: "Média-Alta (70-75% 1RM)",
-                volume: "Médio-Alto (75% V.Max)",
-                reps: "8-10 reps",
-                weeklyVolume: "MMII: 14, MMSS: 12, Core: 10",
-                notes: "Evitar saltos (pliometria). Focar na velocidade da fase concêntrica para recrutar fibras de contração rápida."
-              },
-              {
-                range: "Semana 13-14",
-                focus: "DENSIDADE MÁXIMA",
-                method: "EMOM (Every Minute on the Minute)",
-                intensity: "Alta (75-80% 1RM)",
-                volume: "Alto (85% V.Max)",
-                reps: "10-12 reps",
-                weeklyVolume: "MMII: 16, MMSS: 14, Core: 12",
-                notes: "O relógio dita o ritmo. Excelente estímulo gamificado para manter a motivação e foco do TDAH."
-              },
-              {
-                range: "Semana 15-16",
-                focus: "POLIMENTO E PICO METABÓLICO",
-                method: "Circuitos AMRAP",
-                intensity: "Média (65-75% 1RM)",
-                volume: "Alto (90% V.Max)",
-                reps: "12-15 reps",
-                weeklyVolume: "MMII: 16, MMSS: 14, Core: 12",
-                notes: "Reta final para completar as 100 sessões. Foco em manter o movimento constante com exercícios de baixo impacto."
+                range: 'Sessões 25-32',
+                focus: 'BLOCO 4 (SESSÕES 25 A 32) - 3º AJUSTE DE CARGAS (PICO DE INTENSIDADE)',
+                method: '13 Repetições | 20s de recuperação | 4 séries MMII / 3 séries MMSS',
+                reps: '13 reps',
+                notes: 'Ajuste final de cargas aumentando o desconforto e consolidando as 32 sessões de treino.'
               }
             ]
           },
           workouts: [
             {
               id: 'treino-a-liliane',
-              title: 'TREINO A - Musculação',
+              title: 'TREINO A',
+              projectedSessions: 32,
               status: 'published',
               exercises: [
-                { id: 'l-a-1', name: 'LEG PRESS HORIZONTAL', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-2', name: 'LEG PRESS HORIZONTAL UNILATERAL', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-3', name: 'AGACHAMENTO NO BANCO COM HALTER', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-4', name: 'CADEIRA EXTENSORA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-5', name: 'CRUCIFIXO ABERTO NO BANCO RETO COM HALTER', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-6', name: 'ABDUÇÃO DE OMBROS EM PÉ COM HALTER', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-7', name: 'TRÍCEPS EM PÉ NO CROSS COM BARRA RETA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-a-8', name: 'ABDOMINAL SUPRA NO SOLO', sets: '3', reps: '15', rest: '25s', executionType: 'Simples' }
+                { id: 'l-a-1', name: 'Leg Press Horizontal', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-2', name: 'Agachamento na parede com bola suíssa e HBC', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-3', name: 'Agachamento passada com HBC segurando no espaldar', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-4', name: 'Cadeira extensora', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-5', name: 'Cadeira extensora unilateral', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-6', name: 'Supino aberto no banco reto com HBC', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-7', name: 'Remada alta em pé com HBC', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-8', name: 'Tríceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-9', name: 'Abdominal diagonal no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-a-10', name: 'Prancha ventral no solo em isometria', sets: '3', reps: 'Isometria', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
               id: 'treino-b-liliane',
-              title: 'TREINO B - Musculação',
+              title: 'TREINO B',
+              projectedSessions: 32,
               status: 'published',
               exercises: [
-                { id: 'l-b-1', name: 'ELEVAÇÃO DE QUADRIL NO SOLO', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-2', name: 'EXTENSÃO DE QUADRIL EM PÉ COM CANELEIRA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-3', name: 'ABDUÇÃO DE QUADRIL EM PÉ COM CANELEIRA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-4', name: 'CADEIRA FLEXORA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-5', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-7', name: 'BÍCEPS EM PÉ NO CROSS COM BARRA RETA', sets: '3', reps: '12', rest: '60s', executionType: 'Simples' },
-                { id: 'l-b-8', name: 'FLEXÃO PLANTAR EM PÉ', sets: '3', reps: '15', rest: '25s', executionType: 'Simples' }
+                { id: 'l-b-1', name: 'Subida unilateral no banco reto ou 2 steps', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-2', name: 'Extensão de quadril e joelho em pé com caneleira joelho estendido no segurando no espaldar (Coice)', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-3', name: 'Extensão de quadril em pé com caneleira joelho estendido no segurando no espaldar', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-4', name: 'Flexão de joelho em pé com caneleira segurando no espaldar', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-5', name: 'Cadeira flexora', sets: '4', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-6', name: 'Remada baixa pegada supinada com barra reta sentada no solo com steps', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-7', name: 'Puxada alta aberta com barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-8', name: 'Bíceps em pé no cross com barra reta ou com HBC', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-9', name: 'Abdominal diagonal no solo', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'l-b-10', name: 'Prancha ventral no solo em isometria', sets: '3', reps: 'Isometria', rest: '20s', executionType: 'Simples' }
               ]
             },
             {
-              id: 'treino-intervalado-confortavel',
-              title: 'INTERVALADO (Confortável) - Seg/Sex',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
+              id: 'treino-aerobico-seg-qua-sex-liliane',
+              title: 'AERÓBICO ESCALONADO - Seg/Qua/Sex',
+              projectedSessions: 32,
+              frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'ex-aq-1', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b1-1', name: 'Bloco 1: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
-                { id: 'ex-tr-1', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b2-1', name: 'Bloco 2: Corrida Leve / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve permitir conversa fácil.' },
-                { id: 'ex-dq-1', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
+                { id: 'l-aero-1', name: "5' caminhada em 5 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-2', name: "5' caminhada em 5,5 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-3', name: "5' caminhada em 6,0 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-4', name: "5' caminhada em 6,5 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-5', name: "5' caminhada em 6,0 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-6', name: "5' caminhada em 5,5 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' },
+                { id: 'l-aero-7', name: "5' caminhada em 5 km/h", sets: '1', reps: "5 min", rest: '0s', executionType: 'Simples' }
               ]
             },
             {
-              id: 'treino-intervalado-desconfortavel',
-              title: 'INTERVALADO (Desconfortável) - Qua',
-              projectedSessions: 10,
-              frequencyWeekly: 1,
+              id: 'treino-aerobico-ter-qui-sab-liliane',
+              title: 'AERÓBICO CONTÍNUO - Ter/Qui/Sáb',
+              projectedSessions: 32,
+              frequencyWeekly: 3,
               status: 'published',
               exercises: [
-                { id: 'ex-aq-2', name: 'Aquecimento: Caminhada', sets: '1', reps: '10 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b1-2', name: 'Bloco 1: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 1:30 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
-                { id: 'ex-tr-2', name: 'Transição: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' },
-                { id: 'ex-b2-2', name: 'Bloco 2: Corrida Moderada/Forte / Caminhada', sets: '4', reps: '1:30 min / 2:00 min', rest: '0s', executionType: 'Simples', description: 'Ritmo deve ser desafiador, dificultando a fala durante o tiro.' },
-                { id: 'ex-dq-2', name: 'Desaquecimento: Caminhada', sets: '1', reps: '8:30 min', rest: '0s', executionType: 'Simples' }
-              ]
-            },
-            {
-              id: 'treino-rodagem',
-              title: 'RODAGEM - Ter/Qui',
-              projectedSessions: 20,
-              frequencyWeekly: 2,
-              status: 'published',
-              exercises: [
-                { id: 'ex-rod-1', name: 'Caminhada Contínua a 5,5 km/h', sets: '1', reps: '50 min', rest: '0s', executionType: 'Simples' }
+                { id: 'l-aero-8', name: "35' de caminhada contínua em 6,0 km/h", sets: '1', reps: "35 min", rest: '0s', executionType: 'Simples' }
               ]
             }
           ]
@@ -2186,6 +2124,35 @@ export default function App() {
                           workoutsModified = true;
                       }
                   }
+
+                  // Force clean workouts and periodization for Liliane Torres
+                  if (defaultProfile.email === 'lilicatorres@gmail.com' || rawData.id === 'fixed-liliane') {
+                      if ((rawData as any)._planRevision !== '32-sessoes-liliane-ab-v1') {
+                          (rawData as any)._planRevision = '32-sessoes-liliane-ab-v1';
+                          rawData.workouts = defaultProfile.workouts || [];
+                          currentWorkouts = defaultProfile.workouts || [];
+                          rawData.periodization = defaultProfile.periodization;
+                          rawData.faseAjusteA = 0;
+                          rawData.faseAjusteB = 0;
+                          rawData.faseAjusteC = 0;
+                          rawData.totalGlobalA = 0;
+                          rawData.totalGlobalB = 0;
+                          rawData.totalGlobalC = 0;
+                          rawData.activePlan = defaultProfile.activePlan || {
+                            id: 'current',
+                            phaseName: 'Treino A e Treino B (32 Sessões)',
+                            targetSets: 32,
+                            progress: { A: 0, B: 0, C: 0 }
+                          };
+                          rawData.trainingProgress = { completedCount: 0, targetCount: 64 };
+                          rawData.periodizationProgress = {
+                            ...(rawData.periodizationProgress || {}),
+                            '13 Repetições': { A: 0, B: 0, C: 0 }
+                          };
+                          workoutsModified = true;
+                          hasCloudChanges = true;
+                      }
+                  }
                   
                   if (workoutsModified || !rawData.workouts) {
                       rawData.workouts = currentWorkouts;
@@ -2345,6 +2312,10 @@ export default function App() {
               };
             });
           });
+          
+          subscribeToUserStats(targetId, (count) => {
+            setGlobalWorkoutCount(count);
+          });
         } catch (pe) {
           console.warn("Aviso ao escutar activePlan:", pe);
         }
@@ -2380,7 +2351,7 @@ export default function App() {
               merged[existingIndex].photoUrl = def.photoUrl;
             }
             
-            if (def.id === 'fixed-marcelly' || def.id === 'fixed-andre') {
+            if (def.id === 'fixed-marcelly' || def.id === 'fixed-andre' || def.id === 'fixed-liliane') {
                 merged[existingIndex].periodization = def.periodization;
                 merged[existingIndex].activePlan = def.activePlan;
             } else if (!existing.periodization && def.periodization) {
@@ -2425,7 +2396,11 @@ export default function App() {
                     }
                 }
             });
-            merged[existingIndex].workouts = currentWorkoutsForCoach;
+            if (def.id === 'fixed-liliane') {
+                merged[existingIndex].workouts = def.workouts || [];
+            } else {
+                merged[existingIndex].workouts = currentWorkoutsForCoach;
+            }
             
             // Se o aluno não tiver histórico, adiciona o padrão (apenas se for um aluno fixo que nunca treinou)
             if (!existing.workoutHistory || existing.workoutHistory.length === 0) {
@@ -3351,21 +3326,10 @@ export default function App() {
                   progress = Math.min(100, Math.round((curWk / totalWks) * 100));
                   progressText = `Semana ${curWk} de ${totalWks}`;
                 } else if (isWorkouts) {
-                  const currentPeriodization = studentForView.periodization;
-                  const currentReps = studentForView.workouts?.[0]?.exercises?.[0]?.reps || '13';
-                  const periodKey = currentPeriodization?.phaseTitle || currentReps;
-                  const prog = studentForView.periodizationProgress || {};
-                  const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
-                  const countA = periodProg.A || 0;
-                  const countB = periodProg.B || 0;
-                  const countC = periodProg.C || 0;
-                  const completedCount = countA + countB + countC;
-
-                  const activeWorkoutsTotal = (studentForView.workouts || []).reduce((acc: number, w: any) => acc + (w.projectedSessions || 20), 0);
-                  const targetCount = activeWorkoutsTotal || 40;
-
-                  progress = Math.min(100, Math.round((completedCount / targetCount) * 100));
-                  progressText = `Global: ${completedCount} de ${targetCount}`;
+                  const targetCount = 86; // Or whatever total historical target you want, maybe just don't cap it
+                  
+                  progress = Math.min(100, Math.round((globalWorkoutCount / targetCount) * 100));
+                  progressText = `Global: ${globalWorkoutCount} de ${targetCount}`;
                 }
 
                 const colorStyles: Record<string, any> = {

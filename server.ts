@@ -132,18 +132,18 @@ async function startServer() {
     } catch (error: any) {
       console.error("Server-side AI Error:", error);
       let errorMessage = error.message || "Erro desconhecido na IA.";
-      let statusCode = 500;
+      let statusCode = 400;
       let errorType = "UNKNOWN_ERROR";
 
       const errString = String(error.stack || error.message || error);
       
       if (errString.includes("leased") || errString.includes("leaked") || errString.includes("reported as leaked") || errString.includes("PERMISSION_DENIED") || errString.includes("403")) {
         errorMessage = "A chave de API do Gemini (GEMINI_API_KEY) foi marcada como VAZADA ou REVOGADA de segurança pela Google. Por favor, remova a chave atual e adicione um token válido do Gemini API em Settings > Secrets.";
-        statusCode = 403;
+        statusCode = 400;
         errorType = "API_KEY_LEAKED";
       } else if (errString.includes("quota") || errString.includes("RESOURCE_EXHAUSTED") || errString.includes("limit") || errString.includes("429")) {
         errorMessage = "Limite de requisições excedido. A cota da sua chave de API do Gemini esgotou para este modelo. Aguarde um minuto ou mude para o fluxo de chave paga nas configurações do AI Studio.";
-        statusCode = 429;
+        statusCode = 400;
         errorType = "QUOTA_EXCEEDED";
       }
 

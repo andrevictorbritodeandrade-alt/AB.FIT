@@ -4,7 +4,7 @@ import {
   CloudRain, Sun, RefreshCw, Bell, Dumbbell, Wifi, WifiOff, 
   Mail, Phone, Loader2, MapPin, MessageCircle, Menu, X, 
   LayoutGrid, Bot, Settings2, User, Layout, Brain, Ruler, 
-  Footprints, BarChart3, Info, Cloud, Thermometer, Droplets, AlertTriangle, Smartphone, Headphones
+  Footprints, BarChart3, Info, Cloud, CloudOff, Thermometer, Droplets, AlertTriangle, Smartphone, Headphones
 } from 'lucide-react';
 import { AppNotification } from '../types';
 
@@ -303,16 +303,15 @@ export function GlobalSyncIndicator({ status }: { status: 'synced' | 'syncing' |
   return (
     <div className="fixed top-4 right-4 z-[100] animate-in fade-in slide-in-from-top-4 duration-1000 pointer-events-none select-none flex items-center justify-center">
        {!online || status === 'offline' ? (
-         <div className="flex items-center gap-2 bg-red-950/90 border border-red-500/50 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md text-red-200">
-           <WifiOff size={14} className="text-red-400 animate-pulse" />
-           <span className="text-[10px] font-black uppercase italic tracking-wider">Modo Offline (Salvo Localmente)</span>
+         <div className="flex items-center gap-2 bg-zinc-900/90 border border-zinc-500/50 px-3.5 py-1.5 rounded-full shadow-2xl backdrop-blur-md text-zinc-400">
+           <CloudOff size={14} className="text-zinc-500" />
+           <span className="text-[10px] font-black uppercase italic tracking-wider">Offline</span>
          </div>
        ) : status === 'syncing' ? (
          <RefreshCw size={24} className="text-orange-500 animate-spin drop-shadow-[0_0_10px_rgba(249,115,22,0.6)]" />
        ) : (
          <div className="relative flex items-center justify-center">
-            <Wifi size={24} className="text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
-            <div className="absolute inset-0 bg-emerald-500/20 rounded-full animate-ping opacity-50"></div>
+            <Cloud size={24} className="text-emerald-500 drop-shadow-[0_0_10px_rgba(16,185,129,0.6)]" />
          </div>
        )}
     </div>
