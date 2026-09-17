@@ -51,9 +51,12 @@ export async function finalizarTreino(
 ): Promise<FinalizarTreinoResult> {
   try {
     const activePlanId = planId || 'current';
+    const isLiliane = userId === 'fixed-liliane';
+    const defaultTarget = isLiliane ? 32 : 18;
+    const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Mesociclo 16 - Hipertrofia";
     let notificacaoNecessaria: string | null = null;
     let novaContagem = 1;
-    let targetSets = 18;
+    let targetSets = defaultTarget;
 
     const planRef = doc(db, `alunos/${userId}/active_plans/${activePlanId}`);
     const historyRef = doc(collection(db, `alunos/${userId}/workout_history`));
@@ -67,24 +70,25 @@ export async function finalizarTreino(
       
       // 1. Atualizar Active Plan
       if (!planDoc.exists()) {
-        targetSets = 18;
+        targetSets = defaultTarget;
         novaContagem = 1;
         const initialProgress = { A: 0, B: 0, C: 0 };
         initialProgress[tipoTreino] = 1;
         
         transaction.set(planRef, {
-          phaseName: "Mesociclo 16 - Hipertrofia",
-          targetSets: 18,
+          phaseName: defaultPhase,
+          targetSets: defaultTarget,
           progress: initialProgress,
           updatedAt: serverTimestamp()
         });
       } else {
         const planData = planDoc.data() as any;
-        targetSets = planData.targetSets || 18;
+        targetSets = isLiliane ? 32 : (planData.targetSets || defaultTarget);
         const progress = planData.progress || { A: 0, B: 0, C: 0 };
         novaContagem = (progress[tipoTreino] || 0) + 1;
         
         transaction.update(planRef, {
+          targetSets,
           [`progress.${tipoTreino}`]: novaContagem,
           updatedAt: serverTimestamp()
         });
@@ -161,13 +165,17 @@ export function subscribeToActivePlan(
   planId: string = 'current'
 ): Unsubscribe {
   const planRef = doc(db, `alunos/${userId}/active_plans/${planId}`);
+  const isLiliane = userId === 'fixed-liliane';
+  const defaultTarget = isLiliane ? 32 : 18;
+  const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Mesociclo 16 - Hipertrofia";
+
   return onSnapshot(planRef, (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
       onUpdate({
         id: docSnap.id,
-        phaseName: data.phaseName || "Mesociclo 16 - Hipertrofia",
-        targetSets: data.targetSets || 18,
+        phaseName: data.phaseName || defaultPhase,
+        targetSets: isLiliane ? 32 : (data.targetSets || defaultTarget),
         progress: {
           A: data.progress?.A ?? 0,
           B: data.progress?.B ?? 0,
@@ -178,11 +186,19 @@ export function subscribeToActivePlan(
     } else {
       onUpdate({
         id: 'current',
-        phaseName: "Mesociclo 16 - Hipertrofia",
-        targetSets: 18,
+        phaseName: defaultPhase,
+        targetSets: defaultTarget,
         progress: { A: 0, B: 0, C: 0 }
       });
     }
+  }, (err) => {
+    console.warn("Active plan snapshot fallback:", err);
+    onUpdate({
+      id: 'current',
+      phaseName: defaultPhase,
+      targetSets: defaultTarget,
+      progress: { A: 0, B: 0, C: 0 }
+    });
   });
 }
 

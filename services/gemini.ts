@@ -1,8 +1,8 @@
 
 import { EXERCISE_CATALOG, FULL_EXERCISE_LIST } from "../src/constants/exerciseCatalog";
 
-const MODEL_TEXT = 'gemini-1.5-flash';
-const MODEL_IMAGE = 'gemini-2.0-flash';
+const MODEL_TEXT = 'gemini-3.5-flash';
+const MODEL_IMAGE = 'gemini-2.5-flash-image';
 
 export async function callAI(params: any) {
   try {

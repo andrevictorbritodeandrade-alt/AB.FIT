@@ -1069,6 +1069,51 @@ const RunCalendar = ({ workouts, history, onCheckIn, studentId }: { workouts: Wo
     );
 };
 
+// --- AEROBIC DEFINITIONS FOR LILIANE TORRES ---
+const lilianeEscalonadoSegments: WorkoutSegment[] = [
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 5,0 km/h", speed: '5.0' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 5,5 km/h", speed: '5.5' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 6,0 km/h", speed: '6.0' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 6,5 km/h", speed: '6.5' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 6,0 km/h", speed: '6.0' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 5,5 km/h", speed: '5.5' },
+    { type: 'stimulus', duration: 300, title: "5' caminhada em 5,0 km/h", speed: '5.0' }
+];
+
+const lilianeContinuoSegments: WorkoutSegment[] = [
+    { type: 'continuous', duration: 2100, title: "35' caminhada contínua em 6,0 km/h", speed: '6.0' }
+];
+
+export const lilianeEscalonadoBase = {
+    type: 'Aeróbico Escalonado',
+    warmupTime: '0',
+    sets: '1',
+    reps: '1',
+    stimulusTime: '35',
+    recoveryTime: '0',
+    cooldownTime: '0',
+    speed: '5.0 - 6.5',
+    totalTime: '35 min',
+    customDisplay: '<span class="text-[#e2ff00] font-black">35\' Aeróbico Escalonado</span> <span class="text-zinc-400 ml-2 font-bold">5,0 a 6,5 km/h</span>',
+    description: '35 min escalonados (32 sessões): 5\' @ 5,0 km/h ➔ 5\' @ 5,5 km/h ➔ 5\' @ 6,0 km/h ➔ 5\' @ 6,5 km/h ➔ 5\' @ 6,0 km/h ➔ 5\' @ 5,5 km/h ➔ 5\' @ 5,0 km/h.',
+    segments: lilianeEscalonadoSegments
+};
+
+export const lilianeContinuoBase = {
+    type: 'Aeróbico Contínuo',
+    warmupTime: '0',
+    sets: '1',
+    reps: '1',
+    stimulusTime: '35',
+    recoveryTime: '0',
+    cooldownTime: '0',
+    speed: '6.0',
+    totalTime: '35 min',
+    customDisplay: '<span class="text-[#e2ff00] font-black">35\' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">6,0 km/h</span>',
+    description: '35 min de caminhada contínua em velocidade constante de 6,0 km/h.',
+    segments: lilianeContinuoSegments
+};
+
 // --- COACH VIEW ---
 
 export function RunTrackCoachView({ student, onBack }: { student: Student, onBack: () => void }) {
@@ -1136,6 +1181,15 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
                         customDisplay: `<span class="text-[#e2ff00] font-black">60' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">${spd.replace('.', ',')} km/h</span>`,
                         description: `Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo constante a ${spd.replace('.', ',')} km/h.`,
                         segments: segs
+                    };
+                }
+                if (w.studentId === 'fixed-liliane' || student.id === 'fixed-liliane') {
+                    const isEscalonado = w.dayOfWeek === 'Segunda' || w.dayOfWeek === 'Quarta' || w.dayOfWeek === 'Sexta' || w.type?.toLowerCase().includes('escalonad');
+                    const base = isEscalonado ? lilianeEscalonadoBase : lilianeContinuoBase;
+                    return {
+                        ...w,
+                        ...base,
+                        dayOfWeek: w.dayOfWeek || 'Segunda'
                     };
                 }
                 return w;
@@ -1367,7 +1421,7 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu, onN
 
     useEffect(() => {
         if (!student.id) return;
-        const seedKey = `seeded_${student.id}_run_v30`;
+        const seedKey = `seeded_${student.id}_run_v32`;
         if (localStorage.getItem(seedKey) === 'true') return;
         
         const checkAndSeed = async () => {
@@ -1381,7 +1435,8 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu, onN
                     .filter(w => w.studentId === student.id);
 
                 const needsReSeed = currentWorkouts.length === 0 || 
-                    (student.id === 'fixed-andre' && currentWorkouts.some(w => w.stimulusTime !== '60' || w.customDisplay?.includes('50\'') || w.customDisplay?.includes('70\'')));
+                    (student.id === 'fixed-andre' && currentWorkouts.some(w => w.stimulusTime !== '60' || w.customDisplay?.includes('50\'') || w.customDisplay?.includes('70\''))) ||
+                    (student.id === 'fixed-liliane' && (currentWorkouts.length < 6 || currentWorkouts.some(w => w.totalTime !== '35 min' || !w.type?.includes('Aeróbico'))));
 
                 if (needsReSeed && ['fixed-andre', 'fixed-liliane', 'fixed-marcelly'].includes(student.id)) {
                     for (const w of currentWorkouts) {
@@ -1487,6 +1542,15 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu, onN
                         customDisplay: `<span class="text-[#e2ff00] font-black">60' Caminhada Contínua</span> <span class="text-zinc-400 ml-2 font-bold">${spd.replace('.', ',')} km/h</span>`,
                         description: `Fase 1 (Semanas 1-3): 60 min contínuos. Mantenha ritmo constante a ${spd.replace('.', ',')} km/h.`,
                         segments: segs
+                    };
+                }
+                if (w.studentId === 'fixed-liliane' || student.id === 'fixed-liliane') {
+                    const isEscalonado = w.dayOfWeek === 'Segunda' || w.dayOfWeek === 'Quarta' || w.dayOfWeek === 'Sexta' || w.type?.toLowerCase().includes('escalonad');
+                    const base = isEscalonado ? lilianeEscalonadoBase : lilianeContinuoBase;
+                    return {
+                        ...w,
+                        ...base,
+                        dayOfWeek: w.dayOfWeek || 'Segunda'
                     };
                 }
                 return w;
@@ -2425,11 +2489,12 @@ export const getDefaultWorkouts = (studentId: string): WorkoutModel[] => {
             }
         ],
         'fixed-liliane': [
-            { id: 'fixed-liliane-segunda', studentId: 'fixed-liliane', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
-            { id: 'fixed-liliane-terca', studentId: 'fixed-liliane', dayOfWeek: 'Terça', ...rodagem },
-            { id: 'fixed-liliane-quarta', studentId: 'fixed-liliane', dayOfWeek: 'Quarta', ...intervaladoDesconfortavel },
-            { id: 'fixed-liliane-quinta', studentId: 'fixed-liliane', dayOfWeek: 'Quinta', ...rodagem },
-            { id: 'fixed-liliane-sexta', studentId: 'fixed-liliane', dayOfWeek: 'Sexta', ...intervaladoConfortavel }
+            { id: 'fixed-liliane-segunda', studentId: 'fixed-liliane', dayOfWeek: 'Segunda', ...lilianeEscalonadoBase },
+            { id: 'fixed-liliane-terca', studentId: 'fixed-liliane', dayOfWeek: 'Terça', ...lilianeContinuoBase },
+            { id: 'fixed-liliane-quarta', studentId: 'fixed-liliane', dayOfWeek: 'Quarta', ...lilianeEscalonadoBase },
+            { id: 'fixed-liliane-quinta', studentId: 'fixed-liliane', dayOfWeek: 'Quinta', ...lilianeContinuoBase },
+            { id: 'fixed-liliane-sexta', studentId: 'fixed-liliane', dayOfWeek: 'Sexta', ...lilianeEscalonadoBase },
+            { id: 'fixed-liliane-sabado', studentId: 'fixed-liliane', dayOfWeek: 'Sábado', ...lilianeContinuoBase }
         ],
         'fixed-marcelly': [
             { id: 'fixed-marcelly-segunda', studentId: 'fixed-marcelly', dayOfWeek: 'Segunda', ...intervaladoConfortavel },
@@ -2444,7 +2509,7 @@ export const getDefaultWorkouts = (studentId: string): WorkoutModel[] => {
 };
 
 const seedWorkouts = async (studentId: string) => {
-    localStorage.setItem(`seeded_${studentId}_run_v30`, 'true');
+    localStorage.setItem(`seeded_${studentId}_run_v32`, 'true');
     const payload = getDefaultWorkouts(studentId);
     if (!payload || payload.length === 0) return;
 

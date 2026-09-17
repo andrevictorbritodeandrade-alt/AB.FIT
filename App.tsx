@@ -2420,12 +2420,32 @@ export default function App() {
             }
 
             // Sync scalar fields for Treino A/B/C counters
-            if (existing.faseAjusteA === undefined && def.faseAjusteA !== undefined) merged[existingIndex].faseAjusteA = def.faseAjusteA;
-            if (existing.faseAjusteB === undefined && def.faseAjusteB !== undefined) merged[existingIndex].faseAjusteB = def.faseAjusteB;
-            if (existing.faseAjusteC === undefined && def.faseAjusteC !== undefined) merged[existingIndex].faseAjusteC = def.faseAjusteC;
-            if (existing.totalGlobalA === undefined && def.totalGlobalA !== undefined) merged[existingIndex].totalGlobalA = def.totalGlobalA;
-            if (existing.totalGlobalB === undefined && def.totalGlobalB !== undefined) merged[existingIndex].totalGlobalB = def.totalGlobalB;
-            if (existing.totalGlobalC === undefined && def.totalGlobalC !== undefined) merged[existingIndex].totalGlobalC = def.totalGlobalC;
+            if (def.id === 'fixed-liliane') {
+                merged[existingIndex].faseAjusteA = 0;
+                merged[existingIndex].faseAjusteB = 0;
+                merged[existingIndex].faseAjusteC = 0;
+                merged[existingIndex].totalGlobalA = 0;
+                merged[existingIndex].totalGlobalB = 0;
+                merged[existingIndex].totalGlobalC = 0;
+                merged[existingIndex].activePlan = {
+                    ...(existing.activePlan || {}),
+                    id: 'current',
+                    phaseName: 'Nova Periodização Liliane Torres',
+                    targetSets: 32,
+                    progress: {
+                        A: existing.activePlan?.progress?.A ?? 0,
+                        B: existing.activePlan?.progress?.B ?? 0,
+                        C: 0
+                    }
+                };
+            } else {
+                if (existing.faseAjusteA === undefined && def.faseAjusteA !== undefined) merged[existingIndex].faseAjusteA = def.faseAjusteA;
+                if (existing.faseAjusteB === undefined && def.faseAjusteB !== undefined) merged[existingIndex].faseAjusteB = def.faseAjusteB;
+                if (existing.faseAjusteC === undefined && def.faseAjusteC !== undefined) merged[existingIndex].faseAjusteC = def.faseAjusteC;
+                if (existing.totalGlobalA === undefined && def.totalGlobalA !== undefined) merged[existingIndex].totalGlobalA = def.totalGlobalA;
+                if (existing.totalGlobalB === undefined && def.totalGlobalB !== undefined) merged[existingIndex].totalGlobalB = def.totalGlobalB;
+                if (existing.totalGlobalC === undefined && def.totalGlobalC !== undefined) merged[existingIndex].totalGlobalC = def.totalGlobalC;
+            }
 
             // Physical Assessments Sync
             const existingAssessments = existing.physicalAssessments ? [...existing.physicalAssessments] : [];
@@ -2861,8 +2881,9 @@ export default function App() {
       }
 
       // 3. Executa a Transação Atômica no Firestore (active_plans + workout_history)
+      const isLilianeStudent = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com';
       let novaContagemAtômica = (studentForView.activePlan?.progress?.[tipoTreino] || 0) + 1;
-      let targetSetsAtômico = studentForView.activePlan?.targetSets || 18;
+      let targetSetsAtômico = isLilianeStudent ? 32 : (studentForView.activePlan?.targetSets || 18);
 
       try {
         const resFinalizar = await finalizarTreino(studentForView.id, 'current', tipoTreino, {
@@ -3260,11 +3281,12 @@ export default function App() {
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
               {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
-                const targetSets = studentForView.activePlan?.targetSets || 18;
+                const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
+                const targetSets = isLiliane ? 32 : (studentForView.activePlan?.targetSets || 18);
                 const isAndre = studentForView.id === 'fixed-andre' || studentForView.email === 'andrevictorbritodeandrade@gmail.com';
-                const countA = isAndre ? 4 : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
-                const countB = isAndre ? 4 : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
-                const phaseName = studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia";
+                const countA = isAndre ? 4 : isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
+                const countB = isAndre ? 4 : isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
+                const phaseName = isLiliane ? "Nova Periodização (32 Sessões)" : (studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia");
                 const percentA = Math.min(100, (countA / targetSets) * 100);
                 const percentB = Math.min(100, (countB / targetSets) * 100);
 

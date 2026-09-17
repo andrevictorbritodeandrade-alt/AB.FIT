@@ -676,6 +676,19 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
        merged.A = 4;
        merged.B = 4;
     }
+
+    // Explicit override for Liliane Torres: must start at 0 and only count after completing workouts
+    const isLilianeStudent = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
+    if (isLilianeStudent) {
+       const lilianeResetKey = 'liliane_zero_start_v32';
+       if (localStorage.getItem(lilianeResetKey) !== 'true') {
+          localStorage.setItem(lilianeResetKey, 'true');
+          merged.A = 0;
+          merged.B = 0;
+          merged.C = 0;
+          salvarContagemTreinos(merged, user.id);
+       }
+    }
     
     salvarContagemTreinos(merged, user.id);
     setLocalCounters(merged);
@@ -715,9 +728,22 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     return { a, b, c };
   }, [user.workoutHistory, periodKey]);
 
-  const countA = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com') ? 4 : (localCounters.A || user.activePlan?.progress?.A || user.faseAjusteA || historyCounts.a || 0);
-  const countB = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com') ? 4 : (localCounters.B || user.activePlan?.progress?.B || user.faseAjusteB || historyCounts.b || 0);
-  const countC = localCounters.C || user.activePlan?.progress?.C || user.faseAjusteC || historyCounts.c || 0;
+  const isLiliane = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
+  const countA = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com')
+    ? 4
+    : isLiliane
+    ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
+    : (localCounters.A || user.activePlan?.progress?.A || user.faseAjusteA || historyCounts.a || 0);
+
+  const countB = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com')
+    ? 4
+    : isLiliane
+    ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
+    : (localCounters.B || user.activePlan?.progress?.B || user.faseAjusteB || historyCounts.b || 0);
+
+  const countC = isLiliane
+    ? (localCounters.C ?? user.activePlan?.progress?.C ?? 0)
+    : (localCounters.C || user.activePlan?.progress?.C || user.faseAjusteC || historyCounts.c || 0);
 
   const totalCompleted = countA + countB + countC;
 
@@ -795,7 +821,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       completed = (periodProg as any)[activeWorkout.id] || 0;
     }
 
-    const total = user.activePlan?.targetSets || activeWorkout.projectedSessions || 18;
+    const total = isLiliane ? 32 : (activeWorkout?.projectedSessions || user.activePlan?.targetSets || 18);
     const startDateDisplay = user.protocolStartDate ? new Date(user.protocolStartDate).toLocaleDateString('pt-BR') : 'Aguardando 1º Treino';
     return { completed, total, totalGlobal: totalCompleted, startDate: startDateDisplay, rawStartDate: user.protocolStartDate };
   }, [activeWorkout, user.protocolStartDate, user.activePlan, countA, countB, countC, periodProg, totalCompleted]);
@@ -1004,13 +1030,21 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       periodization: periodKey
     };
 
-    const targetSets = user.activePlan?.targetSets || activeWorkout.projectedSessions || 18;
+    const targetSets = isLiliane ? 32 : (activeWorkout.projectedSessions || user.activePlan?.targetSets || 18);
 
     let alertMsg = `Treino ${workoutType} concluído com sucesso!`;
-    if (novoContador === 6 || novoContador === 12) {
-      alertMsg = `Atenção: Você concluiu o Treino ${workoutType} pela ${novoContador}ª vez! Hora de ajustar e aumentar as cargas.`;
-    } else if (novoContador >= targetSets) {
-      alertMsg = `Parabéns! Você concluiu todos os ${targetSets} treinos do Treino ${workoutType}. Ciclo finalizado com sucesso!`;
+    if (isLiliane) {
+      if (novoContador === 8 || novoContador === 16 || novoContador === 24) {
+        alertMsg = `Atenção: Você concluiu ${novoContador} sessões do Treino ${workoutType}! Conforme sua periodização, hora de fazer ajustes de cargas para aumentar o desconforto comparada com a anterior.`;
+      } else if (novoContador >= 32) {
+        alertMsg = `Parabéns Liliane! Você concluiu todas as 32 sessões do Treino ${workoutType}. Ciclo finalizado com sucesso!`;
+      }
+    } else {
+      if (novoContador === 6 || novoContador === 12) {
+        alertMsg = `Atenção: Você concluiu o Treino ${workoutType} pela ${novoContador}ª vez! Hora de ajustar e aumentar as cargas.`;
+      } else if (novoContador >= targetSets) {
+        alertMsg = `Parabéns! Você concluiu todos os ${targetSets} treinos do Treino ${workoutType}. Ciclo finalizado com sucesso!`;
+      }
     }
 
     // Define banner de feedback na lista de treinos
@@ -1235,6 +1269,16 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }
 
   if (!activeWorkout) {
+    const isStrengthWorkout = (w: any) => {
+      const wid = (w.id || '').toLowerCase();
+      const wtitle = (w.title || '').toLowerCase();
+      if (['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(wid)) return false;
+      if (wid.includes('aerobico') || wid.includes('aeróbico')) return false;
+      if (wtitle.includes('aeróbico') || wtitle.includes('aerobico')) return false;
+      return true;
+    };
+    const strengthWorkouts = (user.workouts || []).filter(isStrengthWorkout);
+
     return (
       <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in">
         <header className="flex flex-col mb-6 sticky top-0 bg-transparent backdrop-blur-md py-4 z-40 -mx-6 px-6 border-b border-border">
@@ -1244,7 +1288,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               </button>
               <div className="bg-card border border-border px-4 py-2 rounded-full flex items-center gap-2">
                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {(user.workouts || []).reduce((acc: number, w: any) => acc + (w.projectedSessions || 18), 0)}</span>
+                 <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {strengthWorkouts.reduce((acc: number, w: any) => acc + (isLiliane ? 32 : (w.projectedSessions || user.activePlan?.targetSets || 18)), 0)}</span>
               </div>
            </div>
            <h2 className="text-xl font-black italic uppercase tracking-tighter">
@@ -1271,8 +1315,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         )}
 
         <div className="space-y-4">
-          {(user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).length > 0 ? (
-            (user.workouts || []).filter(w => !['treino-intervalado-confortavel', 'treino-intervalado-desconfortavel', 'treino-rodagem'].includes(w.id)).map(w => {
+          {strengthWorkouts.length > 0 ? (
+            strengthWorkouts.map(w => {
               const title = w.title.toLowerCase();
               
               let completed = 0;
@@ -1287,7 +1331,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                 completed = (periodProg as any)[w.id] || 0;
               }
 
-              const total = user.activePlan?.targetSets || w.projectedSessions || 18;
+              const total = isLiliane ? 32 : (w.projectedSessions || user.activePlan?.targetSets || 18);
 
               return (
                 <Card key={w.id} className="p-5 bg-card/50 border-border flex flex-row items-center gap-5 group cursor-pointer hover:border-red-600/20 shadow-xl rounded-[2rem] transition-all hover:scale-[1.02] active:scale-95" onClick={() => startSession(w)}>

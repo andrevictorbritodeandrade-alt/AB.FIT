@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Dumbbell, X, Zap, Menu, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { EXERCISE_CATALOG, IMAGEN_MODEL, GEMINI_MODEL } from '../src/constants/exerciseCatalog';
+import { getBiomechanicalDetails } from '../src/constants/exerciseBiomechanicalDB';
 import { callAI } from '../services/gemini';
 import { BackgroundCarousel, FITNESS_IMAGES } from './Layout';
 
@@ -245,19 +246,13 @@ Responda APENAS em JSON válido, sem formatação markdown ou texto adicional. U
       const parsedData = JSON.parse(cleaned);
       setAnalysis(parsedData);
     } catch (err: any) {
-      console.error("Failed to fetch or parse analysis JSON:", err);
-      const errMsg = err.message || String(err);
-      if (errMsg.includes("chave") || errMsg.includes("Gemini") || errMsg.includes("cota") || errMsg.includes("Limite") || errMsg.includes("vazada") || errMsg.includes("API")) {
+      console.warn("AI text analysis unavailable, using master biomechanical database:", err?.message || err);
+      const errMsg = err?.message || String(err);
+      if (errMsg.includes("chave") || errMsg.includes("Gemini") || errMsg.includes("cota") || errMsg.includes("Limite") || errMsg.includes("vazada") || errMsg.includes("API") || errMsg.includes("leaked")) {
         setAiWarning(errMsg);
       }
-      setAnalysis({
-        tecnicaAplicada: `Para realizar o exercício ${exerciseName}, mantenha postura ereta, faça o movimento de forma controlada respeitando a cadência recomendada e garanta a correta ativação muscular do grupo ${muscle}.`,
-        impactoFisiologico: [
-          `Foco primário de ativação na região do(a) ${muscle}.`,
-          "Melhora da estabilidade articular e fortalecimento das estruturas motoras.",
-          "Estímulo metabólico direcionado com baixo estresse articular residual."
-        ]
-      });
+      const bioFallback = getBiomechanicalDetails(exerciseName, muscle);
+      setAnalysis(bioFallback);
     }
 
     setIsGenerating(false);
