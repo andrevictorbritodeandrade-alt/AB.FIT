@@ -673,8 +673,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
     // Explicit override for André's fix to reset local storage that might be stuck
     if (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com') {
-       merged.A = 4;
-       merged.B = 4;
+       merged.A = 5;
+       merged.B = 5;
     }
 
     // Explicit override for Liliane Torres: must start at 0 and only count after completing workouts

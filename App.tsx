@@ -1768,8 +1768,8 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v29-andre-exercises-loads-all-history') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v29-andre-exercises-loads-all-history';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v30-andre-fix-counts-inner-view') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v30-andre-fix-counts-inner-view';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
@@ -3239,6 +3239,11 @@ export default function App() {
                 const countB = isLiliane 
                   ? (studentForView.activePlan?.progress?.B ?? 0) 
                   : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
+                const countC = isLiliane
+                  ? (studentForView.activePlan?.progress?.C ?? 0)
+                  : (studentForView.activePlan?.progress?.C ?? (studentForView.faseAjusteC !== undefined ? studentForView.faseAjusteC : 0));
+                
+                const currentPlanSum = countA + countB + countC;
                 const phaseName = isLiliane 
                   ? "Nova Periodização (32 Sessões)" 
                   : (studentForView.periodization?.phaseTitle || studentForView.activePlan?.phaseName || "Fase 1: Retorno & Adaptação (18 Sessões)");
@@ -3288,6 +3293,7 @@ export default function App() {
                   </div>
                 );
               })()}
+
               
               {visibleDashboardItems.map(item => {
                 const isPeriodization = item.id === 'STUDENT_PERIODIZATION';
@@ -3303,10 +3309,16 @@ export default function App() {
                   progress = Math.min(100, Math.round((curWk / totalWks) * 100));
                   progressText = `Semana ${curWk} de ${totalWks}`;
                 } else if (isWorkouts) {
-                  const targetCount = 86; // Or whatever total historical target you want, maybe just don't cap it
+                  const currentPlanSum = (studentForView.activePlan?.progress?.A || 0) + 
+                                       (studentForView.activePlan?.progress?.B || 0) + 
+                                       (studentForView.activePlan?.progress?.C || 0);
                   
-                  progress = Math.min(100, Math.round((globalWorkoutCount / targetCount) * 100));
-                  progressText = `Global: ${globalWorkoutCount} de ${targetCount}`;
+                  // Use a soma calculada se o global Workout Count estiver zerado ou defasado
+                  const displayGlobalCount = studentForView.trainingProgress?.completedCount || Math.max(globalWorkoutCount, currentPlanSum);
+                  const targetCount = studentForView.trainingProgress?.targetCount || 86;
+                  
+                  progress = Math.min(100, Math.round((displayGlobalCount / targetCount) * 100));
+                  progressText = `Global: ${displayGlobalCount} de ${targetCount}`;
                 }
 
                 const colorStyles: Record<string, any> = {
