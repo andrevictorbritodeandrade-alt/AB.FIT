@@ -1091,15 +1091,15 @@ export default function App() {
               status: 'published',
               description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
+                { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
                 { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
+                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+                { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
               ]
             },
             {
@@ -1110,15 +1110,15 @@ export default function App() {
               status: 'published',
               description: '18 treinos (6 semanas, 3x/semana). Ajustes de carga no treino 6 e 12. No treino 18: transição para 11 reps.',
               exercises: [
-                { id: 'a-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-b-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
+                { id: 'a-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
+                { id: 'a-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+                { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+                { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+                { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+                { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+                { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                { id: 'a-b-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
               ]
             },
             {
@@ -1768,8 +1768,8 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v28-andre-hoje-treino-a-5-e-b-5') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v28-andre-hoje-treino-a-5-e-b-5';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v29-andre-exercises-loads-all-history') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v29-andre-exercises-loads-all-history';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
@@ -1791,6 +1791,30 @@ export default function App() {
                             '3 x 13': { A: 5, B: 5, C: 0 }
                           };
                           
+                          const exTreinoA = [
+                            { name: 'Leg press horizontal/máquina', load: '50 Kg' },
+                            { name: 'Agachamento no aparelho hack machine', load: '-- Kg' },
+                            { name: 'Cadeira extensora', load: '15 Kg' },
+                            { name: 'Cadeira extensora unilateral', load: '5 Kg' },
+                            { name: 'Supino aberto na máquina', load: '20 Kg' },
+                            { name: 'Supino aberto no banco inclinado na máquina', load: '2,5 Kg' },
+                            { name: 'Desenvolvimento aberto máquina', load: '10 Kg' },
+                            { name: 'Tríceps em pé no Cross barra reta', load: '20 Kg' },
+                            { name: 'Abdominal na máquina crunch', load: '5 Kg' }
+                          ];
+
+                          const exTreinoB = [
+                            { name: 'Stiff em pé com HBC ou HBM', load: '10 Kg' },
+                            { name: 'Extensão de quadril na máquina', load: '15 Kg' },
+                            { name: 'Cadeira abdutora', load: '25 Kg' },
+                            { name: 'Cadeira flexora', load: '20 Kg' },
+                            { name: 'Remada aberta na máquina', load: '20 Kg' },
+                            { name: 'Remada fechada na máquina', load: '25 Kg' },
+                            { name: 'Puxada fechada com triângulo no pulley alto', load: '25 Kg' },
+                            { name: 'Bíceps em pé no cross barra reta', load: '15 Kg' },
+                            { name: 'Abdominal na máquina crunch', load: '5 Kg' }
+                          ];
+
                           const andreHistory: WorkoutHistoryEntry[] = [
                             {
                               id: 'andre-hist-a5-hoje',
@@ -1803,17 +1827,7 @@ export default function App() {
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
                               countText: '5ª Sessão do Treino A (5 de 18)',
-                              exercises: [
-                                { name: 'Leg press horizontal/máquina', load: '50 Kg' },
-                                { name: 'Agachamento no aparelho hack machine', load: '-- Kg' },
-                                { name: 'Cadeira extensora', load: '15 Kg' },
-                                { name: 'Cadeira extensora unilateral', load: '5 Kg' },
-                                { name: 'Supino aberto na máquina', load: '20 Kg' },
-                                { name: 'Supino aberto no banco inclinado na máquina', load: '2,5 Kg' },
-                                { name: 'Desenvolvimento aberto máquina', load: '10 Kg' },
-                                { name: 'Tríceps em pé no Cross barra reta', load: '20 Kg' },
-                                { name: 'Abdominal na máquina crunch', load: '5 Kg' }
-                              ]
+                              exercises: exTreinoA
                             },
                             {
                               id: 'andre-hist-b5',
@@ -1825,7 +1839,8 @@ export default function App() {
                               duration: '50 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '5ª Sessão do Treino B (5 de 18)'
+                              countText: '5ª Sessão do Treino B (5 de 18)',
+                              exercises: exTreinoB
                             },
                             {
                               id: 'andre-hist-a4',
@@ -1837,7 +1852,8 @@ export default function App() {
                               duration: '52 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '4ª Sessão do Treino A (4 de 18)'
+                              countText: '4ª Sessão do Treino A (4 de 18)',
+                              exercises: exTreinoA
                             },
                             {
                               id: 'andre-hist-b4',
@@ -1849,7 +1865,8 @@ export default function App() {
                               duration: '48 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '4ª Sessão do Treino B (4 de 18)'
+                              countText: '4ª Sessão do Treino B (4 de 18)',
+                              exercises: exTreinoB
                             },
                             {
                               id: 'andre-hist-a3',
@@ -1861,7 +1878,8 @@ export default function App() {
                               duration: '55 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '3ª Sessão do Treino A (3 de 18)'
+                              countText: '3ª Sessão do Treino A (3 de 18)',
+                              exercises: exTreinoA
                             },
                             {
                               id: 'andre-hist-b3',
@@ -1873,7 +1891,8 @@ export default function App() {
                               duration: '50 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '3ª Sessão do Treino B (3 de 18)'
+                              countText: '3ª Sessão do Treino B (3 de 18)',
+                              exercises: exTreinoB
                             },
                             {
                               id: 'andre-hist-a2',
@@ -1885,7 +1904,8 @@ export default function App() {
                               duration: '50 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '2ª Sessão do Treino A (2 de 18)'
+                              countText: '2ª Sessão do Treino A (2 de 18)',
+                              exercises: exTreinoA
                             },
                             {
                               id: 'andre-hist-b2',
@@ -1897,7 +1917,8 @@ export default function App() {
                               duration: '48 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '2ª Sessão do Treino B (2 de 18)'
+                              countText: '2ª Sessão do Treino B (2 de 18)',
+                              exercises: exTreinoB
                             },
                             {
                               id: 'andre-hist-b1',
@@ -1909,7 +1930,8 @@ export default function App() {
                               duration: '45 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '1ª Sessão do Treino B (1 de 18)'
+                              countText: '1ª Sessão do Treino B (1 de 18)',
+                              exercises: exTreinoB
                             },
                             {
                               id: 'andre-hist-a1',
@@ -1921,7 +1943,8 @@ export default function App() {
                               duration: '50 min',
                               completedExercises: 9,
                               periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '1ª Sessão do Treino A (1 de 18)'
+                              countText: '1ª Sessão do Treino A (1 de 18)',
+                              exercises: exTreinoA
                             }
                           ];
 
