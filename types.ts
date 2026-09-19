@@ -87,6 +87,8 @@ export interface WorkoutHistoryEntry {
   runningStats?: RunningStats;
   type: 'STRENGTH' | 'RUNNING' | 'POST';
   exercises?: Exercise[]; // Adicionado campo de exercícios com cargas
+  completedExercises?: number;
+  countText?: string;
   periodization?: string;
 }
 

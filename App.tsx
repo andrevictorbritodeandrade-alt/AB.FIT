@@ -1768,31 +1768,141 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v23-force-andre-4x4') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v23-force-andre-4x4';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v26-andre-5b-4a-feed-quinta') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v26-andre-5b-4a-feed-quinta';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
                           rawData.faseAjusteA = 4;
-                          rawData.faseAjusteB = 4;
+                          rawData.faseAjusteB = 5;
                           rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
                           rawData.totalGlobalA = 4;
-                          rawData.totalGlobalB = 4;
+                          rawData.totalGlobalB = 5;
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
-                          rawData.activePlan = rawData.activePlan || {
+                          rawData.activePlan = {
                             id: 'current',
                             phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
                             targetSets: 18,
-                            progress: { A: 4, B: 4, C: 0 }
+                            progress: { A: 4, B: 5, C: 0 }
                           };
-                          rawData.activePlan.progress = rawData.activePlan.progress || { A: 4, B: 4, C: 0 };
-                          rawData.activePlan.progress.A = 4;
-                          rawData.activePlan.progress.B = 4;
-                          rawData.trainingProgress = { completedCount: 8, targetCount: 36 };
+                          rawData.trainingProgress = { completedCount: 9, targetCount: 36 };
                           rawData.periodizationProgress = {
                             ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 4, B: 4, C: 0 }
+                            '3 x 13': { A: 4, B: 5, C: 0 }
                           };
+                          
+                          const andreHistory: WorkoutHistoryEntry[] = [
+                            {
+                              id: 'andre-hist-b5',
+                              workoutId: 'treino-b-andre',
+                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
+                              type: 'STRENGTH',
+                              date: '17/09/2026',
+                              timestamp: new Date(2026, 8, 17, 18, 30, 0).getTime(),
+                              duration: '50 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '5ª Sessão do Treino B (5 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-a4',
+                              workoutId: 'treino-a-andre',
+                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
+                              type: 'STRENGTH',
+                              date: '16/09/2026',
+                              timestamp: new Date(2026, 8, 16, 18, 30, 0).getTime(),
+                              duration: '52 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '4ª Sessão do Treino A (4 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-b4',
+                              workoutId: 'treino-b-andre',
+                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
+                              type: 'STRENGTH',
+                              date: '12/09/2026',
+                              timestamp: new Date(2026, 8, 12, 11, 0, 0).getTime(),
+                              duration: '48 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '4ª Sessão do Treino B (4 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-a3',
+                              workoutId: 'treino-a-andre',
+                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
+                              type: 'STRENGTH',
+                              date: '11/09/2026',
+                              timestamp: new Date(2026, 8, 11, 18, 15, 0).getTime(),
+                              duration: '55 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '3ª Sessão do Treino A (3 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-b3',
+                              workoutId: 'treino-b-andre',
+                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
+                              type: 'STRENGTH',
+                              date: '10/09/2026',
+                              timestamp: new Date(2026, 8, 10, 18, 0, 0).getTime(),
+                              duration: '50 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '3ª Sessão do Treino B (3 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-a2',
+                              workoutId: 'treino-a-andre',
+                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
+                              type: 'STRENGTH',
+                              date: '08/09/2026',
+                              timestamp: new Date(2026, 8, 8, 18, 30, 0).getTime(),
+                              duration: '50 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '2ª Sessão do Treino A (2 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-b2',
+                              workoutId: 'treino-b-andre',
+                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
+                              type: 'STRENGTH',
+                              date: '07/09/2026',
+                              timestamp: new Date(2026, 8, 7, 18, 30, 0).getTime(),
+                              duration: '48 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '2ª Sessão do Treino B (2 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-b1',
+                              workoutId: 'treino-b-andre',
+                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
+                              type: 'STRENGTH',
+                              date: '03/09/2026',
+                              timestamp: new Date(2026, 8, 3, 18, 0, 0).getTime(),
+                              duration: '45 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '1ª Sessão do Treino B (1 de 18)'
+                            },
+                            {
+                              id: 'andre-hist-a1',
+                              workoutId: 'treino-a-andre',
+                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
+                              type: 'STRENGTH',
+                              date: '01/09/2026',
+                              timestamp: new Date(2026, 8, 1, 18, 0, 0).getTime(),
+                              duration: '50 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '1ª Sessão do Treino A (1 de 18)'
+                            }
+                          ];
+
+                          rawData.workoutHistory = andreHistory;
                           workoutsModified = true;
                           hasCloudChanges = true;
                       } else {
