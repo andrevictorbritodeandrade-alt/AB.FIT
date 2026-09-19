@@ -98,20 +98,16 @@ export async function finalizarTreino(
         novaContagem = (progress[tipoTreino] || 0) + 1;
         
         const updatePayload = {
-          targetSets,
-          [`progress.${tipoTreino}`]: novaContagem,
-          updatedAt: serverTimestamp()
-        };
-        transaction.update(planRef, updatePayload);
-        transaction.set(planRefAlunos, {
-          ...planData,
+          phaseName: planData.phaseName || defaultPhase,
           targetSets,
           progress: {
             ...progress,
             [tipoTreino]: novaContagem
           },
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+        transaction.set(planRef, updatePayload, { merge: true });
+        transaction.set(planRefAlunos, updatePayload, { merge: true });
       }
 
       // 2. Adiciona o histórico nas coleções do Firestore
@@ -145,14 +141,23 @@ export async function finalizarTreino(
         const subProg = { ...(prevProg[pKey] || { A: 0, B: 0, C: 0 }) };
         subProg[tipoTreino] = novaContagem;
         
-        transaction.update(alunoRef, {
+        transaction.set(alunoRef, {
           [`faseAjuste${tipoTreino}`]: novaContagem,
           [`totalGlobal${tipoTreino}`]: (aData[`totalGlobal${tipoTreino}`] || 0) + 1,
-          [`activePlan.progress.${tipoTreino}`]: novaContagem,
-          [`activePlan.targetSets`]: targetSets,
-          [`periodizationProgress.${pKey}`]: subProg,
+          activePlan: {
+            ...(aData.activePlan || {}),
+            targetSets,
+            progress: {
+              ...(aData.activePlan?.progress || {}),
+              [tipoTreino]: novaContagem
+            }
+          },
+          periodizationProgress: {
+            ...prevProg,
+            [pKey]: subProg
+          },
           lastUpdateTimestamp: serverTimestamp()
-        });
+        }, { merge: true });
       }
 
       if (novaContagem === 6 || novaContagem === 12) {

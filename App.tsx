@@ -1096,7 +1096,7 @@ export default function App() {
                 { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
-                { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
+                { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
                 { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' },
                 { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', executionType: 'Simples' }
@@ -1768,30 +1768,53 @@ export default function App() {
                   
                   // Force clean workouts and session recount for Andre
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v26-andre-5b-4a-feed-quinta') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v26-andre-5b-4a-feed-quinta';
+                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v28-andre-hoje-treino-a-5-e-b-5') {
+                          (rawData as any)._planRevision = '18-sessoes-3x13-v28-andre-hoje-treino-a-5-e-b-5';
                           rawData.workouts = defaultProfile.workouts || [];
                           currentWorkouts = defaultProfile.workouts || [];
                           rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = 4;
+                          rawData.faseAjusteA = 5;
                           rawData.faseAjusteB = 5;
                           rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
-                          rawData.totalGlobalA = 4;
+                          rawData.totalGlobalA = 5;
                           rawData.totalGlobalB = 5;
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = {
                             id: 'current',
                             phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
                             targetSets: 18,
-                            progress: { A: 4, B: 5, C: 0 }
+                            progress: { A: 5, B: 5, C: 0 }
                           };
-                          rawData.trainingProgress = { completedCount: 9, targetCount: 36 };
+                          rawData.trainingProgress = { completedCount: 10, targetCount: 36 };
                           rawData.periodizationProgress = {
                             ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 4, B: 5, C: 0 }
+                            '3 x 13': { A: 5, B: 5, C: 0 }
                           };
                           
                           const andreHistory: WorkoutHistoryEntry[] = [
+                            {
+                              id: 'andre-hist-a5-hoje',
+                              workoutId: 'treino-a-andre',
+                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
+                              type: 'STRENGTH',
+                              date: '19/09/2026',
+                              timestamp: new Date(2026, 8, 19, 10, 30, 0).getTime(),
+                              duration: '30 min',
+                              completedExercises: 9,
+                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              countText: '5ª Sessão do Treino A (5 de 18)',
+                              exercises: [
+                                { name: 'Leg press horizontal/máquina', load: '50 Kg' },
+                                { name: 'Agachamento no aparelho hack machine', load: '-- Kg' },
+                                { name: 'Cadeira extensora', load: '15 Kg' },
+                                { name: 'Cadeira extensora unilateral', load: '5 Kg' },
+                                { name: 'Supino aberto na máquina', load: '20 Kg' },
+                                { name: 'Supino aberto no banco inclinado na máquina', load: '2,5 Kg' },
+                                { name: 'Desenvolvimento aberto máquina', load: '10 Kg' },
+                                { name: 'Tríceps em pé no Cross barra reta', load: '20 Kg' },
+                                { name: 'Abdominal na máquina crunch', load: '5 Kg' }
+                              ]
+                            },
                             {
                               id: 'andre-hist-b5',
                               workoutId: 'treino-b-andre',
@@ -1905,6 +1928,35 @@ export default function App() {
                           rawData.workoutHistory = andreHistory;
                           workoutsModified = true;
                           hasCloudChanges = true;
+
+                          // Direct async push to active_plans subcollections to fix cloud sync immediately
+                          try {
+                            const apPayload = {
+                              phaseName: rawData.activePlan.phaseName,
+                              targetSets: 18,
+                              progress: { A: 5, B: 5, C: 0 },
+                              updatedAt: serverTimestamp()
+                            };
+                            setDoc(doc(db, `alunos/${targetId}/active_plans/current`), apPayload, { merge: true }).catch(() => {});
+                            setDoc(doc(db, `users/${targetId}/active_plans/current`), apPayload, { merge: true }).catch(() => {});
+
+                            andreHistory.forEach(h => {
+                              const hPayload = {
+                                planId: 'current',
+                                workoutType: h.workoutId?.includes('-b') ? 'B' : 'A',
+                                workoutName: h.name,
+                                dateCompleted: new Date(h.timestamp),
+                                timestamp: h.timestamp,
+                                duration: h.duration,
+                                exercises: h.exercises || [],
+                                countText: h.countText
+                              };
+                              setDoc(doc(db, `alunos/${targetId}/workout_history/${h.id}`), hPayload, { merge: true }).catch(() => {});
+                              setDoc(doc(db, `users/${targetId}/workout_history/${h.id}`), hPayload, { merge: true }).catch(() => {});
+                            });
+                          } catch (e) {
+                            console.warn("Error syncing Andre activePlan/history to subcollections:", e);
+                          }
                       } else {
                           currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
                           workoutsModified = true;
@@ -2595,6 +2647,43 @@ export default function App() {
           totalWorkouts: finalData.trainingProgress.completedCount,
           lastWorkoutAt: serverTimestamp()
         }, { merge: true });
+      }
+
+      // Sync activePlan to active_plans subcollections for real-time listeners
+      if (finalData.activePlan) {
+        const apRefAlunos = doc(db, `alunos/${sid}/active_plans/current`);
+        const apRefUsers = doc(db, `users/${sid}/active_plans/current`);
+        const activePlanPayload = removeUndefined({
+          phaseName: finalData.activePlan.phaseName || 'Fase 1: Retorno & Adaptação (18 Sessões)',
+          targetSets: finalData.activePlan.targetSets || 18,
+          progress: finalData.activePlan.progress || { A: 0, B: 0, C: 0 },
+          updatedAt: serverTimestamp()
+        });
+        batch.set(apRefAlunos, activePlanPayload, { merge: true });
+        batch.set(apRefUsers, activePlanPayload, { merge: true });
+      }
+
+      // Sync latest workout history entries to subcollections
+      if (Array.isArray(finalData.workoutHistory)) {
+        const topHistory = finalData.workoutHistory.slice(0, 10);
+        for (const hEntry of topHistory) {
+          if (hEntry && hEntry.id) {
+            const hRefAlunos = doc(db, `alunos/${sid}/workout_history/${hEntry.id}`);
+            const hRefUsers = doc(db, `users/${sid}/workout_history/${hEntry.id}`);
+            const hPayload = removeUndefined({
+              planId: 'current',
+              workoutType: hEntry.name?.toLowerCase().includes('treino b') ? 'B' : (hEntry.name?.toLowerCase().includes('treino c') ? 'C' : 'A'),
+              workoutName: hEntry.name,
+              dateCompleted: hEntry.timestamp ? new Date(hEntry.timestamp) : serverTimestamp(),
+              timestamp: hEntry.timestamp || Date.now(),
+              duration: hEntry.duration || '00:00',
+              exercises: hEntry.exercises || [],
+              countText: hEntry.countText || null
+            });
+            batch.set(hRefAlunos, hPayload, { merge: true });
+            batch.set(hRefUsers, hPayload, { merge: true });
+          }
+        }
       }
 
       // If workouts are explicitly being updated, sync to prescricoes subcollection using the same batch
