@@ -45,6 +45,40 @@ export interface MusicCategory {
 
 export const musicCategories: MusicCategory[] = [
   {
+    id: 'musica-popular-da-bahia',
+    name: 'MÚSICA POPULAR DA BAHIA',
+    description: 'Axé, samba-reggae, ijexá, percussão afro-baiana, guitarra baiana e os maiores clássicos da música da Bahia para seu treino.',
+    color: '#f59e0b',
+    gradient: 'from-amber-500 via-orange-600 to-yellow-600',
+    songs: [
+      { id: 'jY2ydtNTTok', title: 'Música Popular da Bahia - Sucessos & Clássicos', artist: 'Bahia Workout' },
+      { id: '4I3QvmYO0yE', title: 'Samba Reggae & Axé das Antigas', artist: 'Bahia Ancestral' },
+      { id: 'lqnXo6tAT_8', title: 'Ritmos da Bahia - Percussão & Groove', artist: 'Música Popular da Bahia' },
+      { id: 'CoJ23XNHgG0', title: 'Axé Retrô & Clássicos Baianos', artist: 'Bahia Hits' },
+      { id: 'lYUMMyEgBN4', title: 'Swing da Bahia - Energia & Movimento', artist: 'Música da Bahia' },
+      { id: 'J0GxeEfICDc', title: 'Blocos Afros & Tambores de Salvador', artist: 'Bahia Raízes' },
+      { id: 'OXejkTKqvsk', title: 'Especial Música Baiana Ao Vivo', artist: 'Música Popular da Bahia' },
+      { id: 'yW3pSZcI168', title: 'Grandes Hinos da Música Baiana', artist: 'Bahia Workout' },
+      { id: 'PENUx7fOz6Q', title: 'Afrobeat & Axé Music Bahia', artist: 'Música da Bahia' },
+      { id: 'pza2xBH3f8o', title: 'Batuque & Alegria Baiana', artist: 'Bahia Hits' },
+      { id: 'kOiKjEpj13M', title: 'Sons de Salvador - Trio Elétrico & Emoção', artist: 'Música Popular da Bahia' },
+      { id: 'HiFVU-de-oM', title: 'Bahia Sound Experience', artist: 'Bahia Workout' },
+      { id: '9frJprbIwM4', title: 'Tambores e Vozes da Bahia', artist: 'Música da Bahia' },
+      { id: 'qcIiAv8-UQY', title: 'Clássicos Tropicais da Bahia', artist: 'Música Popular da Bahia' },
+      { id: 't0qO6FPFelo', title: 'Micareta & Alto Astral Baiano', artist: 'Bahia Hits' },
+      { id: 'flIi-4EDKUA', title: 'Groove Ancestral da Bahia', artist: 'Bahia Ancestral' },
+      { id: 'WAnM79-j_lU', title: 'Samba-Afro & Percussão de Elite', artist: 'Música da Bahia' },
+      { id: 'i7ogLsbKrUU', title: 'Canções Inesquecíveis da Bahia', artist: 'Música Popular da Bahia' },
+      { id: 'thCWCzDlQsw', title: 'Ritmo Quente da Bahia', artist: 'Bahia Workout' },
+      { id: 'Puhkv-rNpwI', title: 'Bahia de Todos os Ritmos', artist: 'Bahia Hits' },
+      { id: 'dSNU1aHm7nA', title: 'Celebração Baiana Ao Vivo', artist: 'Música Popular da Bahia' },
+      { id: '6rsMMzopkug', title: 'Batucada e Cordas da Bahia', artist: 'Música da Bahia' },
+      { id: 'UIjH_IMp1OQ', title: 'Pérolas da Música Popular da Bahia', artist: 'Bahia Raízes' },
+      { id: 'sQo8gKGdH2U', title: 'Axé, Samba e Força da Bahia', artist: 'Bahia Workout' },
+      { id: '7mL3DTJqB04', title: 'Mega Seleção Música Popular da Bahia', artist: 'Música Popular da Bahia' }
+    ]
+  },
+  {
     id: 'pagodao-baiano',
     name: 'PAGODÃO BAIANO',
     description: 'Swingueira pesada, metralhadora e groove acelerado para elevar sua frequência cardíaca.',
@@ -110,10 +144,10 @@ export const musicCategories: MusicCategory[] = [
     color: '#ef4444',
     gradient: 'from-red-600 to-rose-700',
     songs: [
-      { id: 'hoIROKL1bB8', title: 'Pagode 1', artist: 'ABFIT Roda de Samba' },
-      { id: '9f7AcEXNZyE', title: 'Pagode 2', artist: 'ABFIT Roda de Samba' },
-      { id: 'CQryy5dBz2s', title: 'Pagode 3', artist: 'ABFIT Roda de Samba' },
-      { id: 'QBYn1-0GNWE', title: 'Pagode 4', artist: 'ABFIT Roda de Samba' }
+      { id: 'hoIROKL1bB8', title: 'Pagode Seleção Especial - Roda de Samba', artist: 'ABFIT Pagode' },
+      { id: '9f7AcEXNZyE', title: 'Pagode das Antigas & Melhores Sucessos', artist: 'ABFIT Roda de Samba' },
+      { id: 'CQryy5dBz2s', title: 'Samba & Pagode Workout Live', artist: 'ABFIT Roda de Samba' },
+      { id: 'QBYn1-0GNWE', title: 'Pagode 90 & 2000 Sucessos', artist: 'ABFIT Roda de Samba' }
     ]
   },
   {

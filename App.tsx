@@ -47,7 +47,7 @@ import {
   increment 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
-import { finalizarTreino, subscribeToActivePlan, subscribeToUserStats } from './services/workoutService';
+import { finalizarTreino, subscribeToActivePlan, subscribeToUserStats, subscribeToWorkoutHistory } from './services/workoutService';
 import { useTheme } from './components/ThemeContext';
 
 const removeUndefined = (obj: any): any => {
@@ -531,68 +531,7 @@ export default function App() {
           medicalHistory: '⚠️ Dores no joelho',
           medications: 'Nenhuma',
           physicalAssessments: [], 
-          workoutHistory: [
-            {
-              id: 'hist-1',
-              name: 'Treino Livre',
-              duration: '48:54',
-              date: '19/04/2026',
-              timestamp: new Date('2026-04-19T12:10:00').getTime(),
-              type: 'RUNNING',
-              runningStats: {
-                distance: 3.74,
-                avgHR: 105,
-                calories: 223,
-                elevation: 32,
-                cadence: 101
-              }
-            },
-            {
-              id: 'hist-2',
-              name: 'Treino Livre',
-              duration: '33:15',
-              date: '16/04/2026',
-              timestamp: new Date('2026-04-16T22:22:00').getTime(),
-              type: 'RUNNING',
-              runningStats: {
-                distance: 3.52,
-                avgHR: 115,
-                calories: 195,
-                elevation: 2,
-                cadence: 118
-              }
-            },
-            {
-              id: 'hist-3',
-              name: 'Treino Livre',
-              duration: '38:18',
-              date: '15/04/2026',
-              timestamp: new Date('2026-04-15T21:06:00').getTime(),
-              type: 'RUNNING',
-              runningStats: {
-                distance: 3.12,
-                avgHR: 110,
-                calories: 174,
-                elevation: 4,
-                cadence: 104
-              }
-            },
-            {
-              id: 'hist-4',
-              name: 'Treino Livre',
-              duration: '29:31',
-              date: '09/04/2026',
-              timestamp: new Date('2026-04-09T16:03:00').getTime(),
-              type: 'RUNNING',
-              runningStats: {
-                distance: 2.48,
-                avgHR: 119,
-                calories: 152,
-                elevation: 41,
-                cadence: 103
-              }
-            }
-          ], 
+          workoutHistory: [], 
           analytics: {
             sessionsCompleted: 0,
             streakDays: 0,
@@ -1039,244 +978,12 @@ export default function App() {
               idadeReal: 36,
             }
           ], 
-          workoutHistory: [
-            {
-              id: "hist-andre-treino-b-20260519",
-              workoutId: "treino-b-andre",
-              name: "TREINO B (terças e sextas)",
-              duration: "28:48",
-              date: "19/05/2026",
-              timestamp: new Date('2026-05-19T17:00:00').getTime(),
-              type: "STRENGTH",
-              exercises: [
-                { id: 'a-b-1', name: 'REMADA ABERTA EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '30' },
-                { id: 'a-b-2', name: 'REMADA NEUTRA NA MÁQUINA SENTADA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '15' },
-                { id: 'a-b-3', name: 'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '4' },
-                { id: 'a-b-4', name: 'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                { id: 'a-b-5', name: 'PUXADA SUPINADA NO PULLEY ALTO', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '25' },
-                { id: 'a-b-6', name: 'EXTENSÃO DE OMBROS EM PÉ NO CROSS', sets: '4', reps: '12', rest: '40s', executionType: 'Simples', load: '20' },
-                { id: 'a-b-7', name: 'ABDOMINAL SUPRA NO SOLO', sets: '6', reps: '20', rest: '40s', executionType: 'Simples', load: '' }
-              ]
-            },
-            {
-              id: "hist-andre-run-20260428",
-              workoutId: "unplanned",
-              name: "Corrida",
-              athleteName: "André Brito",
-              duration: "43:43",
-              date: "28/04/2026",
-              timestamp: new Date('2026-04-28T15:54:00').getTime(),
-              type: "RUNNING",
-              runningStats: {
-                distance: 3.71,
-                avgSpeed: 5.1,
-                avgHR: 113,
-                calories: 345,
-                steps: 4571,
-                elevation: 17,
-                vo2max: 36.1,
-                vo2maxClass: "red",
-                sweatLoss: 295,
-                hydrationRecomendation: 442,
-                weather: { temp: 28, condition: "Nublado", humidity: 81, wind: 18 },
-                hrZones: {
-                  max: "161-178 bpm",
-                  anaerobic: "143-160 bpm",
-                  aerobic: "125-142 bpm",
-                  weightControl: "107-124 bpm",
-                  lowIntensity: "89-106 bpm"
-                },
-                splits: [
-                  { km: "1.00", time: "12:00", speed: "4.9 km/h" },
-                  { km: "1.00", time: "11:37", speed: "5.1 km/h" },
-                  { km: "1.00", time: "11:46", speed: "5.0 km/h" },
-                  { km: "0.71", time: "08:19", speed: "5.1 km/h" }
-                ]
-              }
-            },
-            {
-              id: "hist-andre-run-20260420",
-              workoutId: "unplanned",
-              name: "Corrida",
-              athleteName: "André Brito",
-              duration: "46:20",
-              date: "20/04/2026",
-              timestamp: new Date('2026-04-20T17:32:00').getTime(),
-              type: "RUNNING",
-              runningStats: {
-                distance: 4.50,
-                avgPace: "10'17\"",
-                avgHR: 131,
-                calories: 362,
-                cadence: 112,
-                elevation: 34,
-                vo2max: 36.1,
-                vo2maxClass: "red",
-                sweatLoss: 606,
-                hydrationRecomendation: 909,
-                hrZones: {
-                  max: "161-178 bpm (Uso Mínimo)",
-                  anaerobic: "143-160 bpm (Uso Moderado)",
-                  aerobic: "125-142 bpm (Uso Predominante/Longo)",
-                  weightControl: "107-124 bpm (Uso Baixo)",
-                  lowIntensity: "89-106 bpm (Uso Baixo)"
-                },
-                advancedMetricsColors: {
-                  asymmetry: "blue",
-                  groundTime: "orange",
-                  airTime: "green",
-                  regularity: "blue",
-                  vertical: "orange",
-                  stiffness: "orange"
-                },
-                splits: [
-                  { km: "1.00", time: "11:42", pace: "11'42\"" },
-                  { km: "1.00", time: "09:04", pace: "09'04\"" },
-                  { km: "1.00", time: "09:52", pace: "09'52\"" },
-                  { km: "1.00", time: "10:12", pace: "10'12\"" },
-                  { km: "0.50", time: "05:28", pace: "10'53\"" }
-                ]
-              }
-            },
-            {
-              id: "hist-andre-run-20260419",
-              workoutId: "unplanned",
-              name: "Corrida (ritmo de caminhada)",
-              athleteName: "André Brito",
-              duration: "48:54",
-              date: "19/04/2026",
-              timestamp: new Date('2026-04-19T12:10:00').getTime(),
-              type: "RUNNING",
-              runningStats: {
-                distance: 3.74,
-                avgPace: "13'04\"",
-                avgHR: 105,
-                calories: 223,
-                cadence: 101,
-                elevation: 32,
-                vo2max: 36.1,
-                vo2maxClass: "green",
-                sweatLoss: 317,
-                hydrationRecomendation: 475,
-                weather: { temp: 27, condition: "Sol entre nuvens", humidity: 76, wind: 23 },
-                hrZones: {
-                  max: "161-178 bpm (0%)",
-                  anaerobic: "143-160 bpm (0%)",
-                  aerobic: "125-142 bpm (Mínimo/Traço)",
-                  weightControl: "107-124 bpm (Presença significativa)",
-                  lowIntensity: "89-106 bpm (PREDOMINANTE)"
-                },
-                splits: [
-                  { km: "1.00", time: "13:57", pace: "13'57\"" },
-                  { km: "1.00", time: "12:56", pace: "12'56\"" },
-                  { km: "1.00", time: "12:34", pace: "12'34\"" },
-                  { km: "0.74", time: "09:26", pace: "12'43\"" }
-                ]
-              }
-            },
-            {
-              id: "hist-andre-run-20260416",
-              workoutId: "treino-rodagem",
-              name: "Caminhada",
-              athleteName: "André Brito",
-              duration: "33:15",
-              date: "16/04/2026",
-              timestamp: new Date('2026-04-16T22:22:00').getTime(),
-              type: "RUNNING",
-              runningStats: {
-                distance: 3.52,
-                avgSpeed: 6.3,
-                avgHR: 115,
-                calories: 195,
-                steps: 3967,
-                elevation: 2,
-                vo2max: 36.1,
-                vo2maxClass: "green",
-                sweatLoss: 188,
-                hydrationRecomendation: 282,
-                weather: { temp: 23, condition: "Céu limpo/Noite", humidity: 88, wind: 11 },
-                hrZones: {
-                  max: "161-178 bpm (0%)",
-                  anaerobic: "143-160 bpm (Traço mínimo)",
-                  aerobic: "125-142 bpm (Presença moderada)",
-                  weightControl: "107-124 bpm (Predominante)",
-                  lowIntensity: "89-106 bpm (Presença moderada)"
-                },
-                splits: [
-                  { km: "1.00", time: "11:25", speed: "5.2 km/h" },
-                  { km: "1.00", time: "09:18", speed: "6.4 km/h" },
-                  { km: "1.00", time: "08:04", speed: "7.4 km/h" },
-                  { km: "0.52", time: "04:26", speed: "7.1 km/h" }
-                ]
-              }
-            },
-            {
-              id: "hist-andre-run-20260415",
-              workoutId: "treino-intervalado-desconfortavel",
-              name: "Corrida",
-              athleteName: "André Brito",
-              duration: "38:18",
-              date: "15/04/2026",
-              timestamp: new Date('2026-04-15T21:06:00').getTime(),
-              type: "RUNNING",
-              runningStats: {
-                distance: 3.12,
-                avgPace: "12'14\"",
-                avgHR: 110,
-                calories: 174,
-                cadence: 104,
-                elevation: 4,
-                vo2max: 36.1,
-                vo2maxClass: "orange",
-                sweatLoss: 252,
-                hydrationRecomendation: 378,
-                weather: { temp: 23, condition: "Céu limpo com nuvens", humidity: 91, wind: 5 },
-                hrZones: {
-                  max: "162-179 bpm (Inexistente)",
-                  anaerobic: "144-161 bpm (Inexistente)",
-                  aerobic: "126-143 bpm (Baixa presença)",
-                  weightControl: "108-125 bpm (PREDOMINANTE)",
-                  lowIntensity: "89-107 bpm (Presença moderada)"
-                },
-                advancedMetricsColors: {
-                  asymmetry: "blue",
-                  groundTime: "orange",
-                  airTime: "green",
-                  regularity: "blue",
-                  vertical: "orange",
-                  stiffness: "orange"
-                },
-                splits: [
-                  { km: "1.00", time: "11:52", pace: "11'52\"" },
-                  { km: "1.00", time: "13:21", pace: "13'21\"" },
-                  { km: "1.00", time: "13:26", pace: "13'26\"" },
-                  { km: "0.13", time: "01:37", pace: "12'46\"" }
-                ]
-              }
-            }
-          ], 
+          workoutHistory: [], 
           analytics: {
-            sessionsCompleted: 6,
-            streakDays: 2,
-            exercises: {
-              'Remada aberta na máquina': { completed: 1, skipped: 0 },
-              'Puxada aberta com barra romana pulley alto': { completed: 1, skipped: 0 },
-              'Voador dorsal': { completed: 1, skipped: 0 },
-              'Bíceps neutro com HBC banco 75 graus': { completed: 1, skipped: 0 },
-              'Bíceps em pé com HBM pegada supinada': { completed: 1, skipped: 0 },
-              'Agachamento sumô com HBC': { completed: 1, skipped: 0 },
-              'Subida no step': { completed: 1, skipped: 0 },
-              'Extensão de quadril e joelho em pé no cross': { completed: 1, skipped: 0 },
-              'Mata-borrão isométrico no solo (super-man)': { completed: 1, skipped: 0 },
-              'REMADA ABERTA EM PÉ NO CROSS': { completed: 1, skipped: 0 },
-              'REMADA NEUTRA NA MÁQUINA SENTADA': { completed: 1, skipped: 0 },
-              'CRUCIFIXO INVERSO NO BANCO 30 GRAUS COM HALTER': { completed: 1, skipped: 0 },
-              'PUXADA ABERTA NO PULLEY ALTO COM BARRA RETA': { completed: 1, skipped: 0 },
-              'PUXADA SUPINADA NO PULLEY ALTO': { completed: 1, skipped: 0 },
-              'EXTENSÃO DE OMBROS EM PÉ NO CROSS': { completed: 1, skipped: 0 },
-              'ABDOMINAL SUPRA NO SOLO': { completed: 1, skipped: 0 }
-            } as Record<string, { completed: number; skipped: number }>,
-            lastSessionDate: '19/05/2026'
+            sessionsCompleted: 0,
+            streakDays: 0,
+            exercises: {} as Record<string, { completed: number; skipped: number }>,
+            lastSessionDate: ''
           },
           sexo: 'Masculino', 
           periodization: {
@@ -1359,21 +1066,21 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 1,
-          faseAjusteB: 2,
+          faseAjusteA: 0,
+          faseAjusteB: 0,
           faseAjusteC: 0,
-          totalGlobalA: 1,
-          totalGlobalB: 2,
+          totalGlobalA: 0,
+          totalGlobalB: 0,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 3, targetCount: 36 },
+          trainingProgress: { completedCount: 0, targetCount: 36 },
           activePlan: {
             id: 'current',
-            phaseName: 'Mesociclo 16 - Hipertrofia',
+            phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 1, B: 2, C: 0 }
+            progress: { A: 0, B: 0, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 1, B: 2, C: 0 }
+            '3 x 13': { A: 0, B: 0, C: 0 }
           },
           workouts: [
             {
@@ -1773,6 +1480,7 @@ export default function App() {
   useEffect(() => {
     let unsub: () => void;
     let unsubPlan: (() => void) | null = null;
+    let unsubHistory: (() => void) | null = null;
     
     // Se a autenticação ainda não estiver pronta, esperamos.
     // Mas se estiver pronta, prosseguimos mesmo sem usuário (user === null)
@@ -2073,7 +1781,7 @@ export default function App() {
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = rawData.activePlan || {
                             id: 'current',
-                            phaseName: 'Mesociclo 16 - Hipertrofia',
+                            phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
                             targetSets: 18,
                             progress: { A: 4, B: 4, C: 0 }
                           };
@@ -2108,7 +1816,7 @@ export default function App() {
                           rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
                           rawData.activePlan = {
                             id: 'current',
-                            phaseName: 'Mesociclo 16 - Hipertrofia',
+                            phaseName: defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global (18 Sessões)',
                             targetSets: 18,
                             progress: { A: 2, B: 2, C: 0 }
                           };
@@ -2313,11 +2021,30 @@ export default function App() {
             });
           });
           
+          unsubHistory = subscribeToWorkoutHistory(targetId, (historyRecords) => {
+            setSelectedStudent(prev => {
+              if (!prev || prev.id !== targetId) return prev;
+              const mapped = historyRecords.map(rec => ({
+                id: rec.id || `hist-${rec.workoutType}-${Date.now()}`,
+                name: rec.workoutName || `Treino ${rec.workoutType}`,
+                duration: rec.duration || (rec.duracaoMinutos ? `${rec.duracaoMinutos}:00` : '00:00'),
+                date: rec.dateCompleted?.seconds ? new Date(rec.dateCompleted.seconds * 1000).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'),
+                timestamp: rec.dateCompleted?.seconds ? rec.dateCompleted.seconds * 1000 : (rec.timestamp || Date.now()),
+                type: 'STRENGTH' as const,
+                exercises: rec.exercises || []
+              }));
+              return {
+                ...prev,
+                workoutHistory: mapped
+              };
+            });
+          });
+
           subscribeToUserStats(targetId, (count) => {
             setGlobalWorkoutCount(count);
           });
         } catch (pe) {
-          console.warn("Aviso ao escutar activePlan:", pe);
+          console.warn("Aviso ao escutar activePlan/history:", pe);
         }
       } catch (e) {
         console.error("Erro ao iniciar listener do aluno:", e);
@@ -2326,6 +2053,7 @@ export default function App() {
     return () => { 
       if (unsub) unsub(); 
       if (unsubPlan) unsubPlan();
+      if (unsubHistory) unsubHistory();
       clearTimeout(studentLoadTimeout);
     };
   }, [authReady, view, selectedStudent?.id, isCoach, defaultStudentsData]);
@@ -2934,7 +2662,7 @@ export default function App() {
 
       const currentActivePlan = studentForView.activePlan || {
         id: 'current',
-        phaseName: "Mesociclo 16 - Hipertrofia",
+        phaseName: studentForView.periodization?.phaseTitle || "Fase 1: Retorno & Adaptação (18 Sessões)",
         targetSets: targetSetsAtômico,
         progress: { A: 0, B: 0, C: 0 }
       };
@@ -3283,10 +3011,15 @@ export default function App() {
               {(() => {
                 const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
                 const targetSets = isLiliane ? 32 : (studentForView.activePlan?.targetSets || 18);
-                const isAndre = studentForView.id === 'fixed-andre' || studentForView.email === 'andrevictorbritodeandrade@gmail.com';
-                const countA = isAndre ? 4 : isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
-                const countB = isAndre ? 4 : isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
-                const phaseName = isLiliane ? "Nova Periodização (32 Sessões)" : (studentForView.activePlan?.phaseName || studentForView.periodization?.phaseTitle || "Mesociclo 16 - Hipertrofia");
+                const countA = isLiliane 
+                  ? (studentForView.activePlan?.progress?.A ?? 0) 
+                  : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
+                const countB = isLiliane 
+                  ? (studentForView.activePlan?.progress?.B ?? 0) 
+                  : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
+                const phaseName = isLiliane 
+                  ? "Nova Periodização (32 Sessões)" 
+                  : (studentForView.periodization?.phaseTitle || studentForView.activePlan?.phaseName || "Fase 1: Retorno & Adaptação (18 Sessões)");
                 const percentA = Math.min(100, (countA / targetSets) * 100);
                 const percentB = Math.min(100, (countB / targetSets) * 100);
 

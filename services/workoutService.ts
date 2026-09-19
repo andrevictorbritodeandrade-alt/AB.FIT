@@ -53,18 +53,26 @@ export async function finalizarTreino(
     const activePlanId = planId || 'current';
     const isLiliane = userId === 'fixed-liliane';
     const defaultTarget = isLiliane ? 32 : 18;
-    const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Mesociclo 16 - Hipertrofia";
+    const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Fase 1: Retorno & Adaptação (18 Sessões)";
     let notificacaoNecessaria: string | null = null;
     let novaContagem = 1;
     let targetSets = defaultTarget;
 
-    const planRef = doc(db, `alunos/${userId}/active_plans/${activePlanId}`);
-    const historyRef = doc(collection(db, `alunos/${userId}/workout_history`));
+    const planRef = doc(db, `users/${userId}/active_plans/${activePlanId}`);
+    const historyRef = doc(collection(db, `users/${userId}/workout_history`));
     const statsRef = doc(db, `user_stats/${userId}`);
     const alunoRef = doc(db, 'alunos', userId);
+    const planRefAlunos = doc(db, `alunos/${userId}/active_plans/${activePlanId}`);
+    const historyRefAlunos = doc(collection(db, `alunos/${userId}/workout_history`));
 
     await runTransaction(db, async (transaction) => {
-      const planDoc = await transaction.get(planRef);
+      let planDoc = await transaction.get(planRef);
+      if (!planDoc.exists()) {
+        const altDoc = await transaction.get(planRefAlunos);
+        if (altDoc.exists()) {
+          planDoc = altDoc;
+        }
+      }
       const statsDoc = await transaction.get(statsRef);
       const alunoDoc = await transaction.get(alunoRef);
       
@@ -75,27 +83,39 @@ export async function finalizarTreino(
         const initialProgress = { A: 0, B: 0, C: 0 };
         initialProgress[tipoTreino] = 1;
         
-        transaction.set(planRef, {
+        const planPayload = {
           phaseName: defaultPhase,
           targetSets: defaultTarget,
           progress: initialProgress,
           updatedAt: serverTimestamp()
-        });
+        };
+        transaction.set(planRef, planPayload);
+        transaction.set(planRefAlunos, planPayload);
       } else {
         const planData = planDoc.data() as any;
         targetSets = isLiliane ? 32 : (planData.targetSets || defaultTarget);
         const progress = planData.progress || { A: 0, B: 0, C: 0 };
         novaContagem = (progress[tipoTreino] || 0) + 1;
         
-        transaction.update(planRef, {
+        const updatePayload = {
           targetSets,
           [`progress.${tipoTreino}`]: novaContagem,
           updatedAt: serverTimestamp()
-        });
+        };
+        transaction.update(planRef, updatePayload);
+        transaction.set(planRefAlunos, {
+          ...planData,
+          targetSets,
+          progress: {
+            ...progress,
+            [tipoTreino]: novaContagem
+          },
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       }
 
-      // 2. Adiciona o histórico
-      transaction.set(historyRef, {
+      // 2. Adiciona o histórico nas coleções do Firestore
+      const historyPayload = {
         planId: activePlanId,
         workoutType: tipoTreino,
         dateCompleted: serverTimestamp(),
@@ -106,7 +126,9 @@ export async function finalizarTreino(
         calorias: dadosDoTreino.calorias || 0,
         exercises: dadosDoTreino.exercises || [],
         photoUrl: dadosDoTreino.photoUrl || null
-      });
+      };
+      transaction.set(historyRef, historyPayload);
+      transaction.set(historyRefAlunos, historyPayload);
 
       // 3. Atualizar User Stats Globais
       const currentGlobalCount = statsDoc.exists() ? (statsDoc.data().totalWorkouts || 0) : 0;
@@ -164,12 +186,15 @@ export function subscribeToActivePlan(
   onUpdate: (plan: ActivePlan) => void,
   planId: string = 'current'
 ): Unsubscribe {
-  const planRef = doc(db, `alunos/${userId}/active_plans/${planId}`);
+  const planRef = doc(db, `users/${userId}/active_plans/${planId}`);
+  const planRefAlunos = doc(db, `alunos/${userId}/active_plans/${planId}`);
   const isLiliane = userId === 'fixed-liliane';
   const defaultTarget = isLiliane ? 32 : 18;
-  const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Mesociclo 16 - Hipertrofia";
+  const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Fase 1: Retorno & Adaptação (18 Sessões)";
 
-  return onSnapshot(planRef, (docSnap) => {
+  let unsubAlunos: Unsubscribe | null = null;
+
+  const unsubUsers = onSnapshot(planRef, (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
       onUpdate({
@@ -184,12 +209,31 @@ export function subscribeToActivePlan(
         updatedAt: data.updatedAt
       });
     } else {
-      onUpdate({
-        id: 'current',
-        phaseName: defaultPhase,
-        targetSets: defaultTarget,
-        progress: { A: 0, B: 0, C: 0 }
-      });
+      if (!unsubAlunos) {
+        unsubAlunos = onSnapshot(planRefAlunos, (altSnap) => {
+          if (altSnap.exists()) {
+            const data = altSnap.data();
+            onUpdate({
+              id: altSnap.id,
+              phaseName: data.phaseName || defaultPhase,
+              targetSets: isLiliane ? 32 : (data.targetSets || defaultTarget),
+              progress: {
+                A: data.progress?.A ?? 0,
+                B: data.progress?.B ?? 0,
+                C: data.progress?.C ?? 0
+              },
+              updatedAt: data.updatedAt
+            });
+          } else {
+            onUpdate({
+              id: 'current',
+              phaseName: defaultPhase,
+              targetSets: defaultTarget,
+              progress: { A: 0, B: 0, C: 0 }
+            });
+          }
+        });
+      }
     }
   }, (err) => {
     console.warn("Active plan snapshot fallback:", err);
@@ -200,6 +244,11 @@ export function subscribeToActivePlan(
       progress: { A: 0, B: 0, C: 0 }
     });
   });
+
+  return () => {
+    unsubUsers();
+    if (unsubAlunos) unsubAlunos();
+  };
 }
 
 export function subscribeToWorkoutHistory(
@@ -207,19 +256,61 @@ export function subscribeToWorkoutHistory(
   onUpdate: (history: WorkoutHistoryRecord[]) => void,
   limitCount: number = 50
 ): Unsubscribe {
-  const historyRef = collection(db, `alunos/${userId}/workout_history`);
+  const historyRef = collection(db, `users/${userId}/workout_history`);
+  const historyRefAlunos = collection(db, `alunos/${userId}/workout_history`);
   const q = query(historyRef, orderBy('dateCompleted', 'desc'), limit(limitCount));
-  
-  return onSnapshot(q, (snapshot) => {
-    const records: WorkoutHistoryRecord[] = [];
+  const qAlunos = query(historyRefAlunos, orderBy('dateCompleted', 'desc'), limit(limitCount));
+
+  let recordsUsers: WorkoutHistoryRecord[] = [];
+  let recordsAlunos: WorkoutHistoryRecord[] = [];
+
+  const mergeAndNotify = () => {
+    const map = new Map<string, WorkoutHistoryRecord>();
+    [...recordsUsers, ...recordsAlunos].forEach(rec => {
+      const key = rec.id || `${rec.workoutType}-${rec.timestamp}`;
+      if (!map.has(key)) {
+        map.set(key, rec);
+      }
+    });
+    const merged = Array.from(map.values());
+    merged.sort((a, b) => {
+      const timeA = a.dateCompleted?.seconds ? a.dateCompleted.seconds * 1000 : (a.timestamp || 0);
+      const timeB = b.dateCompleted?.seconds ? b.dateCompleted.seconds * 1000 : (b.timestamp || 0);
+      return timeB - timeA;
+    });
+    onUpdate(merged);
+  };
+
+  const unsubUsers = onSnapshot(q, (snapshot) => {
+    recordsUsers = [];
     snapshot.forEach(docSnap => {
-      records.push({
+      recordsUsers.push({
         id: docSnap.id,
         ...docSnap.data()
       } as WorkoutHistoryRecord);
     });
-    onUpdate(records);
+    mergeAndNotify();
+  }, (err) => {
+    console.warn("Users workout history listener error:", err);
   });
+
+  const unsubAlunos = onSnapshot(qAlunos, (snapshot) => {
+    recordsAlunos = [];
+    snapshot.forEach(docSnap => {
+      recordsAlunos.push({
+        id: docSnap.id,
+        ...docSnap.data()
+      } as WorkoutHistoryRecord);
+    });
+    mergeAndNotify();
+  }, (err) => {
+    console.warn("Alunos workout history listener error:", err);
+  });
+
+  return () => {
+    unsubUsers();
+    unsubAlunos();
+  };
 }
 
 export function subscribeToUserStats(

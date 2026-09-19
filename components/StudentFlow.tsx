@@ -729,15 +729,11 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }, [user.workoutHistory, periodKey]);
 
   const isLiliane = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
-  const countA = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com')
-    ? 4
-    : isLiliane
+  const countA = isLiliane
     ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
     : (localCounters.A || user.activePlan?.progress?.A || user.faseAjusteA || historyCounts.a || 0);
 
-  const countB = (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com')
-    ? 4
-    : isLiliane
+  const countB = isLiliane
     ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
     : (localCounters.B || user.activePlan?.progress?.B || user.faseAjusteB || historyCounts.b || 0);
 
@@ -1107,7 +1103,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           [`faseAjuste${workoutType}`]: novoContador,
           [`totalGlobal${workoutType}`]: ((user as any)[`totalGlobal${workoutType}`] || 0) + 1,
           activePlan: {
-            ...(user.activePlan || { id: 'current', phaseName: 'Mesociclo 16 - Hipertrofia', targetSets }),
+            ...(user.activePlan || { id: 'current', phaseName: user.periodization?.phaseTitle || 'Fase 1: Retorno & Adaptação (18 Sessões)', targetSets }),
             targetSets,
             progress: {
               A: currentA,
@@ -1123,23 +1119,6 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
         await onSave(user.id, updates);
       }
-
-      // Sincroniza endpoint backend em background
-      fetch('/api/finalizarTreino', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          userId: user.id, 
-          treinoId: activeWorkout.id,
-          duracaoMinutos,
-          calorias,
-          cargas: mappedExercises.map(ex => ({
-            exercicio: ex.name || 'Exercício',
-            carga: ex.load || '0',
-            unidade: ex.loadUnit || 'Kg'
-          }))
-        }),
-      }).catch(e => console.warn("Background API sync:", e));
     } catch (error) {
       console.error("Erro ao salvar treino em segundo plano:", error);
     }

@@ -14,6 +14,16 @@ interface RadioChannel {
 
 const RADIO_CHANNELS: RadioChannel[] = [
     {
+        id: 'musica-popular-da-bahia',
+        name: 'Música Popular da Bahia',
+        genre: 'Música da Bahia & Axé Ancestral',
+        description: 'Axé, samba-reggae, ijexá, percussão afro-baiana e hinos inesquecíveis da Bahia.',
+        videoId: 'jY2ydtNTTok',
+        bgGradient: 'from-amber-500 via-orange-900 to-black',
+        icon: '☀️',
+        tag: 'DESTAQUE BAHIA'
+    },
+    {
         id: 'pagodao-baiano',
         name: 'Pagodão Baiano 2026',
         genre: 'Pagodão & Swingueira',
@@ -24,14 +34,14 @@ const RADIO_CHANNELS: RadioChannel[] = [
         tag: 'MAIS OUVIDO'
     },
     {
-        id: 'roda-samba',
-        name: 'Roda de Samba Ao Vivo',
-        genre: 'Samba de Raiz',
-        description: 'Cavaquinho, pandeiro e batuque autêntico em looping contínuo.',
-        videoId: '5qap5aO4i9A',
+        id: 'pagode-abfit',
+        name: 'Pagode & Samba Workout',
+        genre: 'Pagode & Roda de Samba',
+        description: 'Cavaquinho, pandeiro e aquele pagode de responsa para dar ritmo e energia ao seu treino.',
+        videoId: 'hoIROKL1bB8',
         bgGradient: 'from-red-600 via-rose-900 to-black',
         icon: '🪘',
-        tag: 'TRADIÇÃO'
+        tag: 'PAGODE'
     },
     {
         id: 'samba-roda-bahia',

@@ -382,10 +382,15 @@ class YouTubeAudioService {
     }, 150);
   }
 
-  public playCategory(category: MusicCategory) {
+  public playCategory(category: MusicCategory, startShuffled: boolean = false) {
     this.updateState({ selectedCategory: category });
     if (category.songs.length > 0) {
-      this.playSong(category.songs[0], category.songs);
+      if (startShuffled || this.state.shuffle) {
+        const randomIdx = Math.floor(Math.random() * category.songs.length);
+        this.playSong(category.songs[randomIdx], category.songs);
+      } else {
+        this.playSong(category.songs[0], category.songs);
+      }
     }
   }
 
@@ -427,11 +432,16 @@ class YouTubeAudioService {
     this.updateState({ selectedCategory: favCategory });
   }
 
-  public playFavorites() {
+  public playFavorites(startShuffled: boolean = false) {
     const favCategory = this.getFavoritesCategory();
     this.updateState({ selectedCategory: favCategory });
     if (favCategory.songs.length > 0) {
-      this.playSong(favCategory.songs[0], favCategory.songs);
+      if (startShuffled || this.state.shuffle) {
+        const randomIdx = Math.floor(Math.random() * favCategory.songs.length);
+        this.playSong(favCategory.songs[randomIdx], favCategory.songs);
+      } else {
+        this.playSong(favCategory.songs[0], favCategory.songs);
+      }
     }
   }
 

@@ -5,6 +5,7 @@ import {
   Pause, 
   SkipBack, 
   SkipForward, 
+  Shuffle,
   Disc3, 
   Music2, 
   Maximize2, 
@@ -159,8 +160,21 @@ export const GlobalMusicPlayer: React.FC<GlobalMusicPlayerProps> = ({
           {/* Right: Controls */}
           <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             <button
+              onClick={() => audioService.toggleShuffle()}
+              className={`p-1.5 transition-colors active:scale-95 cursor-pointer rounded-full relative ${
+                playerState.shuffle ? 'text-red-500 bg-red-950/50' : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+              title={playerState.shuffle ? 'Modo Aleatório Ativado' : 'Ativar Modo Aleatório'}
+            >
+              <Shuffle size={15} />
+              {playerState.shuffle && (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-red-500" />
+              )}
+            </button>
+
+            <button
               onClick={() => audioService.handlePrevious()}
-              className="p-2 text-zinc-400 hover:text-white transition-colors active:scale-95 cursor-pointer rounded-full hover:bg-zinc-800"
+              className="p-1.5 sm:p-2 text-zinc-400 hover:text-white transition-colors active:scale-95 cursor-pointer rounded-full hover:bg-zinc-800"
               title="Anterior"
             >
               <SkipBack size={16} />
