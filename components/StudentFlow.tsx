@@ -655,8 +655,9 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     const local = getContagemTreinos(user.id);
     
     // Respect real Firestore counters or local storage without hardcoded overrides
-    const fireA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : 0);
-    const fireB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : 0);
+    const isAndreStudent = user.id === 'fixed-andre' || user.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || user.nome?.toLowerCase().includes('andré');
+    const fireA = isAndreStudent ? Math.max(6, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0) : (user.faseAjusteA !== undefined ? Math.max(user.faseAjusteA, user.activePlan?.progress?.A ?? 0) : (user.activePlan?.progress?.A ?? 0));
+    const fireB = isAndreStudent ? Math.max(5, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0) : (user.faseAjusteB !== undefined ? Math.max(user.faseAjusteB, user.activePlan?.progress?.B ?? 0) : (user.activePlan?.progress?.B ?? 0));
     const fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
 
     const merged = {
@@ -717,17 +718,23 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   }, [user.workoutHistory, periodKey]);
 
   const isLiliane = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
+  const isAndre = user.id === 'fixed-andre' || user.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || user.nome?.toLowerCase().includes('andré');
+
   const countA = isLiliane
     ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
-    : (localCounters.A || user.activePlan?.progress?.A || user.faseAjusteA || historyCounts.a || 0);
+    : isAndre
+      ? Math.max(6, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a)
+      : Math.max(localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a);
 
   const countB = isLiliane
     ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
-    : (localCounters.B || user.activePlan?.progress?.B || user.faseAjusteB || historyCounts.b || 0);
+    : isAndre
+      ? Math.max(5, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b)
+      : Math.max(localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b);
 
   const countC = isLiliane
     ? (localCounters.C ?? user.activePlan?.progress?.C ?? 0)
-    : (localCounters.C || user.activePlan?.progress?.C || user.faseAjusteC || historyCounts.c || 0);
+    : Math.max(localCounters.C ?? 0, user.faseAjusteC ?? 0, user.activePlan?.progress?.C ?? 0, historyCounts.c);
 
   const totalCompleted = countA + countB + countC;
 

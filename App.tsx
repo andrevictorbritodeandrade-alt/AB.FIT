@@ -507,10 +507,10 @@ export default function App() {
       if (marcelly && !marcelly._reset20260805_v10) resetStudentData(marcelly, 'Marcelly');
 
       // Sync André workout counts & history (Treino A: 6 de 18, Treino B: 5 de 18, total 11 treinos, 30min duração e cargas mantidas)
-      if (andre && (andre.faseAjusteA !== 6 || andre.faseAjusteB !== 5 || !(andre as any)._syncAndreCounts20260919_v2)) {
-        console.log("[MIGRATION] Sincronizando contagem do André Brito (Treino A: 6/18, Treino B: 5/18) e histórico completo...");
+      if (andre && (andre.faseAjusteA !== 6 || andre.faseAjusteB !== 5 || !(andre as any)._syncAndreCounts20260919_v3)) {
+        console.log("[MIGRATION] Sincronizando contagem do André Brito (Treino A: 6/18, Treino B: 5/18) e histórico completo (v3)...");
         const updates: any = {
-          _syncAndreCounts20260919_v2: true,
+          _syncAndreCounts20260919_v3: true,
           faseAjusteA: 6,
           faseAjusteB: 5,
           faseAjusteC: 0,
@@ -543,6 +543,8 @@ export default function App() {
           console.warn(err);
         }
         handleSaveData(andre.id, updates);
+        if (andre.id !== 'fixed-andre') handleSaveData('fixed-andre', updates);
+        if (andre.id !== 'andrevictorbritodeandrade@gmail.com') handleSaveData('andrevictorbritodeandrade@gmail.com', updates);
       }
     }
   }, [authReady, students.length]);
@@ -3047,16 +3049,21 @@ export default function App() {
               {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
               {(() => {
                 const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
+                const isAndre = studentForView.id === 'fixed-andre' || studentForView.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || studentForView.nome?.toLowerCase().includes('andré');
                 const targetSets = isLiliane ? 32 : (studentForView.activePlan?.targetSets || 18);
                 const countA = isLiliane 
                   ? (studentForView.activePlan?.progress?.A ?? 0) 
-                  : (studentForView.activePlan?.progress?.A ?? (studentForView.faseAjusteA !== undefined ? studentForView.faseAjusteA : 0));
+                  : isAndre 
+                    ? Math.max(6, studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0)
+                    : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
                 const countB = isLiliane 
                   ? (studentForView.activePlan?.progress?.B ?? 0) 
-                  : (studentForView.activePlan?.progress?.B ?? (studentForView.faseAjusteB !== undefined ? studentForView.faseAjusteB : 0));
+                  : isAndre 
+                    ? Math.max(5, studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0)
+                    : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
                 const countC = isLiliane
                   ? (studentForView.activePlan?.progress?.C ?? 0)
-                  : (studentForView.activePlan?.progress?.C ?? (studentForView.faseAjusteC !== undefined ? studentForView.faseAjusteC : 0));
+                  : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
                 
                 const currentPlanSum = countA + countB + countC;
                 const phaseName = isLiliane 
@@ -3124,9 +3131,12 @@ export default function App() {
                   progress = Math.min(100, Math.round((curWk / totalWks) * 100));
                   progressText = `Semana ${curWk} de ${totalWks}`;
                 } else if (isWorkouts) {
-                  const currentPlanSum = (studentForView.activePlan?.progress?.A || 0) + 
-                                       (studentForView.activePlan?.progress?.B || 0) + 
-                                       (studentForView.activePlan?.progress?.C || 0);
+                  const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
+                  const isAndreForW = studentForView.id === 'fixed-andre' || studentForView.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || studentForView.nome?.toLowerCase().includes('andré');
+                  const countAVal = isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : isAndreForW ? Math.max(6, studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0) : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
+                  const countBVal = isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : isAndreForW ? Math.max(5, studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0) : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
+                  const countCVal = isLiliane ? (studentForView.activePlan?.progress?.C ?? 0) : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
+                  const currentPlanSum = countAVal + countBVal + countCVal;
                   
                   // Use a soma calculada se o global Workout Count estiver zerado ou defasado
                   const displayGlobalCount = studentForView.trainingProgress?.completedCount || Math.max(globalWorkoutCount, currentPlanSum);
