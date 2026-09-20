@@ -46,7 +46,7 @@ import {
   writeBatch,
   increment 
 } from './services/firebase';
-import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
+import { Student, Workout, AppNotification, WorkoutHistoryEntry, Exercise } from './types';
 import { finalizarTreino, finalizarTreinoNoCliente, subscribeToActivePlan, subscribeToUserStats, subscribeToWorkoutHistory } from './services/workoutService';
 import { useTheme } from './components/ThemeContext';
 
@@ -474,10 +474,10 @@ export default function App() {
     };
   }, []);
 
-  // One-time migration/reset for André and Marcelly (User request 2026-08-05 - Week 1 start)
+  // One-time migration/reset for André and Marcelly
   useEffect(() => {
     if (authReady && students.length > 0) {
-      const andre = students.find(s => s.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com');
+      const andre = students.find(s => s.id === 'fixed-andre' || s.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com');
       const marcelly = students.find(s => s.nome?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('marcelly bispo'));
       
       const resetStudentData = async (student: Student, name: string) => {
@@ -505,8 +505,218 @@ export default function App() {
 
       if (andre && !andre._reset20260805_v10) resetStudentData(andre, 'André');
       if (marcelly && !marcelly._reset20260805_v10) resetStudentData(marcelly, 'Marcelly');
+
+      // Sync André workout counts & history (Treino A: 6 de 18, Treino B: 5 de 18, total 11 treinos, 30min duração e cargas mantidas)
+      if (andre && (andre.faseAjusteA !== 6 || andre.faseAjusteB !== 5 || !(andre as any)._syncAndreCounts20260919_v2)) {
+        console.log("[MIGRATION] Sincronizando contagem do André Brito (Treino A: 6/18, Treino B: 5/18) e histórico completo...");
+        const updates: any = {
+          _syncAndreCounts20260919_v2: true,
+          faseAjusteA: 6,
+          faseAjusteB: 5,
+          faseAjusteC: 0,
+          totalGlobalA: 6,
+          totalGlobalB: 5,
+          totalGlobalC: 0,
+          trainingProgress: { completedCount: 11, targetCount: 36 },
+          activePlan: {
+            id: 'current',
+            phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+            targetSets: 18,
+            progress: { A: 6, B: 5, C: 0 }
+          },
+          periodizationProgress: {
+            '3 x 13': { A: 6, B: 5, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 5, C: 0 }
+          },
+          workoutHistory: andreHistory,
+          analytics: {
+            sessionsCompleted: 11,
+            streakDays: 5,
+            lastSessionDate: '19/09/2026',
+            exercises: andre.analytics?.exercises || {}
+          }
+        };
+        try {
+          localStorage.setItem('contagemTreinos_fixed-andre', JSON.stringify({ A: 6, B: 5, C: 0 }));
+          localStorage.setItem('contagemTreinos_andrevictorbritodeandrade@gmail.com', JSON.stringify({ A: 6, B: 5, C: 0 }));
+        } catch (err) {
+          console.warn(err);
+        }
+        handleSaveData(andre.id, updates);
+      }
     }
   }, [authReady, students.length]);
+
+  // Definição dos Exercícios e Histórico Inicial de André Brito
+  const exAndreTreinoA: Exercise[] = [
+    { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
+    { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
+    { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+    { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
+    { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+    { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
+    { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
+    { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+    { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
+  ];
+
+  const exAndreTreinoB: Exercise[] = [
+    { id: 'a-b-1', name: 'Stiff em pé com HBC ou HBM', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
+    { id: 'a-b-2', name: 'Extensão de quadril na máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+    { id: 'a-b-3', name: 'Cadeira abdutora', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+    { id: 'a-b-4', name: 'Cadeira flexora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+    { id: 'a-b-5', name: 'Remada aberta na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+    { id: 'a-b-6', name: 'Remada fechada na máquina', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+    { id: 'a-b-7', name: 'Puxada fechada com triângulo no pulley alto', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+    { id: 'a-b-8', name: 'Bíceps em pé no cross barra reta', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+    { id: 'a-b-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
+  ];
+
+  const andreHistory: WorkoutHistoryEntry[] = [
+    {
+      id: 'andre-a-6-20260919',
+      date: '19/09/2026',
+      timestamp: new Date('2026-09-19T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '6 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
+    {
+      id: 'andre-b-5-20260917',
+      date: '17/09/2026',
+      timestamp: new Date('2026-09-17T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '5 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
+    {
+      id: 'andre-a-5-20260916',
+      date: '16/09/2026',
+      timestamp: new Date('2026-09-16T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '5 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
+    {
+      id: 'andre-b-4-20260915',
+      date: '15/09/2026',
+      timestamp: new Date('2026-09-15T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '4 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
+    {
+      id: 'andre-a-4-20260913',
+      date: '13/09/2026',
+      timestamp: new Date('2026-09-13T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '4 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
+    {
+      id: 'andre-b-3-20260912',
+      date: '12/09/2026',
+      timestamp: new Date('2026-09-12T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '3 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
+    {
+      id: 'andre-a-3-20260910',
+      date: '10/09/2026',
+      timestamp: new Date('2026-09-10T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '3 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
+    {
+      id: 'andre-b-2-20260909',
+      date: '09/09/2026',
+      timestamp: new Date('2026-09-09T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '2 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
+    {
+      id: 'andre-a-2-20260908',
+      date: '08/09/2026',
+      timestamp: new Date('2026-09-08T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '2 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
+    {
+      id: 'andre-b-1-20260905',
+      date: '05/09/2026',
+      timestamp: new Date('2026-09-05T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '1 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
+    {
+      id: 'andre-a-1-20260904',
+      date: '04/09/2026',
+      timestamp: new Date('2026-09-04T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '1 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    }
+  ];
 
   // Removed strict auth redirect to allow offline/unauthenticated access to default data
   // useEffect(() => {
@@ -978,12 +1188,12 @@ export default function App() {
               idadeReal: 36,
             }
           ], 
-          workoutHistory: [], 
+          workoutHistory: andreHistory, 
           analytics: {
-            sessionsCompleted: 0,
-            streakDays: 0,
+            sessionsCompleted: 11,
+            streakDays: 5,
             exercises: {} as Record<string, { completed: number; skipped: number }>,
-            lastSessionDate: ''
+            lastSessionDate: '19/09/2026'
           },
           sexo: 'Masculino', 
           periodization: {
@@ -1066,22 +1276,23 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 0,
-          faseAjusteB: 0,
+          faseAjusteA: 6,
+          faseAjusteB: 5,
           faseAjusteC: 0,
-          totalGlobalA: 0,
-          totalGlobalB: 0,
+          totalGlobalA: 6,
+          totalGlobalB: 5,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 0, targetCount: 36 },
+          trainingProgress: { completedCount: 11, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 0, B: 0, C: 0 }
+            progress: { A: 6, B: 5, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 0, B: 0, C: 0 }
-          },
+            '3 x 13': { A: 6, B: 5, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 5, C: 0 }
+          } as Record<string, { A: number; B: number; C: number }>,
           workouts: [
             {
               id: 'treino-a-andre',

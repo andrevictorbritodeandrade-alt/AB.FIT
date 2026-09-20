@@ -22,6 +22,7 @@ export interface Exercise {
 export interface Workout {
   id: string;
   title: string;
+  description?: string;
   exercises: Exercise[];
   startDate?: string;
   endDate?: string;
