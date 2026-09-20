@@ -722,15 +722,11 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
   const countA = isLiliane
     ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
-    : isAndre
-      ? Math.max(6, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a)
-      : Math.max(localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a);
+    : Math.max(localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a);
 
   const countB = isLiliane
     ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
-    : isAndre
-      ? Math.max(5, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b)
-      : Math.max(localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b);
+    : Math.max(localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b);
 
   const countC = isLiliane
     ? (localCounters.C ?? user.activePlan?.progress?.C ?? 0)

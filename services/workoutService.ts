@@ -142,9 +142,21 @@ export const finalizarTreinoNoCliente = async (
         const subProg = { ...(prevProg[pKey] || { A: 0, B: 0, C: 0 }) };
         subProg[workoutType] = novaContagem;
 
+        // Calcula novo total global de treinos para este aluno
+        const currentGlobalTotal = (aData.trainingProgress?.completedCount || 0) + 1;
+
         transaction.set(alunoRef, {
           [`faseAjuste${workoutType}`]: novaContagem,
           [`totalGlobal${workoutType}`]: (aData[`totalGlobal${workoutType}`] || 0) + 1,
+          trainingProgress: {
+            ...(aData.trainingProgress || { targetCount: 36 }),
+            completedCount: currentGlobalTotal
+          },
+          analytics: {
+            ...(aData.analytics || {}),
+            sessionsCompleted: currentGlobalTotal,
+            lastSessionDate: new Date().toLocaleDateString('pt-BR')
+          },
           activePlan: {
             ...(aData.activePlan || {}),
             targetSets,

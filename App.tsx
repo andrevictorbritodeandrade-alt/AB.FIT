@@ -477,75 +477,53 @@ export default function App() {
   // One-time migration/reset for André and Marcelly
   useEffect(() => {
     if (authReady && students.length > 0) {
+      // Remoção dos blocos de migração que estavam sobrescrevendo dados do Firestore
+      // O App agora confia exclusivamente na "Fonte da Verdade" (Firebase)
+    }
+  }, [authReady, students.length]);
+
+  // One-time manual fix to restore corrupted data for André and Marcelly
+  useEffect(() => {
+    const fixKey = '_fix_database_v20260920_final';
+    if (authReady && students.length > 0 && !localStorage.getItem(fixKey)) {
       const andre = students.find(s => s.id === 'fixed-andre' || s.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com');
       const marcelly = students.find(s => s.nome?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('marcelly bispo'));
-      
-      const resetStudentData = async (student: Student, name: string) => {
-          console.log(`[MIGRATION] Resetting data for ${name} (v10)...`);
-          const updates: any = {
-              _reset20260805_v10: true
-          };
-          
-          if (student.workouts) {
-            updates.workouts = student.workouts.map(w => ({
-              ...w,
-              exercises: w.exercises.map(ex => {
-                let newReps = '13';
-                const exName = ex.name.toUpperCase();
-                if (name === 'André' && ['LEG PRESS HORIZONTAL', 'LEG PRESS HORIZONTAL UNILATERAL', 'CADEIRA EXTENSORA', 'CADEIRA EXTENSORA UNILATERAL'].includes(exName)) {
-                  newReps = '13/13/13';
-                }
-                return { ...ex, reps: newReps, rest: name === 'André' ? '20s' : '25s' };
-              })
-            }));
-          }
-          
-          await handleSaveData(student.id, updates);
-      };
 
-      if (andre && !andre._reset20260805_v10) resetStudentData(andre, 'André');
-      if (marcelly && !marcelly._reset20260805_v10) resetStudentData(marcelly, 'Marcelly');
-
-      // Sync André workout counts & history (Treino A: 6 de 18, Treino B: 5 de 18, total 11 treinos, 30min duração e cargas mantidas)
-      if (andre && (andre.faseAjusteA !== 6 || andre.faseAjusteB !== 5 || !(andre as any)._syncAndreCounts20260919_v3)) {
-        console.log("[MIGRATION] Sincronizando contagem do André Brito (Treino A: 6/18, Treino B: 5/18) e histórico completo (v3)...");
-        const updates: any = {
-          _syncAndreCounts20260919_v3: true,
+      if (andre) {
+        console.log("[FIX] Restaurando dados do André Brito...");
+        handleSaveData(andre.id, {
           faseAjusteA: 6,
-          faseAjusteB: 5,
-          faseAjusteC: 0,
+          faseAjusteB: 6,
           totalGlobalA: 6,
-          totalGlobalB: 5,
-          totalGlobalC: 0,
-          trainingProgress: { completedCount: 11, targetCount: 36 },
+          totalGlobalB: 6,
+          trainingProgress: { completedCount: 12, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 6, B: 5, C: 0 }
-          },
-          periodizationProgress: {
-            '3 x 13': { A: 6, B: 5, C: 0 },
-            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 5, C: 0 }
-          },
-          workoutHistory: andreHistory,
-          analytics: {
-            sessionsCompleted: 11,
-            streakDays: 5,
-            lastSessionDate: '19/09/2026',
-            exercises: andre.analytics?.exercises || {}
+            progress: { A: 6, B: 6, C: 0 }
           }
-        };
-        try {
-          localStorage.setItem('contagemTreinos_fixed-andre', JSON.stringify({ A: 6, B: 5, C: 0 }));
-          localStorage.setItem('contagemTreinos_andrevictorbritodeandrade@gmail.com', JSON.stringify({ A: 6, B: 5, C: 0 }));
-        } catch (err) {
-          console.warn(err);
-        }
-        handleSaveData(andre.id, updates);
-        if (andre.id !== 'fixed-andre') handleSaveData('fixed-andre', updates);
-        if (andre.id !== 'andrevictorbritodeandrade@gmail.com') handleSaveData('andrevictorbritodeandrade@gmail.com', updates);
+        });
       }
+
+      if (marcelly) {
+        console.log("[FIX] Restaurando dados da Marcelly Bispo...");
+        handleSaveData(marcelly.id, {
+          faseAjusteA: 3,
+          faseAjusteB: 4,
+          totalGlobalA: 3,
+          totalGlobalB: 4,
+          trainingProgress: { completedCount: 7, targetCount: 36 },
+          activePlan: {
+            id: 'current',
+            phaseName: 'Fase 1: Retorno & Adaptação (18 Sessões)',
+            targetSets: 18,
+            progress: { A: 3, B: 4, C: 0 }
+          }
+        });
+      }
+
+      localStorage.setItem(fixKey, 'true');
     }
   }, [authReady, students.length]);
 
@@ -1279,21 +1257,21 @@ export default function App() {
             ]
           },
           faseAjusteA: 6,
-          faseAjusteB: 5,
+          faseAjusteB: 6,
           faseAjusteC: 0,
           totalGlobalA: 6,
-          totalGlobalB: 5,
+          totalGlobalB: 6,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 11, targetCount: 36 },
+          trainingProgress: { completedCount: 12, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 6, B: 5, C: 0 }
+            progress: { A: 6, B: 6, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 6, B: 5, C: 0 },
-            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 5, C: 0 }
+            '3 x 13': { A: 6, B: 6, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 6, C: 0 }
           } as Record<string, { A: number; B: number; C: number }>,
           workouts: [
             {
@@ -1631,21 +1609,21 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 1,
-          faseAjusteB: 2,
+          faseAjusteA: 3,
+          faseAjusteB: 4,
           faseAjusteC: 0,
-          totalGlobalA: 1,
-          totalGlobalB: 2,
+          totalGlobalA: 3,
+          totalGlobalB: 4,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 3, targetCount: 36 },
+          trainingProgress: { completedCount: 7, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Mesociclo 16 - Hipertrofia',
             targetSets: 18,
-            progress: { A: 1, B: 2, C: 0 }
+            progress: { A: 3, B: 4, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 1, B: 2, C: 0 }
+            '3 x 13': { A: 3, B: 4, C: 0 }
           },
           workouts: [
             {
@@ -2705,13 +2683,13 @@ export default function App() {
   const handleFinishWorkout = async (post: WorkoutHistoryEntry) => {
     if (!studentForView) return;
 
-    // 1. Determinar o tipo de treino (A, B ou C)
+    // 1. Identificar o tipo de treino (A, B ou C)
     const title = (post.name || '').toLowerCase();
     let tipoTreino: 'A' | 'B' | 'C' = 'A';
     if (title.includes('treino b') || post.workoutId?.includes('-b')) tipoTreino = 'B';
     else if (title.includes('treino c') || post.workoutId?.includes('-c')) tipoTreino = 'C';
 
-    // 2. Calcular dados do treino
+    // 2. Calcular dados para salvar
     const rawDuration = post.duration || '00:00';
     const parts = rawDuration.split(':');
     const duracaoMinutos = Math.max(1, (parseInt(parts[0], 10) || 0) + Math.ceil((parseInt(parts[1], 10) || 0) / 60));
@@ -2722,68 +2700,85 @@ export default function App() {
       unidade: ex.loadUnit || 'Kg'
     }));
 
-    // 3. Chamar o serviço de salvamento (Transação Atômica no Cliente)
-    const result = await finalizarTreinoNoCliente(studentForView.id, tipoTreino, {
-      planId: 'current',
-      workoutName: post.name || `Treino ${tipoTreino}`,
-      duration: post.duration || '00:00',
-      duracaoMinutos,
-      calorias: Math.ceil(duracaoMinutos * 7), // Cálculo de calorias
-      exercises: post.exercises || [],
-      cargas: cargas,
-      athleteName: studentForView.nome,
-      timestamp: Date.now() // Para ordenação local
-    });
+    setSyncStatus('syncing'); // Mostra a rodinha girando
 
-    if (result.success) {
-      // 4. Atualizar o estado local APENAS para feedback visual imediato
-      // O onSnapshot vai puxar os dados reais do Firebase em seguida.
-      const updatedHistory: WorkoutHistoryEntry[] = [{
-        ...post,
-        id: `temp-${Date.now()}`,
-        date: new Date().toLocaleDateString('pt-BR'),
-        timestamp: Date.now(),
-        type: 'STRENGTH'
-      }, ...(studentForView.workoutHistory || [])];
+    try {
+      // 3. Salva o histórico de forma permanente no Firestore
+      const historyRef = collection(db, `users/${studentForView.id}/workout_history`);
+      await addDoc(historyRef, {
+        planId: 'current',
+        workoutType: tipoTreino,
+        workoutName: post.name || `Treino ${tipoTreino}`,
+        duration: post.duration || '00:00',
+        duracaoMinutos,
+        calorias: Math.ceil(duracaoMinutos * 7),
+        exercises: post.exercises || [],
+        cargas: cargas,
+        dateCompleted: serverTimestamp(), // Data correta do servidor
+        timestamp: Date.now()
+      });
 
-      const currentProgress = studentForView.activePlan?.progress || { A: 0, B: 0, C: 0 };
-      const newCount = result.novaContagem !== undefined ? result.novaContagem : ((currentProgress[tipoTreino] || 0) + 1);
-
-      setSelectedStudent(prev => prev ? ({
-        ...prev,
-        workoutHistory: updatedHistory,
-        [`faseAjuste${tipoTreino}`]: newCount,
-        [`totalGlobal${tipoTreino}`]: (prev[`totalGlobal${tipoTreino}`] || 0) + 1,
-        activePlan: {
-          ...(prev.activePlan || { id: 'current', phaseName: 'Fase 1: Retorno & Adaptação', targetSets: 18 }),
-          progress: {
-            ...currentProgress,
-            [tipoTreino]: newCount
-          }
+      // 4. Atualiza a contagem atômica no plano ativo (NUNCA falha)
+      const planRef = doc(db, `users/${studentForView.id}/active_plans`, 'current');
+      
+      await runTransaction(db, async (transaction) => {
+        const planDoc = await transaction.get(planRef);
+        
+        if (!planDoc.exists()) {
+          transaction.set(planRef, {
+            phaseName: 'Fase 1: Retorno & Adaptação',
+            targetSets: 18,
+            progress: { A: tipoTreino === 'A' ? 1 : 0, B: tipoTreino === 'B' ? 1 : 0, C: tipoTreino === 'C' ? 1 : 0 },
+            updatedAt: serverTimestamp()
+          });
+          return;
         }
-      }) : null);
 
-      setStudents(prev => prev.map(s => s.id === studentForView.id ? {
-        ...s,
-        workoutHistory: updatedHistory,
-        [`faseAjuste${tipoTreino}`]: newCount,
-        [`totalGlobal${tipoTreino}`]: (s[`totalGlobal${tipoTreino}`] || 0) + 1,
-        activePlan: {
-          ...(s.activePlan || { id: 'current', phaseName: 'Fase 1: Retorno & Adaptação', targetSets: 18 }),
-          progress: {
-            ...currentProgress,
-            [tipoTreino]: newCount
-          }
-        }
-      } : s));
+        const planData = planDoc.data();
+        const currentProgress = planData.progress || { A: 0, B: 0, C: 0 };
+        const newCount = (currentProgress[tipoTreino] || 0) + 1;
 
-      if (result.notificacaoNecessaria) {
-        setWorkoutAlertNotification(result.notificacaoNecessaria);
-      } else {
-        setWorkoutAlertNotification('Treino salvo com sucesso!');
-      }
-    } else {
-      alert(result.message);
+        transaction.update(planRef, {
+          [`progress.${tipoTreino}`]: newCount,
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      // 5. Atualiza o contador global (GLOBAL: X DE Y)
+      const userProgressRef = doc(db, 'userProgress', studentForView.id);
+      await setDoc(userProgressRef, { 
+        totalWorkouts: increment(1), 
+        lastWorkoutAt: serverTimestamp() 
+      }, { merge: true });
+
+      // 6. Feedback visual instantâneo (O onSnapshot vai atualizar o resto)
+      setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
+      
+      // Atualiza o estado local para não esperar o onSnapshot (opcional, mas ajuda na sensação de velocidade)
+      setSelectedStudent(prev => {
+          if (!prev) return null;
+          const updatedProgress = (prev.activePlan?.progress as any) || { A: 0, B: 0, C: 0 };
+          const newCount = (updatedProgress[tipoTreino as keyof typeof updatedProgress] || 0) + 1;
+          return {
+              ...prev,
+              activePlan: {
+                  ...prev.activePlan,
+                  phaseName: prev.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação',
+                  targetSets: prev.activePlan?.targetSets || 18,
+                  progress: { ...updatedProgress, [tipoTreino]: newCount }
+              },
+              trainingProgress: {
+                  targetCount: prev.trainingProgress?.targetCount || 36,
+                  completedCount: (prev.trainingProgress?.completedCount || 0) + 1
+              }
+          };
+      });
+
+      setSyncStatus('synced');
+    } catch (error) {
+      console.error("Erro ao salvar treino:", error);
+      setSyncStatus('offline');
+      alert("Erro ao salvar o treino. Verifique sua conexão e tente novamente.");
     }
   };
 
@@ -3053,14 +3048,10 @@ export default function App() {
                 const targetSets = isLiliane ? 32 : (studentForView.activePlan?.targetSets || 18);
                 const countA = isLiliane 
                   ? (studentForView.activePlan?.progress?.A ?? 0) 
-                  : isAndre 
-                    ? Math.max(6, studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0)
-                    : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
+                  : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
                 const countB = isLiliane 
                   ? (studentForView.activePlan?.progress?.B ?? 0) 
-                  : isAndre 
-                    ? Math.max(5, studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0)
-                    : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
+                  : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
                 const countC = isLiliane
                   ? (studentForView.activePlan?.progress?.C ?? 0)
                   : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
@@ -3132,15 +3123,19 @@ export default function App() {
                   progressText = `Semana ${curWk} de ${totalWks}`;
                 } else if (isWorkouts) {
                   const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
-                  const isAndreForW = studentForView.id === 'fixed-andre' || studentForView.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || studentForView.nome?.toLowerCase().includes('andré');
-                  const countAVal = isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : isAndreForW ? Math.max(6, studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0) : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
-                  const countBVal = isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : isAndreForW ? Math.max(5, studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0) : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
+                  const countAVal = isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
+                  const countBVal = isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
                   const countCVal = isLiliane ? (studentForView.activePlan?.progress?.C ?? 0) : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
                   const currentPlanSum = countAVal + countBVal + countCVal;
                   
-                  // Use a soma calculada se o global Workout Count estiver zerado ou defasado
-                  const displayGlobalCount = studentForView.trainingProgress?.completedCount || Math.max(globalWorkoutCount, currentPlanSum);
-                  const targetCount = studentForView.trainingProgress?.targetCount || 86;
+                  // Fonte da verdade: Maior valor entre o progresso acumulado, o contador global do perfil e o contador global da coleção de stats
+                  const displayGlobalCount = Math.max(
+                    studentForView.trainingProgress?.completedCount || 0,
+                    studentForView.analytics?.sessionsCompleted || 0,
+                    currentPlanSum,
+                    globalWorkoutCount
+                  );
+                  const targetCount = studentForView.trainingProgress?.targetCount || 36;
                   
                   progress = Math.min(100, Math.round((displayGlobalCount / targetCount) * 100));
                   progressText = `Global: ${displayGlobalCount} de ${targetCount}`;
