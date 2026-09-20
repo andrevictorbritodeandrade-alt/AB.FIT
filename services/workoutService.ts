@@ -33,7 +33,7 @@ export interface WorkoutHistoryRecord {
 export interface FinalizarTreinoResult {
   success: boolean;
   message: string;
-  notificacaoNecessaria: string | null;
+  notificacaoNecessaria?: string | null;
   novaContagem?: number;
   targetSets?: number;
   tipoTreino?: 'A' | 'B' | 'C';
@@ -41,30 +41,39 @@ export interface FinalizarTreinoResult {
 }
 
 /**
- * A Lógica Infalível de Salvar Treino (Transação Atômica no Firestore)
+ * Serviço dedicado para finalizar treino no cliente via Transação Atômica do Firestore
  */
-export async function finalizarTreino(
-  userId: string,
-  planId: string = 'current',
-  tipoTreino: 'A' | 'B' | 'C',
-  dadosDoTreino: Partial<WorkoutHistoryRecord> = {}
-): Promise<FinalizarTreinoResult> {
+export const finalizarTreinoNoCliente = async (
+  userId: string, 
+  workoutType: 'A' | 'B' | 'C', 
+  workoutData: any
+): Promise<FinalizarTreinoResult> => {
   try {
-    const activePlanId = planId || 'current';
-    const isLiliane = userId === 'fixed-liliane';
-    const defaultTarget = isLiliane ? 32 : 18;
-    const defaultPhase = isLiliane ? "Treino A e Treino B (32 Sessões)" : "Fase 1: Retorno & Adaptação (18 Sessões)";
-    let notificacaoNecessaria: string | null = null;
-    let novaContagem = 1;
-    let targetSets = defaultTarget;
+    // 1. Salva o histórico permanentemente com a data do servidor
+    const historyRef = collection(db, `users/${userId}/workout_history`);
+    const historyRefAlunos = collection(db, `alunos/${userId}/workout_history`);
+    
+    const historyPayload = {
+      ...workoutData,
+      workoutType,
+      dateCompleted: serverTimestamp(), // Data correta do servidor
+      createdAt: serverTimestamp()
+    };
 
-    const planRef = doc(db, `users/${userId}/active_plans/${activePlanId}`);
-    const historyRef = doc(collection(db, `users/${userId}/workout_history`));
+    await addDoc(historyRef, historyPayload).catch(() => {});
+    await addDoc(historyRefAlunos, historyPayload).catch(() => {});
+
+    // 2. Atualiza a contagem atômica no plano ativo e nas coleções relacionadas
+    const planRef = doc(db, `users/${userId}/active_plans`, 'current');
+    const planRefAlunos = doc(db, `alunos/${userId}/active_plans`, 'current');
     const statsRef = doc(db, `user_stats/${userId}`);
     const alunoRef = doc(db, 'alunos', userId);
-    const planRefAlunos = doc(db, `alunos/${userId}/active_plans/${activePlanId}`);
-    const historyRefAlunos = doc(collection(db, `alunos/${userId}/workout_history`));
+    const userProgressRef = doc(db, 'userProgress', userId);
 
+    let novaContagem = 1;
+    let targetSets = userId === 'fixed-liliane' ? 32 : 18;
+    let notificacaoNecessaria: string | null = null;
+    
     await runTransaction(db, async (transaction) => {
       let planDoc = await transaction.get(planRef);
       if (!planDoc.exists()) {
@@ -73,83 +82,75 @@ export async function finalizarTreino(
           planDoc = altDoc;
         }
       }
-      const statsDoc = await transaction.get(statsRef);
-      const alunoDoc = await transaction.get(alunoRef);
       
-      // 1. Atualizar Active Plan
       if (!planDoc.exists()) {
-        targetSets = defaultTarget;
+        // Se não existe, cria o plano com o primeiro treino
         novaContagem = 1;
-        const initialProgress = { A: 0, B: 0, C: 0 };
-        initialProgress[tipoTreino] = 1;
-        
-        const planPayload = {
-          phaseName: defaultPhase,
-          targetSets: defaultTarget,
-          progress: initialProgress,
-          updatedAt: serverTimestamp()
-        };
-        transaction.set(planRef, planPayload);
-        transaction.set(planRefAlunos, planPayload);
-      } else {
-        const planData = planDoc.data() as any;
-        targetSets = isLiliane ? 32 : (planData.targetSets || defaultTarget);
-        const progress = planData.progress || { A: 0, B: 0, C: 0 };
-        novaContagem = (progress[tipoTreino] || 0) + 1;
-        
-        const updatePayload = {
-          phaseName: planData.phaseName || defaultPhase,
+        const initialPlan = {
+          phaseName: userId === 'fixed-liliane' ? 'Treino A e Treino B (32 Sessões)' : 'Fase 1: Retorno & Adaptação (18 Sessões)',
           targetSets,
-          progress: {
-            ...progress,
-            [tipoTreino]: novaContagem
-          },
+          progress: { A: workoutType === 'A' ? 1 : 0, B: workoutType === 'B' ? 1 : 0, C: workoutType === 'C' ? 1 : 0 },
           updatedAt: serverTimestamp()
         };
-        transaction.set(planRef, updatePayload, { merge: true });
-        transaction.set(planRefAlunos, updatePayload, { merge: true });
+        transaction.set(planRef, initialPlan);
+        transaction.set(planRefAlunos, initialPlan);
+      } else {
+        const planData = planDoc.data() || {};
+        targetSets = userId === 'fixed-liliane' ? 32 : (planData.targetSets || 18);
+        const currentProgress = planData.progress || { A: 0, B: 0, C: 0 };
+        novaContagem = (currentProgress[workoutType] || 0) + 1;
+
+        const updatedProgress = {
+          ...currentProgress,
+          [workoutType]: novaContagem
+        };
+
+        transaction.set(planRef, {
+          progress: updatedProgress,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        transaction.set(planRefAlunos, {
+          progress: updatedProgress,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       }
 
-      // 2. Adiciona o histórico nas coleções do Firestore
-      const historyPayload = {
-        planId: activePlanId,
-        workoutType: tipoTreino,
-        dateCompleted: serverTimestamp(),
-        volumeTotal: dadosDoTreino.volumeTotal || 0.0,
-        workoutName: dadosDoTreino.workoutName || `Treino ${tipoTreino}`,
-        duration: dadosDoTreino.duration || '00:00',
-        duracaoMinutos: dadosDoTreino.duracaoMinutos || 0,
-        calorias: dadosDoTreino.calorias || 0,
-        exercises: dadosDoTreino.exercises || [],
-        photoUrl: dadosDoTreino.photoUrl || null
-      };
-      transaction.set(historyRef, historyPayload);
-      transaction.set(historyRefAlunos, historyPayload);
+      // Atualiza userProgress
+      const upDoc = await transaction.get(userProgressRef);
+      const totalGlobal = upDoc.exists() ? ((upDoc.data().totalWorkouts || 0) + 1) : novaContagem;
+      transaction.set(userProgressRef, {
+        totalWorkouts: totalGlobal,
+        lastWorkoutAt: serverTimestamp(),
+        lastWorkoutName: workoutData.workoutName || `Treino ${workoutType}`
+      }, { merge: true });
 
-      // 3. Atualizar User Stats Globais
-      const currentGlobalCount = statsDoc.exists() ? (statsDoc.data().totalWorkouts || 0) : 0;
+      // Atualiza user_stats
+      const statsDoc = await transaction.get(statsRef);
+      const currentStats = statsDoc.exists() ? (statsDoc.data().totalWorkouts || 0) : 0;
       transaction.set(statsRef, {
-        totalWorkouts: currentGlobalCount + 1,
+        totalWorkouts: currentStats + 1,
         lastWorkoutAt: serverTimestamp()
       }, { merge: true });
 
-      // 4. Update fallback inside `alunos` for legacy compatibility
-      if (alunoDoc.exists()) {
-        const aData = alunoDoc.data();
+      // Atualiza documento aluno se existir
+      const aDoc = await transaction.get(alunoRef);
+      if (aDoc.exists()) {
+        const aData = aDoc.data();
         const pKey = '3 x 13';
         const prevProg = aData.periodizationProgress || {};
         const subProg = { ...(prevProg[pKey] || { A: 0, B: 0, C: 0 }) };
-        subProg[tipoTreino] = novaContagem;
-        
+        subProg[workoutType] = novaContagem;
+
         transaction.set(alunoRef, {
-          [`faseAjuste${tipoTreino}`]: novaContagem,
-          [`totalGlobal${tipoTreino}`]: (aData[`totalGlobal${tipoTreino}`] || 0) + 1,
+          [`faseAjuste${workoutType}`]: novaContagem,
+          [`totalGlobal${workoutType}`]: (aData[`totalGlobal${workoutType}`] || 0) + 1,
           activePlan: {
             ...(aData.activePlan || {}),
             targetSets,
             progress: {
               ...(aData.activePlan?.progress || {}),
-              [tipoTreino]: novaContagem
+              [workoutType]: novaContagem
             }
           },
           periodizationProgress: {
@@ -161,29 +162,39 @@ export async function finalizarTreino(
       }
 
       if (novaContagem === 6 || novaContagem === 12) {
-        notificacaoNecessaria = `Atenção: Você concluiu o treino ${tipoTreino} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
+        notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
       } else if (novaContagem === targetSets) {
-        notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${tipoTreino}. Última sessão antes de mudar a periodização!`;
+        notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${workoutType}. Última sessão antes de mudar a periodização!`;
       }
     });
 
-    return {
-      success: true,
-      message: "Treino salvo com sucesso!",
-      notificacaoNecessaria,
+    return { 
+      success: true, 
+      message: 'Treino salvo com sucesso!',
       novaContagem,
       targetSets,
-      tipoTreino
+      tipoTreino: workoutType,
+      notificacaoNecessaria
     };
   } catch (error) {
-    console.error("Erro ao salvar treino na transação atômica:", error);
-    return {
-      success: false,
-      message: "Erro ao salvar. Tente novamente.",
-      notificacaoNecessaria: null,
-      error
-    };
+    console.error("Erro ao finalizar treino:", error);
+    return { success: false, message: 'Erro ao salvar treino.', error };
   }
+};
+
+/**
+ * Função unificada para salvar treino (compatível com finalizarTreinoNoCliente)
+ */
+export async function finalizarTreino(
+  userId: string,
+  planId: string = 'current',
+  tipoTreino: 'A' | 'B' | 'C',
+  dadosDoTreino: Partial<WorkoutHistoryRecord> = {}
+): Promise<FinalizarTreinoResult> {
+  return finalizarTreinoNoCliente(userId, tipoTreino, {
+    planId,
+    ...dadosDoTreino
+  });
 }
 
 export function subscribeToActivePlan(

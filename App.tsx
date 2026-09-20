@@ -47,7 +47,7 @@ import {
   increment 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry } from './types';
-import { finalizarTreino, subscribeToActivePlan, subscribeToUserStats, subscribeToWorkoutHistory } from './services/workoutService';
+import { finalizarTreino, finalizarTreinoNoCliente, subscribeToActivePlan, subscribeToUserStats, subscribeToWorkoutHistory } from './services/workoutService';
 import { useTheme } from './components/ThemeContext';
 
 const removeUndefined = (obj: any): any => {
@@ -1766,288 +1766,8 @@ export default function App() {
                       }
                   });
                   
-                  // Force clean workouts and session recount for Andre
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-3x13-v30-andre-fix-counts-inner-view') {
-                          (rawData as any)._planRevision = '18-sessoes-3x13-v30-andre-fix-counts-inner-view';
-                          rawData.workouts = defaultProfile.workouts || [];
-                          currentWorkouts = defaultProfile.workouts || [];
-                          rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = 5;
-                          rawData.faseAjusteB = 5;
-                          rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
-                          rawData.totalGlobalA = 5;
-                          rawData.totalGlobalB = 5;
-                          rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
-                          rawData.activePlan = {
-                            id: 'current',
-                            phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                            targetSets: 18,
-                            progress: { A: 5, B: 5, C: 0 }
-                          };
-                          rawData.trainingProgress = { completedCount: 10, targetCount: 36 };
-                          rawData.periodizationProgress = {
-                            ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 5, B: 5, C: 0 }
-                          };
-                          
-                          const exTreinoA = [
-                            { name: 'Leg press horizontal/máquina', load: '50 Kg' },
-                            { name: 'Agachamento no aparelho hack machine', load: '-- Kg' },
-                            { name: 'Cadeira extensora', load: '15 Kg' },
-                            { name: 'Cadeira extensora unilateral', load: '5 Kg' },
-                            { name: 'Supino aberto na máquina', load: '20 Kg' },
-                            { name: 'Supino aberto no banco inclinado na máquina', load: '2,5 Kg' },
-                            { name: 'Desenvolvimento aberto máquina', load: '10 Kg' },
-                            { name: 'Tríceps em pé no Cross barra reta', load: '20 Kg' },
-                            { name: 'Abdominal na máquina crunch', load: '5 Kg' }
-                          ];
-
-                          const exTreinoB = [
-                            { name: 'Stiff em pé com HBC ou HBM', load: '10 Kg' },
-                            { name: 'Extensão de quadril na máquina', load: '15 Kg' },
-                            { name: 'Cadeira abdutora', load: '25 Kg' },
-                            { name: 'Cadeira flexora', load: '20 Kg' },
-                            { name: 'Remada aberta na máquina', load: '20 Kg' },
-                            { name: 'Remada fechada na máquina', load: '25 Kg' },
-                            { name: 'Puxada fechada com triângulo no pulley alto', load: '25 Kg' },
-                            { name: 'Bíceps em pé no cross barra reta', load: '15 Kg' },
-                            { name: 'Abdominal na máquina crunch', load: '5 Kg' }
-                          ];
-
-                          const andreHistory: WorkoutHistoryEntry[] = [
-                            {
-                              id: 'andre-hist-a5-hoje',
-                              workoutId: 'treino-a-andre',
-                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
-                              type: 'STRENGTH',
-                              date: '19/09/2026',
-                              timestamp: new Date(2026, 8, 19, 10, 30, 0).getTime(),
-                              duration: '30 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '5ª Sessão do Treino A (5 de 18)',
-                              exercises: exTreinoA
-                            },
-                            {
-                              id: 'andre-hist-b5',
-                              workoutId: 'treino-b-andre',
-                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
-                              type: 'STRENGTH',
-                              date: '17/09/2026',
-                              timestamp: new Date(2026, 8, 17, 18, 30, 0).getTime(),
-                              duration: '50 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '5ª Sessão do Treino B (5 de 18)',
-                              exercises: exTreinoB
-                            },
-                            {
-                              id: 'andre-hist-a4',
-                              workoutId: 'treino-a-andre',
-                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
-                              type: 'STRENGTH',
-                              date: '16/09/2026',
-                              timestamp: new Date(2026, 8, 16, 18, 30, 0).getTime(),
-                              duration: '52 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '4ª Sessão do Treino A (4 de 18)',
-                              exercises: exTreinoA
-                            },
-                            {
-                              id: 'andre-hist-b4',
-                              workoutId: 'treino-b-andre',
-                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
-                              type: 'STRENGTH',
-                              date: '12/09/2026',
-                              timestamp: new Date(2026, 8, 12, 11, 0, 0).getTime(),
-                              duration: '48 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '4ª Sessão do Treino B (4 de 18)',
-                              exercises: exTreinoB
-                            },
-                            {
-                              id: 'andre-hist-a3',
-                              workoutId: 'treino-a-andre',
-                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
-                              type: 'STRENGTH',
-                              date: '11/09/2026',
-                              timestamp: new Date(2026, 8, 11, 18, 15, 0).getTime(),
-                              duration: '55 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '3ª Sessão do Treino A (3 de 18)',
-                              exercises: exTreinoA
-                            },
-                            {
-                              id: 'andre-hist-b3',
-                              workoutId: 'treino-b-andre',
-                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
-                              type: 'STRENGTH',
-                              date: '10/09/2026',
-                              timestamp: new Date(2026, 8, 10, 18, 0, 0).getTime(),
-                              duration: '50 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '3ª Sessão do Treino B (3 de 18)',
-                              exercises: exTreinoB
-                            },
-                            {
-                              id: 'andre-hist-a2',
-                              workoutId: 'treino-a-andre',
-                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
-                              type: 'STRENGTH',
-                              date: '08/09/2026',
-                              timestamp: new Date(2026, 8, 8, 18, 30, 0).getTime(),
-                              duration: '50 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '2ª Sessão do Treino A (2 de 18)',
-                              exercises: exTreinoA
-                            },
-                            {
-                              id: 'andre-hist-b2',
-                              workoutId: 'treino-b-andre',
-                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
-                              type: 'STRENGTH',
-                              date: '07/09/2026',
-                              timestamp: new Date(2026, 8, 7, 18, 30, 0).getTime(),
-                              duration: '48 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '2ª Sessão do Treino B (2 de 18)',
-                              exercises: exTreinoB
-                            },
-                            {
-                              id: 'andre-hist-b1',
-                              workoutId: 'treino-b-andre',
-                              name: 'TREINO B (QUARTAS, SÁBADOS E DOMINGOS)',
-                              type: 'STRENGTH',
-                              date: '03/09/2026',
-                              timestamp: new Date(2026, 8, 3, 18, 0, 0).getTime(),
-                              duration: '45 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '1ª Sessão do Treino B (1 de 18)',
-                              exercises: exTreinoB
-                            },
-                            {
-                              id: 'andre-hist-a1',
-                              workoutId: 'treino-a-andre',
-                              name: 'TREINO A (TERÇAS, QUINTAS E SÁBADOS)',
-                              type: 'STRENGTH',
-                              date: '01/09/2026',
-                              timestamp: new Date(2026, 8, 1, 18, 0, 0).getTime(),
-                              duration: '50 min',
-                              completedExercises: 9,
-                              periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              countText: '1ª Sessão do Treino A (1 de 18)',
-                              exercises: exTreinoA
-                            }
-                          ];
-
-                          rawData.workoutHistory = andreHistory;
-                          workoutsModified = true;
-                          hasCloudChanges = true;
-
-                          // Direct async push to active_plans subcollections to fix cloud sync immediately
-                          try {
-                            const apPayload = {
-                              phaseName: rawData.activePlan.phaseName,
-                              targetSets: 18,
-                              progress: { A: 5, B: 5, C: 0 },
-                              updatedAt: serverTimestamp()
-                            };
-                            setDoc(doc(db, `alunos/${targetId}/active_plans/current`), apPayload, { merge: true }).catch(() => {});
-                            setDoc(doc(db, `users/${targetId}/active_plans/current`), apPayload, { merge: true }).catch(() => {});
-
-                            andreHistory.forEach(h => {
-                              const hPayload = {
-                                planId: 'current',
-                                workoutType: h.workoutId?.includes('-b') ? 'B' : 'A',
-                                workoutName: h.name,
-                                dateCompleted: new Date(h.timestamp),
-                                timestamp: h.timestamp,
-                                duration: h.duration,
-                                exercises: h.exercises || [],
-                                countText: h.countText
-                              };
-                              setDoc(doc(db, `alunos/${targetId}/workout_history/${h.id}`), hPayload, { merge: true }).catch(() => {});
-                              setDoc(doc(db, `users/${targetId}/workout_history/${h.id}`), hPayload, { merge: true }).catch(() => {});
-                            });
-                          } catch (e) {
-                            console.warn("Error syncing Andre activePlan/history to subcollections:", e);
-                          }
-                      } else {
-                          currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-andre');
-                          workoutsModified = true;
-                      }
-                  }
-                  
-                  // Force clean workouts for Marcelly
-                  if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      if ((rawData as any)._planRevision !== '18-sessoes-marcelly-split-ab-v4') {
-                          (rawData as any)._planRevision = '18-sessoes-marcelly-split-ab-v4';
-                          rawData.workouts = defaultProfile.workouts || [];
-                          currentWorkouts = defaultProfile.workouts || [];
-                          rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = 2;
-                          rawData.faseAjusteB = 2;
-                          rawData.faseAjusteC = rawData.faseAjusteC ?? 0;
-                          rawData.totalGlobalA = 2;
-                          rawData.totalGlobalB = 2;
-                          rawData.totalGlobalC = rawData.totalGlobalC ?? 0;
-                          rawData.activePlan = {
-                            id: 'current',
-                            phaseName: defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global (18 Sessões)',
-                            targetSets: 18,
-                            progress: { A: 2, B: 2, C: 0 }
-                          };
-                          rawData.trainingProgress = { completedCount: 4, targetCount: 36 };
-                          rawData.periodizationProgress = {
-                            ...(rawData.periodizationProgress || {}),
-                            '3 x 13': { A: 2, B: 2, C: 0 }
-                          };
-                          workoutsModified = true;
-                          hasCloudChanges = true;
-                      } else {
-                          currentWorkouts = currentWorkouts.filter(w => w.id !== 'treino-c-marcelly');
-                          workoutsModified = true;
-                      }
-                  }
-
-                  // Force clean workouts and periodization for Liliane Torres
-                  if (defaultProfile.email === 'lilicatorres@gmail.com' || rawData.id === 'fixed-liliane') {
-                      if ((rawData as any)._planRevision !== '32-sessoes-liliane-ab-v1') {
-                          (rawData as any)._planRevision = '32-sessoes-liliane-ab-v1';
-                          rawData.workouts = defaultProfile.workouts || [];
-                          currentWorkouts = defaultProfile.workouts || [];
-                          rawData.periodization = defaultProfile.periodization;
-                          rawData.faseAjusteA = 0;
-                          rawData.faseAjusteB = 0;
-                          rawData.faseAjusteC = 0;
-                          rawData.totalGlobalA = 0;
-                          rawData.totalGlobalB = 0;
-                          rawData.totalGlobalC = 0;
-                          rawData.activePlan = defaultProfile.activePlan || {
-                            id: 'current',
-                            phaseName: 'Treino A e Treino B (32 Sessões)',
-                            targetSets: 32,
-                            progress: { A: 0, B: 0, C: 0 }
-                          };
-                          rawData.trainingProgress = { completedCount: 0, targetCount: 64 };
-                          rawData.periodizationProgress = {
-                            ...(rawData.periodizationProgress || {}),
-                            '13 Repetições': { A: 0, B: 0, C: 0 }
-                          };
-                          workoutsModified = true;
-                          hasCloudChanges = true;
-                      }
-                  }
-                  
-                  if (workoutsModified || !rawData.workouts) {
+                  // Workouts fallback if not present in Firestore
+                  if (workoutsModified || !rawData.workouts || rawData.workouts.length === 0) {
                       rawData.workouts = currentWorkouts;
                       hasCloudChanges = true;
                   }
@@ -2450,19 +2170,49 @@ export default function App() {
   }, [view, isCoach, isSidebarOpen]);
 
 
-  // Feed de Performance Global para o Professor
+  // Feed de Performance Global para o Professor e Aluno
   const globalFeedHistory = useMemo(() => {
-    if (!isCoach) return studentForView?.workoutHistory || [];
+    if (!isCoach) {
+      const list = studentForView?.workoutHistory || [];
+      return list.map(h => {
+        let dateString = h.date;
+        const ts = h.timestamp || ((h as any).dateCompleted?.seconds ? (h as any).dateCompleted.seconds * 1000 : null);
+        if (ts) {
+          dateString = new Date(ts).toLocaleDateString('pt-BR');
+        }
+        return {
+          ...h,
+          date: dateString,
+          athleteName: studentForView?.nome || 'Atleta'
+        };
+      }).sort((a, b) => {
+        const timeA = a.timestamp || ((a as any).dateCompleted?.seconds ? (a as any).dateCompleted.seconds * 1000 : 0);
+        const timeB = b.timestamp || ((b as any).dateCompleted?.seconds ? (b as any).dateCompleted.seconds * 1000 : 0);
+        return timeB - timeA;
+      });
+    }
     
     // Mescla todos os históricos de todos os alunos e injeta o nome do atleta
     const allHistory: WorkoutHistoryEntry[] = students.flatMap(s => 
-      (s.workoutHistory || []).map(h => ({
-        ...h,
-        athleteName: s.nome // Injeta o nome do aluno para o professor saber quem treinou
-      }))
+      (s.workoutHistory || []).map(h => {
+        let dateString = h.date;
+        const ts = h.timestamp || ((h as any).dateCompleted?.seconds ? (h as any).dateCompleted.seconds * 1000 : null);
+        if (ts) {
+          dateString = new Date(ts).toLocaleDateString('pt-BR');
+        }
+        return {
+          ...h,
+          date: dateString,
+          athleteName: s.nome // Injeta o nome do aluno para o professor saber quem treinou
+        };
+      })
     );
     
-    return allHistory.sort((a, b) => b.timestamp - a.timestamp);
+    return allHistory.sort((a, b) => {
+      const timeA = a.timestamp || ((a as any).dateCompleted?.seconds ? (a as any).dateCompleted.seconds * 1000 : 0);
+      const timeB = b.timestamp || ((b as any).dateCompleted?.seconds ? (b as any).dateCompleted.seconds * 1000 : 0);
+      return timeB - timeA;
+    });
   }, [isCoach, students, studentForView]);
 
   const studentNotifications = useMemo(() => {
@@ -2741,232 +2491,86 @@ export default function App() {
 
   const handleFinishWorkout = async (post: WorkoutHistoryEntry) => {
     if (!studentForView) return;
+
+    // 1. Determinar o tipo de treino (A, B ou C)
+    const title = (post.name || '').toLowerCase();
+    let tipoTreino: 'A' | 'B' | 'C' = 'A';
+    if (title.includes('treino b') || post.workoutId?.includes('-b')) tipoTreino = 'B';
+    else if (title.includes('treino c') || post.workoutId?.includes('-c')) tipoTreino = 'C';
+
+    // 2. Calcular dados do treino
+    const rawDuration = post.duration || '00:00';
+    const parts = rawDuration.split(':');
+    const duracaoMinutos = Math.max(1, (parseInt(parts[0], 10) || 0) + Math.ceil((parseInt(parts[1], 10) || 0) / 60));
     
-    try {
-      const currentHistory = studentForView.workoutHistory || [];
-      const updatedHistory = [post, ...currentHistory];
+    const cargas = (post.exercises || []).map(ex => ({
+      exercicio: ex.name,
+      carga: ex.load || '0',
+      unidade: ex.loadUnit || 'Kg'
+    }));
 
-      // Safe calculation of duration, calories and loads to avoid NaN
-      const rawDuration = post.duration || '00:00';
-      const parts = rawDuration.split(':');
-      const mins = parseInt(parts[0], 10) || 0;
-      const secs = parseInt(parts[1], 10) || 0;
-      const totalSecs = mins * 60 + secs;
-      const duracaoMinutos = Math.max(1, Math.ceil(totalSecs / 60));
-      const calorias = Math.max(1, Math.ceil(duracaoMinutos * 7));
+    // 3. Chamar o serviço de salvamento (Transação Atômica no Cliente)
+    const result = await finalizarTreinoNoCliente(studentForView.id, tipoTreino, {
+      planId: 'current',
+      workoutName: post.name || `Treino ${tipoTreino}`,
+      duration: post.duration || '00:00',
+      duracaoMinutos,
+      calorias: Math.ceil(duracaoMinutos * 7), // Cálculo de calorias
+      exercises: post.exercises || [],
+      cargas: cargas,
+      athleteName: studentForView.nome,
+      timestamp: Date.now() // Para ordenação local
+    });
 
-      const cargas = (post.exercises || []).map(ex => ({
-        exercicio: ex.name || 'Exercício',
-        carga: ex.load || '0',
-        unidade: ex.loadUnit || 'Kg'
-      }));
+    if (result.success) {
+      // 4. Atualizar o estado local APENAS para feedback visual imediato
+      // O onSnapshot vai puxar os dados reais do Firebase em seguida.
+      const updatedHistory: WorkoutHistoryEntry[] = [{
+        ...post,
+        id: `temp-${Date.now()}`,
+        date: new Date().toLocaleDateString('pt-BR'),
+        timestamp: Date.now(),
+        type: 'STRENGTH'
+      }, ...(studentForView.workoutHistory || [])];
 
-      const currentProgress = studentForView.trainingProgress || { completedCount: 0, targetCount: 60 };
-      const updatedProgress = {
-        ...currentProgress,
-        completedCount: (currentProgress.completedCount || 0) + 1
-      };
+      const currentProgress = studentForView.activePlan?.progress || { A: 0, B: 0, C: 0 };
+      const newCount = result.novaContagem !== undefined ? result.novaContagem : ((currentProgress[tipoTreino] || 0) + 1);
 
-      const currentAnalytics = studentForView.analytics || { sessionsCompleted: 0, streakDays: 0, exercises: {} };
-      const updatedAnalytics = {
-        ...currentAnalytics,
-        sessionsCompleted: (currentAnalytics.sessionsCompleted || 0) + 1,
-        lastSessionDate: new Date().toLocaleDateString('pt-BR')
-      };
-
-      const title = (post.name || '').toLowerCase();
-      
-      // Periodization Key logic
-      const currentPeriodization = studentForView.periodization;
-      const currentReps = studentForView.workouts?.find(w => w.id === post.workoutId)?.exercises?.[0]?.reps || '13';
-      const periodKey = currentPeriodization?.phaseTitle || currentReps || '13';
-
-      // 1. Salva na subcoleção logsTreino com serverTimestamp()
-      try {
-        const logsRef = collection(db, 'alunos', studentForView.id, 'logsTreino');
-        const newLog = {
-          treinoId: post.workoutId || 'workout-1',
-          prescricaoId: post.workoutId || 'workout-1',
-          nome: post.name || 'Treino Concluído',
-          dataHora: serverTimestamp(),
-          duracaoMinutos,
-          calorias,
-          cargas,
-          exercises: post.exercises || [],
-          concluido: true,
-          periodization: periodKey,
-          timestamp: Date.now()
-        };
-        await addDoc(logsRef, newLog);
-      } catch (e) {
-        console.warn("Falha ao salvar logTreino:", e);
-      }
-
-      // 2. Salva na coleção global de workouts com serverTimestamp
-      try {
-        await addDoc(collection(db, 'workouts'), {
-          userId: studentForView.id,
-          workoutId: post.workoutId || 'workout-1',
-          nome: post.name || 'Treino Concluído',
-          exercicios: post.exercises || [],
-          cargas,
-          duracao: post.duration || '00:00',
-          duracaoMinutos,
-          calorias,
-          concluidoEm: serverTimestamp(),
-          concluido: true,
-          timestamp: Date.now()
-        });
-        console.log("Treino salvo na coleção workouts com serverTimestamp.");
-      } catch (wErr) {
-        console.error("Erro ao salvar na coleção workouts:", wErr);
-      }
-
-      // Determina tipo de treino (A, B ou C)
-      let tipoTreino: 'A' | 'B' | 'C' = 'A';
-      if (title.includes('treino b') || post.workoutId?.includes('-b') || post.workoutId?.toLowerCase().endsWith('b')) {
-        tipoTreino = 'B';
-      } else if (title.includes('treino c') || post.workoutId?.includes('-c') || post.workoutId?.toLowerCase().endsWith('c')) {
-        tipoTreino = 'C';
-      }
-
-      // 3. Executa a Transação Atômica no Firestore (active_plans + workout_history)
-      const isLilianeStudent = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com';
-      let novaContagemAtômica = (studentForView.activePlan?.progress?.[tipoTreino] || 0) + 1;
-      let targetSetsAtômico = isLilianeStudent ? 32 : (studentForView.activePlan?.targetSets || 18);
-
-      try {
-        const resFinalizar = await finalizarTreino(studentForView.id, 'current', tipoTreino, {
-          planId: 'current',
-          workoutType: tipoTreino,
-          volumeTotal: cargas.reduce((acc: number, cur: any) => acc + (parseFloat(cur.carga) || 0), 0),
-          duration: post.duration || '00:00',
-          duracaoMinutos,
-          calorias,
-          workoutName: post.name || `Treino ${tipoTreino}`,
-          exercises: post.exercises || [],
-          photoUrl: post.photoUrl
-        });
-
-        if (resFinalizar.success && resFinalizar.novaContagem !== undefined) {
-          novaContagemAtômica = resFinalizar.novaContagem;
-          targetSetsAtômico = resFinalizar.targetSets || targetSetsAtômico;
-        }
-
-        if (resFinalizar.notificacaoNecessaria) {
-          setWorkoutAlertNotification(resFinalizar.notificacaoNecessaria);
-        }
-      } catch (txErr) {
-        console.error("Erro na transação atômica de treino:", txErr);
-      }
-
-      // 4. Atualiza contadores globais de progressão de forma atômica
-      try {
-        const userProgressRef = doc(db, 'userProgress', studentForView.id);
-        await runTransaction(db, async (transaction) => {
-          const userProgressDoc = await transaction.get(userProgressRef);
-          let currentCount = 0;
-          if (userProgressDoc.exists()) {
-            currentCount = userProgressDoc.data().totalWorkouts || 0;
-          }
-          const newCount = currentCount + 1;
-          transaction.set(userProgressRef, {
-            totalWorkouts: newCount,
-            lastWorkoutAt: serverTimestamp(),
-            lastWorkoutName: post.name,
-            lastWorkoutId: post.workoutId
-          }, { merge: true });
-        });
-        console.log("Progresso registrado com transação atômica em userProgress.");
-      } catch (pErr) {
-        console.error("Falha ao registrar progresso atômico no userProgress:", pErr);
-      }
-
-      const currentActivePlan = studentForView.activePlan || {
-        id: 'current',
-        phaseName: studentForView.periodization?.phaseTitle || "Fase 1: Retorno & Adaptação (18 Sessões)",
-        targetSets: targetSetsAtômico,
-        progress: { A: 0, B: 0, C: 0 }
-      };
-
-      const updates: any = { 
+      setSelectedStudent(prev => prev ? ({
+        ...prev,
         workoutHistory: updatedHistory,
-        trainingProgress: updatedProgress,
-        analytics: updatedAnalytics,
+        [`faseAjuste${tipoTreino}`]: newCount,
+        [`totalGlobal${tipoTreino}`]: (prev[`totalGlobal${tipoTreino}`] || 0) + 1,
         activePlan: {
-          ...currentActivePlan,
-          targetSets: targetSetsAtômico,
+          ...(prev.activePlan || { id: 'current', phaseName: 'Fase 1: Retorno & Adaptação', targetSets: 18 }),
           progress: {
-            ...(currentActivePlan.progress || { A: 0, B: 0, C: 0 }),
-            [tipoTreino]: novaContagemAtômica
-          }
-        },
-        workouts: (studentForView.workouts || []).map(w => 
-          w.id === post.workoutId ? { ...w, exercises: post.exercises } : w
-        )
-      };
-
-      // Periodization Aware Progress
-      const prog = studentForView.periodizationProgress || {};
-      const currentPeriodProg = { ...(prog[periodKey] || { A: 0, B: 0, C: 0 }) };
-
-      if (tipoTreino === 'A') {
-        updates.faseAjusteA = novaContagemAtômica;
-        updates.totalGlobalA = (studentForView.totalGlobalA || 0) + 1;
-        currentPeriodProg.A = novaContagemAtômica;
-      } else if (tipoTreino === 'B') {
-        updates.faseAjusteB = novaContagemAtômica;
-        updates.totalGlobalB = (studentForView.totalGlobalB || 0) + 1;
-        currentPeriodProg.B = novaContagemAtômica;
-      } else if (tipoTreino === 'C') {
-        updates.faseAjusteC = novaContagemAtômica;
-        updates.totalGlobalC = (studentForView.totalGlobalC || 0) + 1;
-        currentPeriodProg.C = novaContagemAtômica;
-      }
-
-      updates.periodizationProgress = { ...prog, [periodKey]: currentPeriodProg };
-
-      // AUTOMATIC NEXT PERIOD Transition
-      try {
-        const target = 20; 
-        if ((currentPeriodProg.A >= target || currentPeriodProg.B >= target) && currentPeriodization?.microciclos && Array.isArray(currentPeriodization.microciclos)) {
-          const currentMicroIndex = currentPeriodization.microciclos.findIndex(m => m && m.titulo === currentPeriodization.phaseTitle);
-          if (currentMicroIndex !== -1 && currentMicroIndex < currentPeriodization.microciclos.length - 1) {
-            const nextMicro = currentPeriodization.microciclos[currentMicroIndex + 1];
-            if (nextMicro) {
-              updates.periodization = {
-                ...currentPeriodization,
-                phaseTitle: nextMicro.titulo || 'Nova Fase',
-                startDate: new Date().toISOString()
-              };
-              if (nextMicro.volume && studentForView.workouts) {
-                const volStr = String(nextMicro.volume);
-                const newReps = volStr.includes('x') ? volStr.split('x')[1].trim() : volStr;
-                updates.workouts = studentForView.workouts.map(w => ({
-                  ...w,
-                  exercises: (w.exercises || []).map(ex => ({ ...ex, reps: newReps }))
-                }));
-              }
-            }
+            ...currentProgress,
+            [tipoTreino]: newCount
           }
         }
-      } catch (microErr) {
-        console.warn("Erro ao calcular transição de microciclo:", microErr);
+      }) : null);
+
+      setStudents(prev => prev.map(s => s.id === studentForView.id ? {
+        ...s,
+        workoutHistory: updatedHistory,
+        [`faseAjuste${tipoTreino}`]: newCount,
+        [`totalGlobal${tipoTreino}`]: (s[`totalGlobal${tipoTreino}`] || 0) + 1,
+        activePlan: {
+          ...(s.activePlan || { id: 'current', phaseName: 'Fase 1: Retorno & Adaptação', targetSets: 18 }),
+          progress: {
+            ...currentProgress,
+            [tipoTreino]: newCount
+          }
+        }
+      } : s));
+
+      if (result.notificacaoNecessaria) {
+        setWorkoutAlertNotification(result.notificacaoNecessaria);
+      } else {
+        setWorkoutAlertNotification('Treino salvo com sucesso!');
       }
-
-      console.log("Finishing workout for:", studentForView.id, "Updates:", updates);
-      
-      // Atualiza estado local imediatamente para feedback visual instantâneo
-      const updatedStudent = {
-          ...studentForView,
-          ...updates
-      };
-      setSelectedStudent(updatedStudent);
-      setStudents(prev => prev.map(s => s.id === studentForView.id ? updatedStudent : s));
-
-      await handleSaveData(studentForView.id, updates);
-    } catch (err) {
-      console.error("Erro ao finalizar treino:", err);
+    } else {
+      alert(result.message);
     }
   };
 

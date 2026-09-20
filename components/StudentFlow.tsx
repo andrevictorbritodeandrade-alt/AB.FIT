@@ -654,28 +654,16 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     // If we only use Math.max, we can never reduce the local count if a mistake happens.
     const local = getContagemTreinos(user.id);
     
-    // Default to the provided values from user object which includes our v4 overrides
+    // Respect real Firestore counters or local storage without hardcoded overrides
     const fireA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : 0);
     const fireB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : 0);
     const fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
 
     const merged = {
-      A: fireA > 0 ? fireA : (local.A || 0),
-      B: fireB > 0 ? fireB : (local.B || 0),
-      C: fireC > 0 ? fireC : (local.C || 0),
+      A: fireA !== undefined ? fireA : (local.A || 0),
+      B: fireB !== undefined ? fireB : (local.B || 0),
+      C: fireC !== undefined ? fireC : (local.C || 0),
     };
-    
-    // Explicit override for Marcelly's fix v4 to reset local storage that might be stuck
-    if (user.id === 'fixed-marcelly' || user.email === 'marcellybispo92@gmail.com') {
-       merged.A = 2;
-       merged.B = 2;
-    }
-
-    // Explicit override for André's fix to reset local storage that might be stuck
-    if (user.id === 'fixed-andre' || user.email === 'andrevictorbritodeandrade@gmail.com') {
-       merged.A = 5;
-       merged.B = 5;
-    }
 
     // Explicit override for Liliane Torres: must start at 0 and only count after completing workouts
     const isLilianeStudent = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
