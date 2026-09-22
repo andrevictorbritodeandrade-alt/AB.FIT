@@ -84,17 +84,27 @@ export function HeaderTitle({ text }: { text: string }) {
 export function Logo({ size = "text-4xl", subSize = "text-xs", collapsed = false }: { size?: string, subSize?: string, collapsed?: boolean }) {
   if (collapsed) {
     return (
-      <div className="p-2 bg-card rounded-xl border border-border shadow-2xl flex items-center justify-center">
-        <span className="text-red-600 font-black italic text-xs transform -skew-x-12">AB</span>
+      <div className="p-1.5 bg-zinc-900 rounded-xl border border-white/10 shadow-2xl flex items-center justify-center">
+        <svg viewBox="0 0 100 100" className="w-5 h-5">
+          <path d="M20 20 L20 80 M20 50 L50 50 M50 20 L50 80 M50 20 L80 20 L80 50 L50 50 L80 50 L80 80 L50 80" stroke="#DC2626" strokeWidth="12" fill="none" strokeLinecap="square" strokeLinejoin="miter" />
+        </svg>
       </div>
     );
   }
   return (
     <div className="text-center group select-none flex flex-col items-center justify-center w-full overflow-hidden px-2">
-      <h1 className={`${size} font-black italic mb-0 transform -skew-x-12 tracking-tighter transition-all text-foreground uppercase leading-[0.9] px-1`} style={{ textShadow: '1px 1px 0px currentColor, -1px -1px 0px currentColor, 1px -1px 0px currentColor, -1px 1px 0px currentColor' }}>
-        AB<span className="text-red-600">FIT</span>
-      </h1>
-      <p className={`${subSize} text-muted-foreground tracking-tight sm:tracking-[0.25em] uppercase font-bold leading-none mt-3 sm:mt-4 opacity-80 whitespace-nowrap overflow-hidden text-ellipsis w-full`}>Assessoria em Treinamentos Físicos</p>
+      <div className="relative mb-3 group-hover:scale-105 transition-transform duration-500">
+        <svg viewBox="0 0 160 100" className="h-16 sm:h-20 drop-shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+          {/* Monograma AB Estilizado - Alinhado com o screenshot */}
+          <g transform="translate(10, 10)">
+            {/* Letra A */}
+            <path d="M0 0 L0 80 M0 40 L40 40 M40 0 L40 80" stroke="#FFFFFF" strokeWidth="16" fill="none" />
+            {/* Letra B */}
+            <path d="M60 0 L60 80 M60 0 L110 0 L110 40 L60 40 L110 40 L110 80 L60 80" stroke="#DC2626" strokeWidth="16" fill="none" />
+          </g>
+        </svg>
+      </div>
+      <p className={`${subSize} text-muted-foreground tracking-tight sm:tracking-[0.25em] uppercase font-bold leading-none mt-1 opacity-80 whitespace-nowrap overflow-hidden text-ellipsis w-full`}>Assessoria em Treinamentos Físicos</p>
     </div>
   );
 }

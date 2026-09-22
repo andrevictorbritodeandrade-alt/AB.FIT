@@ -1,6 +1,6 @@
 {
-  "name": "Remix: OFICIAL 🏋️‍♀️​🦵​ABFIT💪​✏️​",
-  "description": "An AI-powered exercise prescription and biomechanics analysis application for fitness professionals.",
+  "name": "ABFIT: Oficial",
+  "description": "Assessoria em Treinamentos Físicos ABFIT. Prescrição de exercícios e análise biomecânica.",
   "requestFramePermissions": [
     "geolocation",
     "camera"
