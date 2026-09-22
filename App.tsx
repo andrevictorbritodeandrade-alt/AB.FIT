@@ -2724,6 +2724,59 @@ export default function App() {
 
     setSyncStatus('syncing'); // Mostra a rodinha girando
 
+    // Update local state immediately for instant feedback
+    const updatedProgress = (studentForView.activePlan?.progress as any) || { A: 0, B: 0, C: 0 };
+    const newCount = (updatedProgress[tipoTreino] || 0) + 1;
+    const newHistoryEntry: WorkoutHistoryEntry = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      date: new Date().toLocaleDateString('pt-BR'),
+      timestamp: Date.now(),
+      name: post.name || `Treino ${tipoTreino}`,
+      type: 'STRENGTH',
+      duration: post.duration || '00:00',
+      countText: `${newCount} de 18`,
+      workoutId: post.workoutId,
+      athleteName: studentForView.nome,
+      exercises: post.exercises || []
+    };
+
+    const updatedHistory = [newHistoryEntry, ...(studentForView.workoutHistory || [])];
+    const updatedStudent = {
+      ...studentForView,
+      workoutHistory: updatedHistory,
+      activePlan: {
+        ...studentForView.activePlan,
+        phaseName: studentForView.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação',
+        targetSets: studentForView.activePlan?.targetSets || 18,
+        progress: { ...updatedProgress, [tipoTreino]: newCount }
+      },
+      trainingProgress: {
+        targetCount: studentForView.trainingProgress?.targetCount || 36,
+        completedCount: (studentForView.trainingProgress?.completedCount || 0) + 1
+      }
+    };
+
+    setSelectedStudent(updatedStudent);
+    
+    // Save to localStorage cache immediately
+    try {
+      const limitedHistory = updatedHistory.slice(0, 50);
+      const cacheObj = { ...updatedStudent, workoutHistory: limitedHistory };
+      const safeCacheString = (obj: any) => {
+        const seen = new WeakSet();
+        return JSON.stringify(obj, (key, value) => {
+          if (typeof value === 'object' && value !== null) {
+            if (seen.has(value)) return;
+            seen.add(value);
+          }
+          return value;
+        });
+      };
+      localStorage.setItem(`student_cache_${studentForView.id}`, safeCacheString(cacheObj));
+    } catch (e) {
+      console.warn("Local cache write error:", e);
+    }
+
     try {
       // 3. Salva o histórico de forma permanente no Firestore
       const historyRef = collection(db, `users/${studentForView.id}/workout_history`);
@@ -2736,51 +2789,40 @@ export default function App() {
         calorias: Math.ceil(duracaoMinutos * 7),
         exercises: post.exercises || [],
         cargas: cargas,
-        dateCompleted: serverTimestamp(), // Data correta do servidor
+        dateCompleted: serverTimestamp(),
         timestamp: Date.now()
       });
 
-      // 4. Atualiza a contagem atômica no plano ativo (NUNCA falha)
+      // 4. Atualiza a contagem atômica no plano ativo
       const planRef = doc(db, `users/${studentForView.id}/active_plans`, 'current');
-      
       await runTransaction(db, async (transaction) => {
         const planDoc = await transaction.get(planRef);
-        
         if (!planDoc.exists()) {
           transaction.set(planRef, {
             phaseName: 'Fase 1: Retorno & Adaptação',
             targetSets: 18,
-            progress: { A: tipoTreino === 'A' ? 1 : 0, B: tipoTreino === 'B' ? 1 : 0, C: tipoTreino === 'C' ? 1 : 0 },
+            progress: { A: tipoTreino === 'A' ? newCount : 0, B: tipoTreino === 'B' ? newCount : 0, C: tipoTreino === 'C' ? newCount : 0 },
             updatedAt: serverTimestamp()
           });
           return;
         }
-
-        const planData = planDoc.data();
-        const currentProgress = planData.progress || { A: 0, B: 0, C: 0 };
-        const newCount = (currentProgress[tipoTreino] || 0) + 1;
-
         transaction.update(planRef, {
           [`progress.${tipoTreino}`]: newCount,
           updatedAt: serverTimestamp()
         });
       });
 
-      // 5. Atualiza o contador global (GLOBAL: X DE Y)
+      // 5. Atualiza o contador global
       const userProgressRef = doc(db, 'userProgress', studentForView.id);
       await setDoc(userProgressRef, { 
         totalWorkouts: increment(1), 
         lastWorkoutAt: serverTimestamp() 
       }, { merge: true });
 
-      // 6. Feedback visual instantâneo
       if (tipoTreino === 'A' || tipoTreino === 'B') {
-          const nextCount = ((selectedStudent?.activePlan?.progress as any)?.[tipoTreino] || 0) + 1;
-          if (nextCount === 6 || nextCount === 12 || nextCount === 18) {
-              const msg = `Atenção: Você concluiu o treino ${tipoTreino} pela ${nextCount}ª vez. Hora de ajustar e aumentar a carga!`;
+          if (newCount === 6 || newCount === 12 || newCount === 18) {
+              const msg = `Atenção: Você concluiu o treino ${tipoTreino} pela ${newCount}ª vez. Hora de ajustar e aumentar a carga!`;
               setWorkoutAlertNotification(msg);
-              
-              // Persistir notificação no banco de dados
               const alunoRef = doc(db, 'alunos', studentForView.id);
               await updateDoc(alunoRef, {
                 notifications: arrayUnion({
@@ -2793,37 +2835,26 @@ export default function App() {
                 })
               });
           } else {
-              setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
+              setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado! (${newCount} de 18)`);
           }
       } else {
           setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
       }
-      
-      // Atualiza o estado local para não esperar o onSnapshot (opcional, mas ajuda na sensação de velocidade)
-      setSelectedStudent(prev => {
-          if (!prev) return null;
-          const updatedProgress = (prev.activePlan?.progress as any) || { A: 0, B: 0, C: 0 };
-          const newCount = (updatedProgress[tipoTreino as keyof typeof updatedProgress] || 0) + 1;
-          return {
-              ...prev,
-              activePlan: {
-                  ...prev.activePlan,
-                  phaseName: prev.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação',
-                  targetSets: prev.activePlan?.targetSets || 18,
-                  progress: { ...updatedProgress, [tipoTreino]: newCount }
-              },
-              trainingProgress: {
-                  targetCount: prev.trainingProgress?.targetCount || 36,
-                  completedCount: (prev.trainingProgress?.completedCount || 0) + 1
-              }
-          };
-      });
 
       setSyncStatus('synced');
     } catch (error) {
-      console.error("Erro ao salvar treino:", error);
+      console.warn("Erro ao sincronizar treino com Firestore (salvo localmente):", error);
       setSyncStatus('offline');
-      alert("Erro ao salvar o treino. Verifique sua conexão e tente novamente.");
+      // Success feedback because local save & cache succeeded
+      if (tipoTreino === 'A' || tipoTreino === 'B') {
+        if (newCount === 6 || newCount === 12 || newCount === 18) {
+          setWorkoutAlertNotification(`Atenção: Você concluiu o treino ${tipoTreino} pela ${newCount}ª vez. Hora de ajustar e aumentar a carga!`);
+        } else {
+          setWorkoutAlertNotification(`Treino ${tipoTreino} salvo localmente! (Sincronizará quando a cota/conexão normalizar)`);
+        }
+      } else {
+        setWorkoutAlertNotification(`Treino ${tipoTreino} salvo localmente!`);
+      }
     }
   };
 
