@@ -700,7 +700,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const currentMethod = useMemo(() => getCurrentMethodForStudent(user), [user]);
 
   const currentPeriodizationObj = user.periodization;
-  const periodKey = currentPeriodizationObj?.phaseTitle || currentReps || '13';
+  const periodKey = user.activePlan?.phaseName || currentPeriodizationObj?.phaseTitle || currentReps || '13';
   const prog = user.periodizationProgress || {};
   const periodProg = prog[periodKey] || { A: 0, B: 0, C: 0 };
   
@@ -1440,6 +1440,44 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           </div>
         </div>
       )}
+
+      {/* NOTIFICAÇÃO DE AJUSTE DE CARGA DENTRO DO TREINO ATIVO */}
+      {(() => {
+        const title = activeWorkout.title.toLowerCase();
+        let currentCount = 0;
+        let type = '';
+        if (title.includes('treino a')) { currentCount = countA; type = 'A'; }
+        else if (title.includes('treino b')) { currentCount = countB; type = 'B'; }
+        else if (title.includes('treino c')) { currentCount = countC; type = 'C'; }
+
+        if (!type) return null;
+
+        let showNext = 0;
+        if (!isLiliane) {
+          if (currentCount === 6) showNext = 7;
+          if (currentCount === 12) showNext = 13;
+        } else {
+          if (currentCount === 8) showNext = 9;
+          if (currentCount === 16) showNext = 17;
+          if (currentCount === 24) showNext = 25;
+        }
+
+        if (showNext === 0) return null;
+
+        return (
+          <div className="mb-6 p-4 bg-amber-950/40 border border-amber-500/40 rounded-2xl flex items-center gap-3 shadow-xl border-l-4 border-l-amber-500 animate-pulse">
+            <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-amber-900/30">
+              <Sparkles size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-0.5 italic">Ajuste Obrigatório nesta Sessão</p>
+              <p className="text-xs font-bold text-foreground leading-snug">
+                Esta é a sua <strong className="text-amber-500">Sessão {showNext}</strong>. Realize um ajuste de pelo menos <strong className="text-amber-500">10% de carga</strong> ou mais em cada exercício agora!
+              </p>
+            </div>
+          </div>
+        );
+      })()}
 
       {workoutStats && (
         <div className="mb-8 animate-in slide-in-from-top-4 duration-700">
