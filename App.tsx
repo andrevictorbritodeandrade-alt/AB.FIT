@@ -3041,73 +3041,6 @@ export default function App() {
             <p className="text-xl font-black text-white italic uppercase tracking-[0.3em] mt-2">{studentForView.nome}</p>
             
             <div className="w-full mt-10 space-y-4 pb-20 flex flex-col max-w-xl mx-auto px-4 sm:px-0">
-              {/* CURRENT PHASE PROGRESS (A/B Treinos) - FONTE DA VERDADE FIREBASE (active_plans) */}
-              {(() => {
-                const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
-                const isAndre = studentForView.id === 'fixed-andre' || studentForView.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || studentForView.nome?.toLowerCase().includes('andré');
-                const targetSets = isLiliane ? 32 : (studentForView.activePlan?.targetSets || 18);
-                const countA = isLiliane 
-                  ? (studentForView.activePlan?.progress?.A ?? 0) 
-                  : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
-                const countB = isLiliane 
-                  ? (studentForView.activePlan?.progress?.B ?? 0) 
-                  : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
-                const countC = isLiliane
-                  ? (studentForView.activePlan?.progress?.C ?? 0)
-                  : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
-                
-                const currentPlanSum = countA + countB + countC;
-                const phaseName = isLiliane 
-                  ? "Nova Periodização (32 Sessões)" 
-                  : (studentForView.periodization?.phaseTitle || studentForView.activePlan?.phaseName || "Fase 1: Retorno & Adaptação (18 Sessões)");
-                const percentA = Math.min(100, (countA / targetSets) * 100);
-                const percentB = Math.min(100, (countB / targetSets) * 100);
-
-                return (
-                  <div className="w-full bg-zinc-900/40 p-5 rounded-[2.5rem] border border-zinc-800/50 space-y-4 shadow-xl">
-                    <div className="flex items-center justify-between mb-1 px-1">
-                      <div className="flex items-center gap-2">
-                        <Activity size={14} className="text-red-600" />
-                        <div className="flex flex-col">
-                          <h3 className="text-[10px] font-black uppercase text-zinc-500 tracking-[0.2em] italic leading-none">Progresso da Fase Atual</h3>
-                          <span className="text-[8px] font-black uppercase text-red-600/60 tracking-widest italic mt-1">{phaseName}</span>
-                        </div>
-                      </div>
-                      <span className="text-[9px] font-mono text-zinc-500 uppercase">Meta: {targetSets} sessões</span>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
-                          <span className="text-white">Treino A</span>
-                          <span className="text-red-600 font-mono">{countA} / {targetSets}</span>
-                        </div>
-                        <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${percentA}%` }} />
-                        </div>
-                        <div className="flex justify-between text-[8px] text-zinc-500 px-1 font-mono">
-                          <span>{percentA.toFixed(0)}%</span>
-                          <span>Faltam {Math.max(0, targetSets - countA)}</span>
-                        </div>
-                      </div>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest px-1">
-                          <span className="text-white">Treino B</span>
-                          <span className="text-red-600 font-mono">{countB} / {targetSets}</span>
-                        </div>
-                        <div className="w-full h-2 bg-black rounded-full overflow-hidden border border-zinc-800">
-                          <div className="h-full bg-red-600 transition-all duration-1000" style={{ width: `${percentB}%` }} />
-                        </div>
-                        <div className="flex justify-between text-[8px] text-zinc-500 px-1 font-mono">
-                          <span>{percentB.toFixed(0)}%</span>
-                          <span>Faltam {Math.max(0, targetSets - countB)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              
               {visibleDashboardItems.map(item => {
                 const isPeriodization = item.id === 'STUDENT_PERIODIZATION';
                 const isWorkouts = item.id === 'WORKOUTS';
@@ -3121,24 +3054,6 @@ export default function App() {
                   const curWk = Math.min(totalWks, Math.max(1, Math.floor(diffDays / 7) + 1));
                   progress = Math.min(100, Math.round((curWk / totalWks) * 100));
                   progressText = `Semana ${curWk} de ${totalWks}`;
-                } else if (isWorkouts) {
-                  const isLiliane = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com' || studentForView.nome?.toLowerCase().includes('liliane');
-                  const countAVal = isLiliane ? (studentForView.activePlan?.progress?.A ?? 0) : Math.max(studentForView.faseAjusteA ?? 0, studentForView.activePlan?.progress?.A ?? 0);
-                  const countBVal = isLiliane ? (studentForView.activePlan?.progress?.B ?? 0) : Math.max(studentForView.faseAjusteB ?? 0, studentForView.activePlan?.progress?.B ?? 0);
-                  const countCVal = isLiliane ? (studentForView.activePlan?.progress?.C ?? 0) : Math.max(studentForView.faseAjusteC ?? 0, studentForView.activePlan?.progress?.C ?? 0);
-                  const currentPlanSum = countAVal + countBVal + countCVal;
-                  
-                  // Fonte da verdade: Maior valor entre o progresso acumulado, o contador global do perfil e o contador global da coleção de stats
-                  const displayGlobalCount = Math.max(
-                    studentForView.trainingProgress?.completedCount || 0,
-                    studentForView.analytics?.sessionsCompleted || 0,
-                    currentPlanSum,
-                    globalWorkoutCount
-                  );
-                  const targetCount = studentForView.trainingProgress?.targetCount || 36;
-                  
-                  progress = Math.min(100, Math.round((displayGlobalCount / targetCount) * 100));
-                  progressText = `Global: ${displayGlobalCount} de ${targetCount}`;
                 }
 
                 const colorStyles: Record<string, any> = {
@@ -3166,16 +3081,16 @@ export default function App() {
                     <div className="flex-1 text-left">
                       <div className="flex justify-between items-baseline">
                         <h3 className="text-xs font-black uppercase text-white italic tracking-[0.2em] leading-tight">{item.label}</h3>
-                        {isWorkouts && progressText && (
+                        {isPeriodization && progressText && (
                           <span className="text-[9px] font-black uppercase text-red-600 italic tracking-widest">{progressText}</span>
                         )}
                       </div>
-                      {(isPeriodization || isWorkouts) && (
+                      {isPeriodization && (
                         <div className="mt-2 w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                           <div className={`h-full ${c.bg} shadow-[0_0_10px_rgba(255,255,255,0.3)] transition-all duration-1000`} style={{ width: `${progress}%` }} />
                         </div>
                       )}
-                      {!isPeriodization && !isWorkouts && (
+                      {!isPeriodization && (
                         <div className="mt-2 text-[8px] font-black uppercase text-zinc-600 tracking-widest italic">Acesse sua jornada</div>
                       )}
                     </div>

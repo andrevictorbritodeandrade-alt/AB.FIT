@@ -1284,6 +1284,47 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
           </div>
         )}
 
+        {/* NOTIFICAÇÕES DE AJUSTE DE CARGA (6ª e 12ª Sessões) */}
+        {(() => {
+          const alerts = [];
+          if (!isLiliane) {
+            if (countA === 6) alerts.push({ type: 'A', next: 7 });
+            if (countA === 12) alerts.push({ type: 'A', next: 13 });
+            if (countB === 6) alerts.push({ type: 'B', next: 7 });
+            if (countB === 12) alerts.push({ type: 'B', next: 13 });
+            if (countC === 6) alerts.push({ type: 'C', next: 7 });
+            if (countC === 12) alerts.push({ type: 'C', next: 13 });
+          } else {
+            // Lógica específica para Liliane (8, 16, 24)
+            if (countA === 8) alerts.push({ type: 'A', next: 9 });
+            if (countA === 16) alerts.push({ type: 'A', next: 17 });
+            if (countA === 24) alerts.push({ type: 'A', next: 25 });
+            if (countB === 8) alerts.push({ type: 'B', next: 9 });
+            if (countB === 16) alerts.push({ type: 'B', next: 17 });
+            if (countB === 24) alerts.push({ type: 'B', next: 25 });
+          }
+
+          if (alerts.length === 0) return null;
+
+          return (
+            <div className="space-y-3 mb-8">
+              {alerts.map((alert, idx) => (
+                <div key={`${alert.type}-${alert.next}-${idx}`} className="p-4 bg-amber-950/40 border border-amber-500/40 rounded-2xl flex items-center gap-3 shadow-xl border-l-4 border-l-amber-500 animate-in slide-in-from-left-4 duration-500">
+                  <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-amber-900/30">
+                    <Sparkles size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500 mb-0.5 italic">Ajuste de Periodização</p>
+                    <p className="text-xs sm:text-sm font-bold text-foreground leading-snug">
+                      No próximo <strong className="text-amber-500 italic">Treino {alert.type}</strong> (Sessão {alert.next}), realize um ajuste de pelo menos <strong className="text-amber-500">10% de carga</strong> ou mais em cada exercício.
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         <div className="space-y-4">
           {strengthWorkouts.length > 0 ? (
             strengthWorkouts.map(w => {
