@@ -57,12 +57,7 @@ export function InstallPrompt({ onClose }: { onClose: () => void }) {
           
           <div className="flex flex-col items-center text-center">
              <div className="w-20 h-20 bg-black rounded-3xl flex items-center justify-center shadow-2xl border border-red-600/30 mb-4 overflow-hidden">
-                <svg viewBox="0 0 160 100" className="w-14 drop-shadow-[0_0_10px_rgba(220,38,38,0.5)]">
-                  <g transform="translate(10, 10)">
-                    <path d="M0 0 L0 80 M0 40 L40 40 M40 0 L40 80" stroke="#FFFFFF" strokeWidth="16" fill="none" />
-                    <path d="M60 0 L60 80 M60 0 L110 0 L110 40 L60 40 L110 40 L110 80 L60 80" stroke="#DC2626" strokeWidth="16" fill="none" />
-                  </g>
-                </svg>
+                <span className="text-red-600 font-black italic text-2xl transform -skew-x-12">AB</span>
              </div>
              
              <h3 className="text-xl sm:text-2xl font-black uppercase italic tracking-tighter text-white mb-1">Instalar Aplicativo ABFIT</h3>
