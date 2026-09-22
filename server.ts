@@ -15,7 +15,8 @@ import {
   query, 
   where, 
   serverTimestamp,
-  runTransaction
+  runTransaction,
+  arrayUnion
 } from 'firebase/firestore';
 import { GoogleGenAI } from "@google/genai";
 
@@ -227,6 +228,20 @@ async function startServer() {
           notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar e aumentar a carga!`;
         } else if (novaContagem === targetSets) {
           notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do Treino ${workoutType}. Este é o seu último treino desse ciclo e você precisa trocar de treino!`;
+        }
+
+        if (notificacaoNecessaria) {
+          const alunoRef = doc(serverDb, 'alunos', userId);
+          transaction.update(alunoRef, {
+            notifications: arrayUnion({
+              id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+              title: 'Ajuste de Carga',
+              message: notificacaoNecessaria,
+              date: new Date().toLocaleDateString('pt-BR'),
+              read: false,
+              type: 'WORKOUT'
+            })
+          });
         }
       });
 

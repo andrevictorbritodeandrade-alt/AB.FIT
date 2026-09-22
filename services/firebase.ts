@@ -18,6 +18,7 @@ import {
   runTransaction,
   writeBatch,
   increment,
+  arrayUnion,
   where,
   orderBy,
   limit,
@@ -64,6 +65,7 @@ export {
   runTransaction,
   writeBatch,
   increment,
+  arrayUnion,
   where,
   orderBy,
   limit

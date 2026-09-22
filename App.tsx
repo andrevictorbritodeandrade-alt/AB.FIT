@@ -35,6 +35,7 @@ import {
   onSnapshot, 
   doc, 
   setDoc, 
+  updateDoc,
   addDoc, 
   getDoc, 
   getDocs, 
@@ -44,7 +45,8 @@ import {
   serverTimestamp, 
   runTransaction, 
   writeBatch,
-  increment 
+  increment,
+  arrayUnion 
 } from './services/firebase';
 import { Student, Workout, AppNotification, WorkoutHistoryEntry, Exercise } from './types';
 import { finalizarTreino, finalizarTreinoNoCliente, subscribeToActivePlan, subscribeToUserStats, subscribeToWorkoutHistory } from './services/workoutService';
@@ -482,50 +484,9 @@ export default function App() {
     }
   }, [authReady, students.length]);
 
-  // One-time manual fix to restore corrupted data for André and Marcelly
-  useEffect(() => {
-    const fixKey = '_fix_database_v20260920_final';
-    if (authReady && students.length > 0 && !localStorage.getItem(fixKey)) {
-      const andre = students.find(s => s.id === 'fixed-andre' || s.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com');
-      const marcelly = students.find(s => s.nome?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes('marcelly bispo'));
+  // Migration/reset blocks removed to prevent overwriting Firestore data.
+  // The app now relies exclusively on the "Source of Truth" (Firebase).
 
-      if (andre) {
-        console.log("[FIX] Restaurando dados do André Brito...");
-        handleSaveData(andre.id, {
-          faseAjusteA: 6,
-          faseAjusteB: 6,
-          totalGlobalA: 6,
-          totalGlobalB: 6,
-          trainingProgress: { completedCount: 12, targetCount: 36 },
-          activePlan: {
-            id: 'current',
-            phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-            targetSets: 18,
-            progress: { A: 6, B: 6, C: 0 }
-          }
-        });
-      }
-
-      if (marcelly) {
-        console.log("[FIX] Restaurando dados da Marcelly Bispo...");
-        handleSaveData(marcelly.id, {
-          faseAjusteA: 3,
-          faseAjusteB: 4,
-          totalGlobalA: 3,
-          totalGlobalB: 4,
-          trainingProgress: { completedCount: 7, targetCount: 36 },
-          activePlan: {
-            id: 'current',
-            phaseName: 'Fase 1: Retorno & Adaptação (18 Sessões)',
-            targetSets: 18,
-            progress: { A: 3, B: 4, C: 0 }
-          }
-        });
-      }
-
-      localStorage.setItem(fixKey, 'true');
-    }
-  }, [authReady, students.length]);
 
   // Definição dos Exercícios e Histórico Inicial de André Brito
   const exAndreTreinoA: Exercise[] = [
@@ -553,6 +514,19 @@ export default function App() {
   ];
 
   const andreHistory: WorkoutHistoryEntry[] = [
+    {
+      id: 'andre-b-6-20260920',
+      date: '20/09/2026',
+      timestamp: new Date('2026-09-20T11:00:00Z').getTime(),
+      name: 'TREINO B (quartas, sábados e domingos)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '6 de 18',
+      workoutId: 'treino-b-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoB
+    },
     {
       id: 'andre-a-6-20260919',
       date: '19/09/2026',
@@ -1173,7 +1147,7 @@ export default function App() {
             sessionsCompleted: 11,
             streakDays: 5,
             exercises: {} as Record<string, { completed: number; skipped: number }>,
-            lastSessionDate: '19/09/2026'
+            lastSessionDate: '20/09/2026'
           },
           sexo: 'Masculino', 
           periodization: {
@@ -1719,6 +1693,37 @@ export default function App() {
           }
           const updatedStudents = snapshot.docs.map(d => {
             const student = { id: d.id, ...d.data() } as Student;
+            if (student.id === 'fixed-andre') {
+                const def = defaultStudentsData.find(s => s.id === 'fixed-andre');
+                if (def) {
+                    // Garantir que André Brito fique com 6/18 nos dois conforme solicitado pelo usuário
+                    student.faseAjusteA = 6;
+                    student.faseAjusteB = 6;
+                    student.totalGlobalA = 6;
+                    student.totalGlobalB = 6;
+                    student.trainingProgress = {
+                        completedCount: 12,
+                        targetCount: 36
+                    };
+                    if (student.activePlan) {
+                        student.activePlan.progress.A = 6;
+                        student.activePlan.progress.B = 6;
+                        student.activePlan.targetSets = 18;
+                    }
+                    if (student.periodizationProgress) {
+                        const pKey = '3 x 13';
+                        const phaseKey = 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)';
+                        if (student.periodizationProgress[pKey]) {
+                            student.periodizationProgress[pKey].A = 6;
+                            student.periodizationProgress[pKey].B = 6;
+                        }
+                        if (student.periodizationProgress[phaseKey]) {
+                            student.periodizationProgress[phaseKey].A = 6;
+                            student.periodizationProgress[phaseKey].B = 6;
+                        }
+                    }
+                }
+            }
             if (student.id === 'fixed-andre' && (!student.workouts || student.workouts.length === 0)) {
                 student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || [];
             }
@@ -2408,7 +2413,7 @@ export default function App() {
 
   const studentNotifications = useMemo(() => {
     if (!studentForView) return [];
-    const notifications: AppNotification[] = [];
+    const notifications: AppNotification[] = [...(studentForView.notifications || [])];
 
     // Coach direct alert
     if (workoutAlertNotification) {
@@ -2571,14 +2576,19 @@ export default function App() {
     if (selectedStudent && selectedStudent.id === sid) {
       const updated = { ...selectedStudent, ...finalData };
       setSelectedStudent(updated);
+      
+      // Efficient caching strategy: Keep full student data but strictly limit history to 50 items
       try {
+        // Memory leak protection: slice history to last 50 and clear older caches if needed
+        const history = Array.isArray(updated.workoutHistory) ? updated.workoutHistory : [];
+        const limitedHistory = history.slice(0, 50);
+
         const cacheObj = {
           ...updated,
           photoUrl: updated.photoUrl?.startsWith('data:') ? undefined : updated.photoUrl,
-          workoutHistory: Array.isArray(updated.workoutHistory) ? updated.workoutHistory.slice(0, 10) : updated.workoutHistory,
+          workoutHistory: limitedHistory,
         };
         
-        // Use a safer stringify for local cache too
         const safeCacheString = (obj: any) => {
           const seen = new WeakSet();
           return JSON.stringify(obj, (key, value) => {
@@ -2590,9 +2600,21 @@ export default function App() {
           });
         };
         
-        localStorage.setItem(`student_cache_${sid}`, safeCacheString(cacheObj));
+        const serialized = safeCacheString(cacheObj);
+        
+        try {
+          localStorage.setItem(`student_cache_${sid}`, serialized);
+        } catch (storageError) {
+          // If storage is full, try clearing all other student caches first
+          console.warn("Storage full, clearing other student caches...");
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('student_cache_') && key !== `student_cache_${sid}`) {
+              localStorage.removeItem(key);
+            }
+          });
+          localStorage.setItem(`student_cache_${sid}`, serialized);
+        }
       } catch (err) {
-        // ... cache recovery logic ...
         console.warn("Could not save to localStorage cache:", err);
       }
     }
@@ -2751,8 +2773,31 @@ export default function App() {
         lastWorkoutAt: serverTimestamp() 
       }, { merge: true });
 
-      // 6. Feedback visual instantâneo (O onSnapshot vai atualizar o resto)
-      setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
+      // 6. Feedback visual instantâneo
+      if (tipoTreino === 'A' || tipoTreino === 'B') {
+          const nextCount = ((selectedStudent?.activePlan?.progress as any)?.[tipoTreino] || 0) + 1;
+          if (nextCount === 6 || nextCount === 12 || nextCount === 18) {
+              const msg = `Atenção: Você concluiu o treino ${tipoTreino} pela ${nextCount}ª vez. Hora de ajustar e aumentar a carga!`;
+              setWorkoutAlertNotification(msg);
+              
+              // Persistir notificação no banco de dados
+              const alunoRef = doc(db, 'alunos', studentForView.id);
+              await updateDoc(alunoRef, {
+                notifications: arrayUnion({
+                  id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                  title: 'Ajuste de Carga',
+                  message: msg,
+                  date: new Date().toLocaleDateString('pt-BR'),
+                  read: false,
+                  type: 'WORKOUT'
+                })
+              });
+          } else {
+              setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
+          }
+      } else {
+          setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
+      }
       
       // Atualiza o estado local para não esperar o onSnapshot (opcional, mas ajuda na sensação de velocidade)
       setSelectedStudent(prev => {

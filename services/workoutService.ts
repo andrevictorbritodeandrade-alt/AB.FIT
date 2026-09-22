@@ -10,6 +10,7 @@ import {
   query, 
   orderBy, 
   limit, 
+  arrayUnion,
   Unsubscribe 
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -177,6 +178,19 @@ export const finalizarTreinoNoCliente = async (
         notificacaoNecessaria = `Atenção: Você concluiu o treino ${workoutType} pela ${novaContagem}ª vez. Hora de ajustar as cargas!`;
       } else if (novaContagem === targetSets) {
         notificacaoNecessaria = `Parabéns! Você concluiu os ${targetSets} treinos do ${workoutType}. Última sessão antes de mudar a periodização!`;
+      }
+
+      if (notificacaoNecessaria && aDoc.exists()) {
+          transaction.update(alunoRef, {
+              notifications: arrayUnion({
+                  id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                  title: 'Ajuste de Carga',
+                  message: notificacaoNecessaria,
+                  date: new Date().toLocaleDateString('pt-BR'),
+                  read: false,
+                  type: 'WORKOUT'
+              })
+          });
       }
     });
 
