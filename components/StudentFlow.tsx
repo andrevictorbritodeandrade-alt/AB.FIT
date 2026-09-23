@@ -656,14 +656,24 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     
     // Respect real Firestore counters or local storage without hardcoded overrides
     const isAndreStudent = user.id === 'fixed-andre' || user.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || user.nome?.toLowerCase().includes('andré');
-    const fireA = isAndreStudent ? Math.max(6, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0) : (user.faseAjusteA !== undefined ? Math.max(user.faseAjusteA, user.activePlan?.progress?.A ?? 0) : (user.activePlan?.progress?.A ?? 0));
-    const fireB = isAndreStudent ? Math.max(5, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0) : (user.faseAjusteB !== undefined ? Math.max(user.faseAjusteB, user.activePlan?.progress?.B ?? 0) : (user.activePlan?.progress?.B ?? 0));
-    const fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
+    const isMarcellyStudent = user.id === 'fixed-marcelly' || user.email?.toLowerCase() === 'marcellybispo92@gmail.com' || user.nome?.toLowerCase().includes('marcelly');
+
+    let fireA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : 0);
+    let fireB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : 0);
+    let fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
+
+    if (isAndreStudent) {
+      fireA = Math.max(7, fireA, local.A || 0);
+      fireB = Math.max(6, fireB, local.B || 0);
+    } else if (isMarcellyStudent) {
+      fireA = Math.max(5, fireA, local.A || 0);
+      fireB = Math.max(5, fireB, local.B || 0);
+    }
 
     const merged = {
-      A: fireA !== undefined ? fireA : (local.A || 0),
-      B: fireB !== undefined ? fireB : (local.B || 0),
-      C: fireC !== undefined ? fireC : (local.C || 0),
+      A: fireA,
+      B: fireB,
+      C: fireC,
     };
 
     // Explicit override for Liliane Torres: must start at 0 and only count after completing workouts
@@ -719,13 +729,22 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
   const isLiliane = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
   const isAndre = user.id === 'fixed-andre' || user.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || user.nome?.toLowerCase().includes('andré');
+  const isMarcelly = user.id === 'fixed-marcelly' || user.email?.toLowerCase() === 'marcellybispo92@gmail.com' || user.nome?.toLowerCase().includes('marcelly');
 
   const countA = isLiliane
     ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
+    : isAndre
+    ? Math.max(7, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a)
+    : isMarcelly
+    ? Math.max(5, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0)
     : Math.max(localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a);
 
   const countB = isLiliane
     ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
+    : isAndre
+    ? Math.max(6, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b)
+    : isMarcelly
+    ? Math.max(5, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0)
     : Math.max(localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b);
 
   const countC = isLiliane

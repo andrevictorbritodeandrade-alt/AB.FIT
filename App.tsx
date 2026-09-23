@@ -492,13 +492,13 @@ export default function App() {
   const exAndreTreinoA: Exercise[] = [
     { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
     { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
-    { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+    { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
     { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
-    { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+    { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '30 Kg', executionType: 'Simples' },
     { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
-    { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
-    { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
-    { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
+    { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+    { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+    { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' }
   ];
 
   const exAndreTreinoB: Exercise[] = [
@@ -514,6 +514,19 @@ export default function App() {
   ];
 
   const andreHistory: WorkoutHistoryEntry[] = [
+    {
+      id: 'andre-a-7-20260922',
+      date: '22/09/2026',
+      timestamp: new Date('2026-09-22T11:00:00Z').getTime(),
+      name: 'TREINO A (terças, quintas e sábados)',
+      type: 'STRENGTH',
+      duration: '30:00',
+      countText: '7 de 18',
+      workoutId: 'treino-a-andre',
+      athleteName: 'André Victor Brito de Andrade',
+      periodization: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+      exercises: exAndreTreinoA
+    },
     {
       id: 'andre-b-6-20260920',
       date: '20/09/2026',
@@ -1230,22 +1243,22 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 6,
+          faseAjusteA: 7,
           faseAjusteB: 6,
           faseAjusteC: 0,
-          totalGlobalA: 6,
+          totalGlobalA: 7,
           totalGlobalB: 6,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 12, targetCount: 36 },
+          trainingProgress: { completedCount: 13, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 6, B: 6, C: 0 }
+            progress: { A: 7, B: 6, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 6, B: 6, C: 0 },
-            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 6, B: 6, C: 0 }
+            '3 x 13': { A: 7, B: 6, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 7, B: 6, C: 0 }
           } as Record<string, { A: number; B: number; C: number }>,
           workouts: [
             {
@@ -1258,13 +1271,13 @@ export default function App() {
               exercises: [
                 { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
                 { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
-                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
                 { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
-                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+                { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '30 Kg', executionType: 'Simples' },
                 { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
-                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '10 Kg', executionType: 'Simples' },
-                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
-                { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' }
+                { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+                { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' }
               ]
             },
             {
@@ -1583,21 +1596,22 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 3,
-          faseAjusteB: 4,
+          faseAjusteA: 5,
+          faseAjusteB: 5,
           faseAjusteC: 0,
-          totalGlobalA: 3,
-          totalGlobalB: 4,
+          totalGlobalA: 5,
+          totalGlobalB: 5,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 7, targetCount: 36 },
+          trainingProgress: { completedCount: 10, targetCount: 36 },
           activePlan: {
             id: 'current',
-            phaseName: 'Mesociclo 16 - Hipertrofia',
+            phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 3, B: 4, C: 0 }
+            progress: { A: 5, B: 5, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 3, B: 4, C: 0 }
+            '3 x 13': { A: 5, B: 5, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 5, B: 5, C: 0 }
           },
           workouts: [
             {
@@ -1693,39 +1707,73 @@ export default function App() {
           }
           const updatedStudents = snapshot.docs.map(d => {
             const student = { id: d.id, ...d.data() } as Student;
-            if (student.id === 'fixed-andre') {
+            if (student.id === 'fixed-andre' || student.email === 'andrevictorbritodeandrade@gmail.com') {
                 const def = defaultStudentsData.find(s => s.id === 'fixed-andre');
                 if (def) {
-                    // Garantir que André Brito fique com 6/18 nos dois conforme solicitado pelo usuário
-                    student.faseAjusteA = 6;
-                    student.faseAjusteB = 6;
-                    student.totalGlobalA = 6;
-                    student.totalGlobalB = 6;
+                    const currentA = student.faseAjusteA ?? student.activePlan?.progress?.A ?? 0;
+                    const currentB = student.faseAjusteB ?? student.activePlan?.progress?.B ?? 0;
+                    const finalA = Math.max(7, currentA);
+                    const finalB = Math.max(6, currentB);
+                    student.faseAjusteA = finalA;
+                    student.faseAjusteB = finalB;
+                    student.totalGlobalA = finalA;
+                    student.totalGlobalB = finalB;
                     student.trainingProgress = {
-                        completedCount: 12,
+                        completedCount: Math.max(13, finalA + finalB, student.trainingProgress?.completedCount || 0),
                         targetCount: 36
                     };
                     if (student.activePlan) {
-                        student.activePlan.progress.A = 6;
-                        student.activePlan.progress.B = 6;
+                        student.activePlan.progress.A = finalA;
+                        student.activePlan.progress.B = finalB;
                         student.activePlan.targetSets = 18;
                     }
                     if (student.periodizationProgress) {
                         const pKey = '3 x 13';
                         const phaseKey = 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)';
                         if (student.periodizationProgress[pKey]) {
-                            student.periodizationProgress[pKey].A = 6;
-                            student.periodizationProgress[pKey].B = 6;
+                            student.periodizationProgress[pKey].A = finalA;
+                            student.periodizationProgress[pKey].B = finalB;
                         }
                         if (student.periodizationProgress[phaseKey]) {
-                            student.periodizationProgress[phaseKey].A = 6;
-                            student.periodizationProgress[phaseKey].B = 6;
+                            student.periodizationProgress[phaseKey].A = finalA;
+                            student.periodizationProgress[phaseKey].B = finalB;
                         }
                     }
                 }
             }
-            if (student.id === 'fixed-andre' && (!student.workouts || student.workouts.length === 0)) {
-                student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || [];
+            if (student.id === 'fixed-marcelly' || student.email === 'marcellybispo92@gmail.com') {
+                const currentA = student.faseAjusteA ?? student.activePlan?.progress?.A ?? 0;
+                const currentB = student.faseAjusteB ?? student.activePlan?.progress?.B ?? 0;
+                const finalA = Math.max(5, currentA);
+                const finalB = Math.max(5, currentB);
+                student.faseAjusteA = finalA;
+                student.faseAjusteB = finalB;
+                student.totalGlobalA = finalA;
+                student.totalGlobalB = finalB;
+                student.trainingProgress = {
+                    completedCount: Math.max(10, finalA + finalB, student.trainingProgress?.completedCount || 0),
+                    targetCount: 36
+                };
+                if (student.activePlan) {
+                    student.activePlan.progress.A = finalA;
+                    student.activePlan.progress.B = finalB;
+                    student.activePlan.targetSets = 18;
+                }
+                if (student.periodizationProgress) {
+                    const pKey = '3 x 13';
+                    const phaseKey = 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)';
+                    if (student.periodizationProgress[pKey]) {
+                        student.periodizationProgress[pKey].A = finalA;
+                        student.periodizationProgress[pKey].B = finalB;
+                    }
+                    if (student.periodizationProgress[phaseKey]) {
+                        student.periodizationProgress[phaseKey].A = finalA;
+                        student.periodizationProgress[phaseKey].B = finalB;
+                    }
+                }
+            }
+            if ((student.id === 'fixed-andre' || student.email === 'andrevictorbritodeandrade@gmail.com')) {
+                student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || student.workouts;
             }
             if (student.nome?.includes('Marcelly') && student.workouts) {
               student.workouts = student.workouts.filter(w => !((w.title?.toUpperCase() === 'TREINO A') && (!w.exercises || w.exercises.length === 0)));
@@ -1974,7 +2022,93 @@ export default function App() {
 
 
 
-                  // Block removed
+                  // One-time guaranteed sync for André Brito
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
+                      if ((rawData as any)._planRevision !== 'v31-andre-A7-B6-loads-fix') {
+                          (rawData as any)._planRevision = 'v31-andre-A7-B6-loads-fix';
+                          
+                          // 1. Atualizar Contadores (A: 7, B: 6)
+                          rawData.activePlan = {
+                              id: 'current',
+                              phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                              targetSets: 18,
+                              progress: { A: 7, B: 6, C: 0 }
+                          };
+                          rawData.trainingProgress = { completedCount: 13, targetCount: 36 };
+                          rawData.faseAjusteA = 7;
+                          rawData.faseAjusteB = 6;
+                          rawData.totalGlobalA = 7;
+                          rawData.totalGlobalB = 6;
+                          rawData.periodizationProgress = {
+                              ...(rawData.periodizationProgress || {}),
+                              '3 x 13': { A: 7, B: 6, C: 0 }
+                          };
+
+                          // 2. Atualizar Cargas do Treino A com os novos pesos
+                          currentWorkouts = currentWorkouts.map(w => {
+                              if (w.id === 'treino-a-andre') {
+                                  return {
+                                      ...w,
+                                      exercises: [
+                                          { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
+                                          { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '30 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
+                                          { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' }
+                                      ]
+                                  };
+                              }
+                              return w;
+                          });
+                          rawData.workouts = currentWorkouts;
+                          try {
+                              const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
+                              cargas['a-a-1'] = '50 Kg'; cargas['leg press horizontal/máquina'] = '50 Kg';
+                              cargas['a-a-2'] = '-- Kg'; cargas['agachamento no aparelho hack machine'] = '-- Kg';
+                              cargas['a-a-3'] = '20 Kg'; cargas['cadeira extensora'] = '20 Kg';
+                              cargas['a-a-4'] = '5 Kg'; cargas['cadeira extensora unilateral'] = '5 Kg';
+                              cargas['a-a-5'] = '30 Kg'; cargas['supino aberto na máquina'] = '30 Kg';
+                              cargas['a-a-6'] = '2,5 Kg'; cargas['supino aberto no banco inclinado na máquina'] = '2,5 Kg';
+                              cargas['a-a-7'] = '15 Kg'; cargas['desenvolvimento aberto máquina'] = '15 Kg';
+                              cargas['a-a-8'] = '25 Kg'; cargas['tríceps em pé no cross barra reta'] = '25 Kg';
+                              cargas['a-a-9'] = '15 Kg'; cargas['abdominal na máquina crunch'] = '15 Kg';
+                              localStorage.setItem('cargasTreino', JSON.stringify(cargas));
+                          } catch (e) {}
+                          workoutsModified = true;
+                          hasCloudChanges = true;
+                      }
+                  }
+
+                  // One-time guaranteed sync for Marcelly Bispo
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
+                      if ((rawData as any)._planRevision !== 'v5-marcelly-A5-B5-fix') {
+                          (rawData as any)._planRevision = 'v5-marcelly-A5-B5-fix';
+                          
+                          // 1. Atualizar Contadores (A: 5, B: 5)
+                          rawData.activePlan = {
+                              id: 'current',
+                              phaseName: defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global',
+                              targetSets: 18,
+                              progress: { A: 5, B: 5, C: 0 }
+                          };
+                          rawData.trainingProgress = { completedCount: 10, targetCount: 36 };
+                          rawData.faseAjusteA = 5;
+                          rawData.faseAjusteB = 5;
+                          rawData.totalGlobalA = 5;
+                          rawData.totalGlobalB = 5;
+                          rawData.periodizationProgress = {
+                              ...(rawData.periodizationProgress || {}),
+                              '3 x 13': { A: 5, B: 5, C: 0 }
+                          };
+                          
+                          workoutsModified = true;
+                          hasCloudChanges = true;
+                      }
+                  }
 
                   const mergedHistory = [...currentHistory];
                   let historyModified = false;
@@ -2030,6 +2164,34 @@ export default function App() {
                           rawData.weight = mergedAssessments[0].peso;
                       }
                       hasCloudChanges = true;
+                  }
+
+                  // Specific sync guarantee for Andre and Marcelly counts
+                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
+                      rawData.faseAjusteA = Math.max(7, rawData.faseAjusteA ?? 0);
+                      rawData.faseAjusteB = Math.max(6, rawData.faseAjusteB ?? 0);
+                      rawData.totalGlobalA = Math.max(7, rawData.totalGlobalA ?? 0);
+                      rawData.totalGlobalB = Math.max(6, rawData.totalGlobalB ?? 0);
+                      const currentComp = rawData.trainingProgress?.completedCount || 0;
+                      rawData.trainingProgress = { completedCount: Math.max(13, currentComp, rawData.faseAjusteA + rawData.faseAjusteB), targetCount: 36 };
+                      if (rawData.activePlan) {
+                          rawData.activePlan.progress.A = Math.max(7, rawData.activePlan.progress.A ?? 0);
+                          rawData.activePlan.progress.B = Math.max(6, rawData.activePlan.progress.B ?? 0);
+                          rawData.activePlan.targetSets = 18;
+                      }
+                  }
+                  if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
+                      rawData.faseAjusteA = Math.max(5, rawData.faseAjusteA ?? 0);
+                      rawData.faseAjusteB = Math.max(5, rawData.faseAjusteB ?? 0);
+                      rawData.totalGlobalA = Math.max(5, rawData.totalGlobalA ?? 0);
+                      rawData.totalGlobalB = Math.max(5, rawData.totalGlobalB ?? 0);
+                      const currentComp = rawData.trainingProgress?.completedCount || 0;
+                      rawData.trainingProgress = { completedCount: Math.max(10, currentComp, rawData.faseAjusteA + rawData.faseAjusteB), targetCount: 36 };
+                      if (rawData.activePlan) {
+                          rawData.activePlan.progress.A = Math.max(5, rawData.activePlan.progress.A ?? 0);
+                          rawData.activePlan.progress.B = Math.max(5, rawData.activePlan.progress.B ?? 0);
+                          rawData.activePlan.targetSets = 18;
+                      }
                   }
 
                   // If we detected that local defaults were missing from cloud, sync them up
@@ -2265,6 +2427,41 @@ export default function App() {
                         A: existing.activePlan?.progress?.A ?? 0,
                         B: existing.activePlan?.progress?.B ?? 0,
                         C: 0
+                    }
+                };
+            } else if (def.id === 'fixed-andre' || def.id === 'fixed-marcelly') {
+                const baseA = def.faseAjusteA ?? 0;
+                const baseB = def.faseAjusteB ?? 0;
+                const baseC = def.faseAjusteC ?? 0;
+                const curA = existing.faseAjusteA ?? existing.activePlan?.progress?.A ?? 0;
+                const curB = existing.faseAjusteB ?? existing.activePlan?.progress?.B ?? 0;
+                const curC = existing.faseAjusteC ?? existing.activePlan?.progress?.C ?? 0;
+                const finalA = Math.max(baseA, curA);
+                const finalB = Math.max(baseB, curB);
+                const finalC = Math.max(baseC, curC);
+
+                merged[existingIndex].faseAjusteA = finalA;
+                merged[existingIndex].faseAjusteB = finalB;
+                merged[existingIndex].faseAjusteC = finalC;
+                merged[existingIndex].totalGlobalA = finalA;
+                merged[existingIndex].totalGlobalB = finalB;
+                merged[existingIndex].totalGlobalC = finalC;
+                
+                const curCompleted = existing.trainingProgress?.completedCount ?? 0;
+                const targetCount = def.trainingProgress?.targetCount || existing.trainingProgress?.targetCount || 36;
+                merged[existingIndex].trainingProgress = {
+                    completedCount: Math.max(finalA + finalB + finalC, curCompleted, def.trainingProgress?.completedCount || 0),
+                    targetCount
+                };
+                merged[existingIndex].activePlan = {
+                    ...(def.activePlan || existing.activePlan || {}),
+                    id: 'current',
+                    phaseName: existing.activePlan?.phaseName || def.activePlan?.phaseName || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                    targetSets: def.activePlan?.targetSets || 18,
+                    progress: {
+                        A: finalA,
+                        B: finalB,
+                        C: finalC
                     }
                 };
             } else {
@@ -2725,8 +2922,21 @@ export default function App() {
     setSyncStatus('syncing'); // Mostra a rodinha girando
 
     // Update local state immediately for instant feedback
-    const updatedProgress = (studentForView.activePlan?.progress as any) || { A: 0, B: 0, C: 0 };
-    const newCount = (updatedProgress[tipoTreino] || 0) + 1;
+    const currentProgVal = (studentForView.activePlan?.progress as any)?.[tipoTreino] ?? (studentForView as any)[`faseAjuste${tipoTreino}`] ?? 0;
+    const isAndreStudent = studentForView.id === 'fixed-andre' || studentForView.email === 'andrevictorbritodeandrade@gmail.com';
+    const isMarcellyStudent = studentForView.id === 'fixed-marcelly' || studentForView.email === 'marcellybispo92@gmail.com';
+    const baseCount = isAndreStudent
+      ? Math.max(tipoTreino === 'A' ? 7 : 6, currentProgVal)
+      : isMarcellyStudent
+      ? Math.max(5, currentProgVal)
+      : currentProgVal;
+    const newCount = baseCount + 1;
+
+    const updatedProgress = {
+      ...((studentForView.activePlan?.progress as any) || { A: 0, B: 0, C: 0 }),
+      [tipoTreino]: newCount
+    };
+
     const newHistoryEntry: WorkoutHistoryEntry = {
       id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       date: new Date().toLocaleDateString('pt-BR'),
@@ -2741,14 +2951,16 @@ export default function App() {
     };
 
     const updatedHistory = [newHistoryEntry, ...(studentForView.workoutHistory || [])];
-    const updatedStudent = {
+    const updatedStudent: any = {
       ...studentForView,
+      [`faseAjuste${tipoTreino}`]: newCount,
+      [`totalGlobal${tipoTreino}`]: newCount,
       workoutHistory: updatedHistory,
       activePlan: {
         ...studentForView.activePlan,
         phaseName: studentForView.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação',
         targetSets: studentForView.activePlan?.targetSets || 18,
-        progress: { ...updatedProgress, [tipoTreino]: newCount }
+        progress: updatedProgress
       },
       trainingProgress: {
         targetCount: studentForView.trainingProgress?.targetCount || 36,
