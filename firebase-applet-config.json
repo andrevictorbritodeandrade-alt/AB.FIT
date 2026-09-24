@@ -1,10 +1,10 @@
 {
-  "projectId": "meus-apps---cerebro",
-  "appId": "1:980266889768:web:123d0e4b8f42dc61a53b1d",
-  "apiKey": "AIzaSyAxFmQtAjWqNoXpcGRnmAA_ouXsgw3RvT8",
-  "authDomain": "meus-apps---cerebro.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-b013ed31-1191-49ef-9e90-9456150868ea",
-  "storageBucket": "meus-apps---cerebro.firebasestorage.app",
-  "messagingSenderId": "980266889768",
-  "measurementId": "G-2C4DNZ5FM7"
+  "projectId": "abfit---app",
+  "appId": "1:413075544418:web:e5cffd04a2ed957de2743b",
+  "apiKey": "AIzaSyAvWENe5M3ZwgUxV-oDiUoTcWJk1cq_QO4",
+  "authDomain": "abfit---app.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "abfit---app.firebasestorage.app",
+  "messagingSenderId": "413075544418",
+  "measurementId": "G-JL1CS1MXLF"
 }

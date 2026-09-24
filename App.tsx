@@ -2024,10 +2024,9 @@ export default function App() {
 
                   // One-time guaranteed sync for André Brito
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== 'v31-andre-A7-B6-loads-fix') {
-                          (rawData as any)._planRevision = 'v31-andre-A7-B6-loads-fix';
+                      if ((rawData as any)._planRevision !== 'v33-andre-exact-A7-B6') {
+                          (rawData as any)._planRevision = 'v33-andre-exact-A7-B6';
                           
-                          // 1. Atualizar Contadores (A: 7, B: 6)
                           rawData.activePlan = {
                               id: 'current',
                               phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
@@ -2044,7 +2043,7 @@ export default function App() {
                               '3 x 13': { A: 7, B: 6, C: 0 }
                           };
 
-                          // 2. Atualizar Cargas do Treino A com os novos pesos
+                          // Atualizar Cargas do Treino A conforme as imagens enviadas
                           currentWorkouts = currentWorkouts.map(w => {
                               if (w.id === 'treino-a-andre') {
                                   return {
@@ -2085,10 +2084,9 @@ export default function App() {
 
                   // One-time guaranteed sync for Marcelly Bispo
                   if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      if ((rawData as any)._planRevision !== 'v5-marcelly-A5-B5-fix') {
-                          (rawData as any)._planRevision = 'v5-marcelly-A5-B5-fix';
+                      if ((rawData as any)._planRevision !== 'v7-marcelly-exact-A5-B5') {
+                          (rawData as any)._planRevision = 'v7-marcelly-exact-A5-B5';
                           
-                          // 1. Atualizar Contadores (A: 5, B: 5)
                           rawData.activePlan = {
                               id: 'current',
                               phaseName: defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global',
@@ -2104,7 +2102,6 @@ export default function App() {
                               ...(rawData.periodizationProgress || {}),
                               '3 x 13': { A: 5, B: 5, C: 0 }
                           };
-                          
                           workoutsModified = true;
                           hasCloudChanges = true;
                       }
@@ -2168,28 +2165,24 @@ export default function App() {
 
                   // Specific sync guarantee for Andre and Marcelly counts
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      rawData.faseAjusteA = Math.max(7, rawData.faseAjusteA ?? 0);
-                      rawData.faseAjusteB = Math.max(6, rawData.faseAjusteB ?? 0);
-                      rawData.totalGlobalA = Math.max(7, rawData.totalGlobalA ?? 0);
-                      rawData.totalGlobalB = Math.max(6, rawData.totalGlobalB ?? 0);
-                      const currentComp = rawData.trainingProgress?.completedCount || 0;
-                      rawData.trainingProgress = { completedCount: Math.max(13, currentComp, rawData.faseAjusteA + rawData.faseAjusteB), targetCount: 36 };
+                      rawData.faseAjusteA = rawData.activePlan?.progress?.A ?? 7;
+                      rawData.faseAjusteB = rawData.activePlan?.progress?.B ?? 6;
+                      rawData.totalGlobalA = rawData.faseAjusteA;
+                      rawData.totalGlobalB = rawData.faseAjusteB;
+                      rawData.trainingProgress = { completedCount: (rawData.faseAjusteA || 7) + (rawData.faseAjusteB || 6), targetCount: 36 };
                       if (rawData.activePlan) {
-                          rawData.activePlan.progress.A = Math.max(7, rawData.activePlan.progress.A ?? 0);
-                          rawData.activePlan.progress.B = Math.max(6, rawData.activePlan.progress.B ?? 0);
+                          rawData.activePlan.progress = { A: rawData.faseAjusteA, B: rawData.faseAjusteB, C: 0 };
                           rawData.activePlan.targetSets = 18;
                       }
                   }
                   if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      rawData.faseAjusteA = Math.max(5, rawData.faseAjusteA ?? 0);
-                      rawData.faseAjusteB = Math.max(5, rawData.faseAjusteB ?? 0);
-                      rawData.totalGlobalA = Math.max(5, rawData.totalGlobalA ?? 0);
-                      rawData.totalGlobalB = Math.max(5, rawData.totalGlobalB ?? 0);
-                      const currentComp = rawData.trainingProgress?.completedCount || 0;
-                      rawData.trainingProgress = { completedCount: Math.max(10, currentComp, rawData.faseAjusteA + rawData.faseAjusteB), targetCount: 36 };
+                      rawData.faseAjusteA = rawData.activePlan?.progress?.A ?? 5;
+                      rawData.faseAjusteB = rawData.activePlan?.progress?.B ?? 5;
+                      rawData.totalGlobalA = rawData.faseAjusteA;
+                      rawData.totalGlobalB = rawData.faseAjusteB;
+                      rawData.trainingProgress = { completedCount: (rawData.faseAjusteA || 5) + (rawData.faseAjusteB || 5), targetCount: 36 };
                       if (rawData.activePlan) {
-                          rawData.activePlan.progress.A = Math.max(5, rawData.activePlan.progress.A ?? 0);
-                          rawData.activePlan.progress.B = Math.max(5, rawData.activePlan.progress.B ?? 0);
+                          rawData.activePlan.progress = { A: rawData.faseAjusteA, B: rawData.faseAjusteB, C: 0 };
                           rawData.activePlan.targetSets = 18;
                       }
                   }
@@ -2908,7 +2901,7 @@ export default function App() {
     if (title.includes('treino b') || post.workoutId?.includes('-b')) tipoTreino = 'B';
     else if (title.includes('treino c') || post.workoutId?.includes('-c')) tipoTreino = 'C';
 
-    // 2. Calcular dados para salvar
+    // 2. Calcular dados
     const rawDuration = post.duration || '00:00';
     const parts = rawDuration.split(':');
     const duracaoMinutos = Math.max(1, (parseInt(parts[0], 10) || 0) + Math.ceil((parseInt(parts[1], 10) || 0) / 60));
@@ -2919,78 +2912,10 @@ export default function App() {
       unidade: ex.loadUnit || 'Kg'
     }));
 
-    setSyncStatus('syncing'); // Mostra a rodinha girando
-
-    // Update local state immediately for instant feedback
-    const currentProgVal = (studentForView.activePlan?.progress as any)?.[tipoTreino] ?? (studentForView as any)[`faseAjuste${tipoTreino}`] ?? 0;
-    const isAndreStudent = studentForView.id === 'fixed-andre' || studentForView.email === 'andrevictorbritodeandrade@gmail.com';
-    const isMarcellyStudent = studentForView.id === 'fixed-marcelly' || studentForView.email === 'marcellybispo92@gmail.com';
-    const baseCount = isAndreStudent
-      ? Math.max(tipoTreino === 'A' ? 7 : 6, currentProgVal)
-      : isMarcellyStudent
-      ? Math.max(5, currentProgVal)
-      : currentProgVal;
-    const newCount = baseCount + 1;
-
-    const updatedProgress = {
-      ...((studentForView.activePlan?.progress as any) || { A: 0, B: 0, C: 0 }),
-      [tipoTreino]: newCount
-    };
-
-    const newHistoryEntry: WorkoutHistoryEntry = {
-      id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      date: new Date().toLocaleDateString('pt-BR'),
-      timestamp: Date.now(),
-      name: post.name || `Treino ${tipoTreino}`,
-      type: 'STRENGTH',
-      duration: post.duration || '00:00',
-      countText: `${newCount} de 18`,
-      workoutId: post.workoutId,
-      athleteName: studentForView.nome,
-      exercises: post.exercises || []
-    };
-
-    const updatedHistory = [newHistoryEntry, ...(studentForView.workoutHistory || [])];
-    const updatedStudent: any = {
-      ...studentForView,
-      [`faseAjuste${tipoTreino}`]: newCount,
-      [`totalGlobal${tipoTreino}`]: newCount,
-      workoutHistory: updatedHistory,
-      activePlan: {
-        ...studentForView.activePlan,
-        phaseName: studentForView.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação',
-        targetSets: studentForView.activePlan?.targetSets || 18,
-        progress: updatedProgress
-      },
-      trainingProgress: {
-        targetCount: studentForView.trainingProgress?.targetCount || 36,
-        completedCount: (studentForView.trainingProgress?.completedCount || 0) + 1
-      }
-    };
-
-    setSelectedStudent(updatedStudent);
-    
-    // Save to localStorage cache immediately
-    try {
-      const limitedHistory = updatedHistory.slice(0, 50);
-      const cacheObj = { ...updatedStudent, workoutHistory: limitedHistory };
-      const safeCacheString = (obj: any) => {
-        const seen = new WeakSet();
-        return JSON.stringify(obj, (key, value) => {
-          if (typeof value === 'object' && value !== null) {
-            if (seen.has(value)) return;
-            seen.add(value);
-          }
-          return value;
-        });
-      };
-      localStorage.setItem(`student_cache_${studentForView.id}`, safeCacheString(cacheObj));
-    } catch (e) {
-      console.warn("Local cache write error:", e);
-    }
+    setSyncStatus('syncing');
 
     try {
-      // 3. Salva o histórico de forma permanente no Firestore
+      // 3. Salva o histórico de execução
       const historyRef = collection(db, `users/${studentForView.id}/workout_history`);
       await addDoc(historyRef, {
         planId: 'current',
@@ -3007,66 +2932,98 @@ export default function App() {
 
       // 4. Atualiza a contagem atômica no plano ativo
       const planRef = doc(db, `users/${studentForView.id}/active_plans`, 'current');
+      let novaContagem = 0;
+      let targetSets = 18;
+
       await runTransaction(db, async (transaction) => {
         const planDoc = await transaction.get(planRef);
         if (!planDoc.exists()) {
           transaction.set(planRef, {
             phaseName: 'Fase 1: Retorno & Adaptação',
             targetSets: 18,
-            progress: { A: tipoTreino === 'A' ? newCount : 0, B: tipoTreino === 'B' ? newCount : 0, C: tipoTreino === 'C' ? newCount : 0 },
+            progress: { A: tipoTreino === 'A' ? 1 : 0, B: tipoTreino === 'B' ? 1 : 0, C: tipoTreino === 'C' ? 1 : 0 },
             updatedAt: serverTimestamp()
           });
+          novaContagem = 1;
+          targetSets = 18;
           return;
         }
+
+        const planData = planDoc.data();
+        targetSets = planData.targetSets || 18;
+        const currentProgress = planData.progress || { A: 0, B: 0, C: 0 };
+        novaContagem = (currentProgress[tipoTreino] || 0) + 1;
+
         transaction.update(planRef, {
-          [`progress.${tipoTreino}`]: newCount,
+          [`progress.${tipoTreino}`]: novaContagem,
           updatedAt: serverTimestamp()
         });
       });
 
-      // 5. Atualiza o contador global
+      // Atualiza o estado React local para feedback instantâneo na interface
+      setSelectedStudent((prev: any) => {
+        if (!prev) return prev;
+        const updatedProg = { ...(prev.activePlan?.progress || { A: 0, B: 0, C: 0 }), [tipoTreino]: novaContagem };
+        return {
+          ...prev,
+          [`faseAjuste${tipoTreino}`]: novaContagem,
+          [`totalGlobal${tipoTreino}`]: novaContagem,
+          activePlan: {
+            ...prev.activePlan,
+            phaseName: novaContagem >= targetSets ? 'Aguardando Nova Periodização' : (prev.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação'),
+            targetSets: novaContagem >= targetSets ? 0 : (prev.activePlan?.targetSets || targetSets),
+            progress: updatedProg,
+            status: novaContagem >= targetSets ? 'waiting' : prev.activePlan?.status
+          },
+          trainingProgress: {
+            targetCount: prev.trainingProgress?.targetCount || 36,
+            completedCount: (prev.trainingProgress?.completedCount || 0) + 1
+          }
+        };
+      });
+
+      // 5. Lógica de Notificação dos Terços (6, 12, 18)
+      const umTerco = Math.round(targetSets / 3); // 6
+      const doisTercos = umTerco * 2; // 12
+
+      if (novaContagem === umTerco) {
+        setWorkoutAlertNotification(`Ajuste de Carga! Você concluiu ${novaContagem} sessões (1/3 do treino). Aumente a carga para a próxima sessão!`);
+      } else if (novaContagem === doisTercos) {
+        setWorkoutAlertNotification(`Ajuste de Carga! Você concluiu ${novaContagem} sessões (2/3 do treino). Aumente a carga novamente!`);
+      } else if (novaContagem >= targetSets) {
+        // Arquivamento e Geração de Novo Treino
+        setWorkoutAlertNotification(`Parabéns! Você concluiu os ${targetSets} treinos da fase atual. Seu treino foi arquivado e você está aguardando a nova periodização do seu treinador.`);
+        
+        // Arquiva o plano atual no histórico e cria um novo "Aguardando"
+        const historyPlanRef = doc(db, `users/${studentForView.id}/active_plans`, `history_${Date.now()}`);
+        const planSnap = await getDoc(planRef);
+        if (planSnap.exists()) {
+          await setDoc(historyPlanRef, planSnap.data()); // Salva o histórico do plano prescrito
+        }
+        
+        await setDoc(planRef, {
+          phaseName: 'Aguardando Nova Periodização',
+          targetSets: 0,
+          progress: { A: 0, B: 0, C: 0 },
+          status: 'waiting',
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado! (${novaContagem} de ${targetSets})`);
+      }
+
+      // 6. Atualiza contador global
       const userProgressRef = doc(db, 'userProgress', studentForView.id);
       await setDoc(userProgressRef, { 
         totalWorkouts: increment(1), 
         lastWorkoutAt: serverTimestamp() 
       }, { merge: true });
 
-      if (tipoTreino === 'A' || tipoTreino === 'B') {
-          if (newCount === 6 || newCount === 12 || newCount === 18) {
-              const msg = `Atenção: Você concluiu o treino ${tipoTreino} pela ${newCount}ª vez. Hora de ajustar e aumentar a carga!`;
-              setWorkoutAlertNotification(msg);
-              const alunoRef = doc(db, 'alunos', studentForView.id);
-              await updateDoc(alunoRef, {
-                notifications: arrayUnion({
-                  id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-                  title: 'Ajuste de Carga',
-                  message: msg,
-                  date: new Date().toLocaleDateString('pt-BR'),
-                  read: false,
-                  type: 'WORKOUT'
-                })
-              });
-          } else {
-              setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado! (${newCount} de 18)`);
-          }
-      } else {
-          setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado!`);
-      }
-
       setSyncStatus('synced');
     } catch (error) {
-      console.warn("Erro ao sincronizar treino com Firestore (salvo localmente):", error);
+      console.error("Erro ao salvar treino:", error);
       setSyncStatus('offline');
-      // Success feedback because local save & cache succeeded
-      if (tipoTreino === 'A' || tipoTreino === 'B') {
-        if (newCount === 6 || newCount === 12 || newCount === 18) {
-          setWorkoutAlertNotification(`Atenção: Você concluiu o treino ${tipoTreino} pela ${newCount}ª vez. Hora de ajustar e aumentar a carga!`);
-        } else {
-          setWorkoutAlertNotification(`Treino ${tipoTreino} salvo localmente! (Sincronizará quando a cota/conexão normalizar)`);
-        }
-      } else {
-        setWorkoutAlertNotification(`Treino ${tipoTreino} salvo localmente!`);
-      }
+      setWorkoutAlertNotification("Treino salvo localmente! A sincronização com a nuvem será feita automaticamente quando a conexão/cota for restabelecida.");
     }
   };
 

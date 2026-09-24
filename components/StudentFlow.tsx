@@ -663,11 +663,27 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     let fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
 
     if (isAndreStudent) {
-      fireA = Math.max(7, fireA, local.A || 0);
-      fireB = Math.max(6, fireB, local.B || 0);
+      const andreSyncKey = 'andre_exact_A7_B6_v33';
+      if (localStorage.getItem(andreSyncKey) !== 'true') {
+        localStorage.setItem(andreSyncKey, 'true');
+        fireA = 7;
+        fireB = 6;
+        fireC = 0;
+      } else {
+        fireA = Math.max(7, user.activePlan?.progress?.A ?? user.faseAjusteA ?? 7, local.A || 7);
+        fireB = Math.max(6, user.activePlan?.progress?.B ?? user.faseAjusteB ?? 6, local.B || 6);
+      }
     } else if (isMarcellyStudent) {
-      fireA = Math.max(5, fireA, local.A || 0);
-      fireB = Math.max(5, fireB, local.B || 0);
+      const marcellySyncKey = 'marcelly_exact_A5_B5_v7';
+      if (localStorage.getItem(marcellySyncKey) !== 'true') {
+        localStorage.setItem(marcellySyncKey, 'true');
+        fireA = 5;
+        fireB = 5;
+        fireC = 0;
+      } else {
+        fireA = Math.max(5, user.activePlan?.progress?.A ?? user.faseAjusteA ?? 5, local.A || 5);
+        fireB = Math.max(5, user.activePlan?.progress?.B ?? user.faseAjusteB ?? 5, local.B || 5);
+      }
     }
 
     const merged = {
@@ -734,18 +750,18 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const countA = isLiliane
     ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
     : isAndre
-    ? Math.max(7, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a)
+    ? (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 7)
     : isMarcelly
-    ? Math.max(5, localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0)
-    : Math.max(localCounters.A ?? 0, user.faseAjusteA ?? 0, user.activePlan?.progress?.A ?? 0, historyCounts.a);
+    ? (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 5)
+    : (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 0);
 
   const countB = isLiliane
     ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
     : isAndre
-    ? Math.max(6, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b)
+    ? (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 6)
     : isMarcelly
-    ? Math.max(5, localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0)
-    : Math.max(localCounters.B ?? 0, user.faseAjusteB ?? 0, user.activePlan?.progress?.B ?? 0, historyCounts.b);
+    ? (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 5)
+    : (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 0);
 
   const countC = isLiliane
     ? (localCounters.C ?? user.activePlan?.progress?.C ?? 0)

@@ -1,56 +1,74 @@
 import { initializeApp } from "firebase/app";
 import { 
+  getFirestore,
   initializeFirestore, 
-  persistentLocalCache,
+  persistentLocalCache, 
   persistentMultipleTabManager,
+  collection, 
   doc, 
-  getDocFromServer,
-  collection,
-  query,
-  onSnapshot,
-  setDoc,
-  getDoc,
-  updateDoc,
+  getDoc, 
+  getDocs, 
+  setDoc, 
+  addDoc, 
+  updateDoc, 
   deleteDoc,
-  addDoc,
-  getDocs,
-  serverTimestamp,
-  runTransaction,
-  writeBatch,
-  increment,
-  arrayUnion,
-  where,
-  orderBy,
+  onSnapshot, 
+  query, 
+  where, 
+  orderBy, 
   limit,
+  serverTimestamp, 
+  runTransaction, 
+  increment,
+  writeBatch,
+  arrayUnion,
+  getDocFromServer,
   setLogLevel
 } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth } from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
-// Silence Firestore quota limit exceeded and backoff delay console logs
+// Silence verbose logs
 setLogLevel('silent');
 
-// Import the Firebase configuration from the auto-generated file
-import firebaseConfig from '../firebase-applet-config.json';
+// NOVA CONFIGURAÇÃO DO FIREBASE
+export const firebaseConfig = {
+  apiKey: "AIzaSyAvWENe5M3ZwgUxV-oDiUoTcWJk1cq_QO4",
+  authDomain: "abfit---app.firebaseapp.com",
+  projectId: "abfit---app",
+  storageBucket: "abfit---app.firebasestorage.app",
+  messagingSenderId: "413075544418",
+  appId: "1:413075544418:web:e5cffd04a2ed957de2743b",
+  measurementId: "G-JL1CS1MXLF"
+};
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore with a background synchronization queue using IndexedDB.
-// This ensures workout data and progress are saved locally when offline 
-// and automatically synced to Firestore once connection is restored.
+// Inicializa o Firestore com persistência offline (evita perda de dados e problemas de cota)
 export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
-}, firebaseConfig.firestoreDatabaseId);
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager()
+  })
+});
 
+export const auth = getAuth(app);
 export const storage = getStorage(app);
+export const appId = firebaseConfig.projectId;
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
+// Export storage helpers
 export { ref, uploadBytes, getDownloadURL };
 
-
+// Export auth helpers
+export { signInAnonymously, onAuthStateChanged };
 
 // Export firestore functions to ensure they are from the same module instance
 export {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   doc,
   collection,
   query,
@@ -68,16 +86,13 @@ export {
   arrayUnion,
   where,
   orderBy,
-  limit
+  limit,
+  getDocFromServer
 };
-
-export const auth = getAuth(app);
-export const appId = firebaseConfig.projectId;
 
 // Connection test to Firestore
 async function testConnection() {
   try {
-    // Attempt to read a non-existent document to test connection
     await getDocFromServer(doc(db, 'test', 'connection'));
     console.log("Firestore connection successful.");
   } catch (error) {
@@ -86,15 +101,12 @@ async function testConnection() {
     } else if (error instanceof Error && error.message.includes('Database \'(default)\' not found')) {
       console.error("Firestore error: Database '(default)' not found. You must create the Firestore database in the Firebase Console.");
     }
-    // Skip logging for other errors, as this is simply a connection test.
   }
 }
 
 if (typeof window !== 'undefined') {
   testConnection();
 }
-
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export enum OperationType {
   CREATE = 'create',
