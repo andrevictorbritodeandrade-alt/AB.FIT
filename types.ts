@@ -82,6 +82,8 @@ export interface WorkoutHistoryEntry {
   athleteName?: string; // Novo: Identifica o atleta no Feed Global
   duration: string;
   date: string;
+  time?: string;
+  dayOfWeek?: string;
   timestamp: number;
   photoUrl?: string;
   text?: string;
