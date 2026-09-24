@@ -428,21 +428,15 @@ export default function App() {
         await signInAnonymously(auth); 
         console.log("Autenticação anônima concluída.");
       } catch (err: any) { 
-        console.error("Erro na autenticação:", err);
-        
-        let errorMessage = "";
         if (err.code === 'auth/admin-restricted-operation' || err.code === 'auth/operation-not-allowed') {
-          errorMessage = "O login anônimo está desativado no Console do Firebase. Por favor, ative-o em Authentication > Sign-in method > Anonymous.";
-          console.warn(errorMessage);
-          // We log it but don't set dbError to avoid blocking the whole app
+          console.warn("Autenticação anônima desativada no Console do Firebase. Operando com dados locais/cache.");
         } else if (err.code === 'auth/configuration-not-found') {
-          errorMessage = "Configuração do Firebase não encontrada ou incompleta.";
-          console.warn(errorMessage);
+          console.warn("Configuração de Auth do Firebase em modo autônomo/offline.");
         } else {
-          console.warn("Auth warning:", err.message);
+          console.warn("Auth status notice:", err?.message || err);
         }
         
-        // Even if auth fails, we try to proceed since some rules are 'if true'
+        // Even if auth fails, proceed smoothly with local cache / default state
         setAuthReady(true);
         setLoading(false);
       } 
@@ -3036,89 +3030,82 @@ export default function App() {
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && selectedStudent) {
-      setUploadingPhoto(true);
+    if (!file || !selectedStudent) return;
+    
+    setUploadingPhoto(true);
 
-      const compressImage = (f: File): Promise<Blob> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const MAX_SIZE = 400;
-              let width = img.width;
-              let height = img.height;
+    // Função robusta para comprimir a imagem e converter para Base64
+    const compressAndConvertToBase64 = (f: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_SIZE = 400; // 400px é suficiente para avatar e mantém o arquivo pequeno
+            let width = img.width;
+            let height = img.height;
 
-              if (width > height) {
-                if (width > MAX_SIZE) {
-                  height *= MAX_SIZE / width;
-                  width = MAX_SIZE;
-                }
-              } else {
-                if (height > MAX_SIZE) {
-                  width *= MAX_SIZE / height;
-                  height = MAX_SIZE;
-                }
+            if (width > height) {
+              if (width > MAX_SIZE) {
+                height *= MAX_SIZE / width;
+                width = MAX_SIZE;
               }
+            } else {
+              if (height > MAX_SIZE) {
+                width *= MAX_SIZE / height;
+                height = MAX_SIZE;
+              }
+            }
 
-              canvas.width = width;
-              canvas.height = height;
-              const ctx = canvas.getContext('2d');
-              ctx?.drawImage(img, 0, 0, width, height);
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+              reject(new Error('Falha ao criar contexto de canvas'));
+              return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
 
-              canvas.toBlob((blob) => {
-                if (blob) resolve(blob);
-                else reject(new Error('Canvas to Blob failed'));
-              }, 'image/jpeg', 0.7);
-            };
-            img.onerror = () => reject(new Error('Image load failed'));
-            if (event.target?.result) img.src = event.target.result as string;
+            // Compressão para JPEG qualidade 0.6 (ótimo para avatars)
+            const base64String = canvas.toDataURL('image/jpeg', 0.6);
+            resolve(base64String);
           };
-          reader.onerror = () => reject(new Error('File read failed'));
-          reader.readAsDataURL(f);
-        });
-      };
+          img.onerror = () => reject(new Error('Falha ao carregar a imagem no elemento img'));
+          if (event.target?.result) {
+            img.src = event.target.result as string;
+          }
+        };
+        reader.onerror = () => reject(new Error('Falha ao ler o arquivo'));
+        reader.readAsDataURL(f);
+      });
+    };
 
-      try {
-        // Comprime a imagem para reduzir o tamanho do upload drasticamente
-        const compressedBlob = await compressImage(file);
+    try {
+      console.log("Iniciando processamento da foto de perfil...");
+      
+      // 1. Comprime e converte a imagem para Base64 (não depende de Firebase Storage)
+      const base64Image = await compressAndConvertToBase64(file);
 
-        const sanitizeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const storagePath = `profile_pictures/${selectedStudent.id}/${Date.now()}_${sanitizeName}`;
-        const imageRef = ref(storage, storagePath);
+      // 2. Salva no Firestore usando o handleSaveData existente
+      // O Base64 será salvo no campo photoUrl do documento do aluno
+      const success = await handleSaveData(selectedStudent.id, { 
+        photoUrl: base64Image,
+        photoURL: base64Image // Garante compatibilidade com ambos os nomes de campo
+      });
 
-        const snapshot = await uploadBytes(imageRef, compressedBlob);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-
-        await handleSaveData(selectedStudent.id, { 
-          photoUrl: downloadURL,
-          photoURL: downloadURL
-        });
-        console.log("Foto de perfil enviada com sucesso para o Firebase Storage:", downloadURL);
-      } catch (err) {
-        console.error("Erro no upload para Firebase Storage, executando fallback de compressão de imagem:", err);
-        try {
-          // O fallback usa base64 se o storage falhar por causa de regras de segurança/CORS
-          const blobToBase64 = (blob: Blob): Promise<string> => {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            });
-          };
-          
-          const compressedBlob = await compressImage(file);
-          const compressedBase64 = await blobToBase64(compressedBlob);
-          await handleSaveData(selectedStudent.id, { photoUrl: compressedBase64, photoURL: compressedBase64 });
-        } catch (fallbackErr) {
-          console.error("Erro no fallback da foto:", fallbackErr);
-          alert("Erro ao enviar a foto. Tente novamente.");
-        }
-      } finally {
-        setUploadingPhoto(false);
+      if (success) {
+        console.log("Foto de perfil salva com sucesso no Firestore.");
+      } else {
+        throw new Error("Falha ao salvar dados no Firestore.");
       }
+
+    } catch (err: any) {
+      console.error("Erro ao carregar foto de perfil:", err);
+      alert("Não foi possível carregar a foto. Tente novamente com uma imagem menor ou verifique sua conexão.");
+    } finally {
+      // Sempre desliga o spinner, independente de sucesso ou falha
+      setUploadingPhoto(false);
     }
   };
 

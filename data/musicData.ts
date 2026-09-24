@@ -100,6 +100,8 @@ export const musicCategories: MusicCategory[] = [
     color: '#ec4899',
     gradient: 'from-pink-600 via-purple-600 to-indigo-600',
     songs: [
+      { id: 'SWnXdDADqfs', title: 'Especial LGBTQIAPN+ Energy Mix', artist: 'Pop & Pride Selection' },
+      { id: '_ZmCRc9CxTM', title: 'Especial LGBTQIAPN+ Dance Session', artist: 'Pride Beats' },
       { id: 'QIgym0tzrMw', title: 'Gloria Groove - A Fantástica Máquina do Groove', artist: 'Gloria Groove' },
       { id: 'jmTjugfL_pU', title: 'Gloria Groove - Serenata Da GG, Vol. 2 (Ao Vivo)', artist: 'Gloria Groove' },
       { id: '0uo9YF-fRFM', title: 'Ludmilla - Bloco Numanice (Ao Vivo)', artist: 'Ludmilla' },
@@ -157,6 +159,7 @@ export const musicCategories: MusicCategory[] = [
     color: '#8b5cf6',
     gradient: 'from-purple-600 via-indigo-700 to-zinc-950',
     songs: [
+      { id: 'peF46tU-G9g', title: 'Tiny Desk Concert: Especial Ao Vivo', artist: 'Tiny Desk' },
       { id: 'R2eOU7c7G_4', title: 'Mon Rovîa: Tiny Desk Concert', artist: 'Mon Rovîa' },
       { id: 'SG0ifZpDswg', title: 'E.U.: Tiny Desk Concert', artist: 'E.U.' },
       { id: 'kVzaq0RRYPQ', title: 'Isaiah Rashad: Tiny Desk Concert', artist: 'Isaiah Rashad' },

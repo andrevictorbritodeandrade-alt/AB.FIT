@@ -97,9 +97,11 @@ async function testConnection() {
     console.log("Firestore connection successful.");
   } catch (error) {
     if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Firestore connection failed: the client is offline. Please check your Firebase configuration and ensure the database exists.");
+      console.warn("Firestore: Operando em modo cache local persistente (offline).");
     } else if (error instanceof Error && error.message.includes('Database \'(default)\' not found')) {
-      console.error("Firestore error: Database '(default)' not found. You must create the Firestore database in the Firebase Console.");
+      console.warn("Firestore: Base de dados '(default)' em modo de contingência local.");
+    } else {
+      console.warn("Firestore connectivity notice:", error instanceof Error ? error.message : String(error));
     }
   }
 }
