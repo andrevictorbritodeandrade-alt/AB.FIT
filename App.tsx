@@ -1237,22 +1237,22 @@ export default function App() {
               }
             ]
           },
-          faseAjusteA: 7,
-          faseAjusteB: 6,
+          faseAjusteA: 9,
+          faseAjusteB: 8,
           faseAjusteC: 0,
-          totalGlobalA: 7,
-          totalGlobalB: 6,
+          totalGlobalA: 9,
+          totalGlobalB: 8,
           totalGlobalC: 0,
-          trainingProgress: { completedCount: 13, targetCount: 36 },
+          trainingProgress: { completedCount: 17, targetCount: 36 },
           activePlan: {
             id: 'current',
             phaseName: 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
             targetSets: 18,
-            progress: { A: 7, B: 6, C: 0 }
+            progress: { A: 9, B: 8, C: 0 }
           },
           periodizationProgress: {
-            '3 x 13': { A: 7, B: 6, C: 0 },
-            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 7, B: 6, C: 0 }
+            '3 x 13': { A: 9, B: 8, C: 0 },
+            'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)': { A: 9, B: 8, C: 0 }
           } as Record<string, { A: number; B: number; C: number }>,
           workouts: [
             {
@@ -1706,14 +1706,14 @@ export default function App() {
                 if (def) {
                     const currentA = student.faseAjusteA ?? student.activePlan?.progress?.A ?? 0;
                     const currentB = student.faseAjusteB ?? student.activePlan?.progress?.B ?? 0;
-                    const finalA = Math.max(7, currentA);
-                    const finalB = Math.max(6, currentB);
+                    const finalA = Math.max(9, currentA);
+                    const finalB = Math.max(8, currentB);
                     student.faseAjusteA = finalA;
                     student.faseAjusteB = finalB;
                     student.totalGlobalA = finalA;
                     student.totalGlobalB = finalB;
                     student.trainingProgress = {
-                        completedCount: Math.max(13, finalA + finalB, student.trainingProgress?.completedCount || 0),
+                        completedCount: Math.max(17, finalA + finalB, student.trainingProgress?.completedCount || 0),
                         targetCount: 36
                     };
                     if (student.activePlan) {
@@ -1767,7 +1767,10 @@ export default function App() {
                 }
             }
             if ((student.id === 'fixed-andre' || student.email === 'andrevictorbritodeandrade@gmail.com')) {
-                student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || student.workouts;
+                // Preserva os treinos e cargas reais salvos no Firestore pelo aluno
+                if (!student.workouts || student.workouts.length === 0) {
+                    student.workouts = defaultStudentsData.find(s => s.id === 'fixed-andre')?.workouts || [];
+                }
             }
             if (student.nome?.includes('Marcelly') && student.workouts) {
               student.workouts = student.workouts.filter(w => !((w.title?.toUpperCase() === 'TREINO A') && (!w.exercises || w.exercises.length === 0)));
@@ -2016,87 +2019,82 @@ export default function App() {
 
 
 
-                  // One-time guaranteed sync for André Brito
+                  // Sincronização inteligente e preservação de nuvem para André Brito (Base: 9 Treino A, 8 Treino B = 17 de 36)
                   if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      if ((rawData as any)._planRevision !== 'v33-andre-exact-A7-B6') {
-                          (rawData as any)._planRevision = 'v33-andre-exact-A7-B6';
-                          
-                          rawData.activePlan = {
-                              id: 'current',
-                              phaseName: defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
-                              targetSets: 18,
-                              progress: { A: 7, B: 6, C: 0 }
-                          };
-                          rawData.trainingProgress = { completedCount: 13, targetCount: 36 };
-                          rawData.faseAjusteA = 7;
-                          rawData.faseAjusteB = 6;
-                          rawData.totalGlobalA = 7;
-                          rawData.totalGlobalB = 6;
-                          rawData.periodizationProgress = {
-                              ...(rawData.periodizationProgress || {}),
-                              '3 x 13': { A: 7, B: 6, C: 0 }
-                          };
+                      const curA = rawData.faseAjusteA ?? rawData.activePlan?.progress?.A ?? 0;
+                      const curB = rawData.faseAjusteB ?? rawData.activePlan?.progress?.B ?? 0;
+                      const finalA = Math.max(9, curA);
+                      const finalB = Math.max(8, curB);
+                      
+                      rawData.faseAjusteA = finalA;
+                      rawData.faseAjusteB = finalB;
+                      rawData.totalGlobalA = finalA;
+                      rawData.totalGlobalB = finalB;
+                      rawData.trainingProgress = { 
+                          completedCount: Math.max(finalA + finalB, rawData.trainingProgress?.completedCount || 0, 17), 
+                          targetCount: 36 
+                      };
+                      rawData.activePlan = {
+                          ...(rawData.activePlan || {}),
+                          id: 'current',
+                          phaseName: rawData.activePlan?.phaseName || defaultProfile.periodization?.phaseTitle || 'Fase 1: Retorno de Inatividade & Força Estabilizadora (18 Sessões - 3x13 reps)',
+                          targetSets: 18,
+                          progress: { A: finalA, B: finalB, C: 0 }
+                      };
+                      rawData.periodizationProgress = {
+                          ...(rawData.periodizationProgress || {}),
+                          '3 x 13': { A: finalA, B: finalB, C: 0 }
+                      };
 
-                          // Atualizar Cargas do Treino A conforme as imagens enviadas
-                          currentWorkouts = currentWorkouts.map(w => {
-                              if (w.id === 'treino-a-andre') {
-                                  return {
-                                      ...w,
-                                      exercises: [
-                                          { id: 'a-a-1', name: 'Leg press horizontal/máquina', sets: '3', reps: '13', rest: '20s', load: '50 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-2', name: 'Agachamento no aparelho hack machine', sets: '3', reps: '13', rest: '20s', load: '-- Kg', executionType: 'Simples' },
-                                          { id: 'a-a-3', name: 'Cadeira extensora', sets: '3', reps: '13', rest: '20s', load: '20 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-4', name: 'Cadeira extensora unilateral', sets: '3', reps: '13', rest: '20s', load: '5 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-5', name: 'Supino aberto na máquina', sets: '3', reps: '13', rest: '20s', load: '30 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-6', name: 'Supino aberto no banco inclinado na máquina', sets: '3', reps: '13', rest: '20s', load: '2,5 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-7', name: 'Desenvolvimento aberto máquina', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-8', name: 'Tríceps em pé no Cross barra reta', sets: '3', reps: '13', rest: '20s', load: '25 Kg', executionType: 'Simples' },
-                                          { id: 'a-a-9', name: 'Abdominal na máquina crunch', sets: '3', reps: '13', rest: '20s', load: '15 Kg', executionType: 'Simples' }
-                                      ]
-                                  };
+                      // Garante cargas atualizadas nos exercícios de todas as planilhas priorizando a nuvem (cargas/analytics)
+                      currentWorkouts = currentWorkouts.map(w => ({
+                          ...w,
+                          exercises: w.exercises.map(ex => {
+                              const norm = ex.name.toLowerCase().trim();
+                              const cloudLoad = rawData.cargas?.[norm] || (ex.id ? rawData.cargas?.[ex.id] : '') || (rawData.analytics?.exercises?.[ex.name] as any)?.lastLoad;
+                              if (cloudLoad) {
+                                  return { ...ex, load: cloudLoad };
                               }
-                              return w;
-                          });
-                          rawData.workouts = currentWorkouts;
-                          try {
-                              const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
-                              cargas['a-a-1'] = '50 Kg'; cargas['leg press horizontal/máquina'] = '50 Kg';
-                              cargas['a-a-2'] = '-- Kg'; cargas['agachamento no aparelho hack machine'] = '-- Kg';
-                              cargas['a-a-3'] = '20 Kg'; cargas['cadeira extensora'] = '20 Kg';
-                              cargas['a-a-4'] = '5 Kg'; cargas['cadeira extensora unilateral'] = '5 Kg';
-                              cargas['a-a-5'] = '30 Kg'; cargas['supino aberto na máquina'] = '30 Kg';
-                              cargas['a-a-6'] = '2,5 Kg'; cargas['supino aberto no banco inclinado na máquina'] = '2,5 Kg';
-                              cargas['a-a-7'] = '15 Kg'; cargas['desenvolvimento aberto máquina'] = '15 Kg';
-                              cargas['a-a-8'] = '25 Kg'; cargas['tríceps em pé no cross barra reta'] = '25 Kg';
-                              cargas['a-a-9'] = '15 Kg'; cargas['abdominal na máquina crunch'] = '15 Kg';
-                              localStorage.setItem('cargasTreino', JSON.stringify(cargas));
-                          } catch (e) {}
-                          workoutsModified = true;
+                              const defaultEx = defaultProfile.workouts?.find(dw => dw.id === w.id)?.exercises.find(de => de.name === ex.name);
+                              if (!ex.load && defaultEx?.load) {
+                                  return { ...ex, load: defaultEx.load };
+                              }
+                              return ex;
+                          })
+                      }));
+                      rawData.workouts = currentWorkouts;
+                      if (curA < 9 || curB < 8) {
                           hasCloudChanges = true;
                       }
                   }
 
-                  // One-time guaranteed sync for Marcelly Bispo
+                  // Sincronização inteligente e preservação de nuvem para Marcelly Bispo (Base: 5 Treino A, 5 Treino B = 10 de 36)
                   if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      if ((rawData as any)._planRevision !== 'v7-marcelly-exact-A5-B5') {
-                          (rawData as any)._planRevision = 'v7-marcelly-exact-A5-B5';
-                          
-                          rawData.activePlan = {
-                              id: 'current',
-                              phaseName: defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global',
-                              targetSets: 18,
-                              progress: { A: 5, B: 5, C: 0 }
-                          };
-                          rawData.trainingProgress = { completedCount: 10, targetCount: 36 };
-                          rawData.faseAjusteA = 5;
-                          rawData.faseAjusteB = 5;
-                          rawData.totalGlobalA = 5;
-                          rawData.totalGlobalB = 5;
-                          rawData.periodizationProgress = {
-                              ...(rawData.periodizationProgress || {}),
-                              '3 x 13': { A: 5, B: 5, C: 0 }
-                          };
-                          workoutsModified = true;
+                      const curA = rawData.faseAjusteA ?? rawData.activePlan?.progress?.A ?? 0;
+                      const curB = rawData.faseAjusteB ?? rawData.activePlan?.progress?.B ?? 0;
+                      const finalA = Math.max(5, curA);
+                      const finalB = Math.max(5, curB);
+                      
+                      rawData.faseAjusteA = finalA;
+                      rawData.faseAjusteB = finalB;
+                      rawData.totalGlobalA = finalA;
+                      rawData.totalGlobalB = finalB;
+                      rawData.trainingProgress = { 
+                          completedCount: Math.max(finalA + finalB, rawData.trainingProgress?.completedCount || 0, 10), 
+                          targetCount: 36 
+                      };
+                      rawData.activePlan = {
+                          ...(rawData.activePlan || {}),
+                          id: 'current',
+                          phaseName: rawData.activePlan?.phaseName || defaultProfile.periodization?.phaseTitle || 'Adaptação e Fortalecimento Global',
+                          targetSets: 18,
+                          progress: { A: finalA, B: finalB, C: 0 }
+                      };
+                      rawData.periodizationProgress = {
+                          ...(rawData.periodizationProgress || {}),
+                          '3 x 13': { A: finalA, B: finalB, C: 0 }
+                      };
+                      if (curA < 5 || curB < 5) {
                           hasCloudChanges = true;
                       }
                   }
@@ -2157,32 +2155,8 @@ export default function App() {
                       hasCloudChanges = true;
                   }
 
-                  // Specific sync guarantee for Andre and Marcelly counts
-                  if (defaultProfile.email === 'andrevictorbritodeandrade@gmail.com' || rawData.id === 'fixed-andre') {
-                      rawData.faseAjusteA = rawData.activePlan?.progress?.A ?? 7;
-                      rawData.faseAjusteB = rawData.activePlan?.progress?.B ?? 6;
-                      rawData.totalGlobalA = rawData.faseAjusteA;
-                      rawData.totalGlobalB = rawData.faseAjusteB;
-                      rawData.trainingProgress = { completedCount: (rawData.faseAjusteA || 7) + (rawData.faseAjusteB || 6), targetCount: 36 };
-                      if (rawData.activePlan) {
-                          rawData.activePlan.progress = { A: rawData.faseAjusteA, B: rawData.faseAjusteB, C: 0 };
-                          rawData.activePlan.targetSets = 18;
-                      }
-                  }
-                  if (defaultProfile.email === 'marcellybispo92@gmail.com' || rawData.id === 'fixed-marcelly') {
-                      rawData.faseAjusteA = rawData.activePlan?.progress?.A ?? 5;
-                      rawData.faseAjusteB = rawData.activePlan?.progress?.B ?? 5;
-                      rawData.totalGlobalA = rawData.faseAjusteA;
-                      rawData.totalGlobalB = rawData.faseAjusteB;
-                      rawData.trainingProgress = { completedCount: (rawData.faseAjusteA || 5) + (rawData.faseAjusteB || 5), targetCount: 36 };
-                      if (rawData.activePlan) {
-                          rawData.activePlan.progress = { A: rawData.faseAjusteA, B: rawData.faseAjusteB, C: 0 };
-                          rawData.activePlan.targetSets = 18;
-                      }
-                  }
-
-                  // If we detected that local defaults were missing from cloud, sync them up
-                  if (hasCloudChanges && !(window as any)._hasQuotaExceeded) {
+                    // Dados de contagem preservados diretamente da nuvem
+                    if (hasCloudChanges && !(window as any)._hasQuotaExceeded) {
                       const docRefSave = doc(db, path);
                       try {
                         console.log(`Sincronizando dados base de ${rawData.nome} para a nuvem...`);
@@ -2190,6 +2164,7 @@ export default function App() {
                             nome: rawData.nome, 
                             email: rawData.email,
                             workouts: rawData.workouts,
+                            cargas: rawData.cargas || {},
                             workoutHistory: rawData.workoutHistory,
                             periodization: rawData.periodization,
                             analytics: rawData.analytics,
@@ -2909,7 +2884,7 @@ export default function App() {
     setSyncStatus('syncing');
 
     try {
-      // 3. Salva o histórico de execução
+      // 3. Salva o histórico de execução na subcoleção users/${id}/workout_history
       const historyRef = collection(db, `users/${studentForView.id}/workout_history`);
       await addDoc(historyRef, {
         planId: 'current',
@@ -2926,59 +2901,162 @@ export default function App() {
 
       // 4. Atualiza a contagem atômica no plano ativo
       const planRef = doc(db, `users/${studentForView.id}/active_plans`, 'current');
-      let novaContagem = 0;
-      let targetSets = 18;
+      const isLilianeStudent = studentForView.id === 'fixed-liliane' || studentForView.email === 'lilicatorres@gmail.com';
+      let targetSets = isLilianeStudent ? 32 : (studentForView.activePlan?.targetSets || 18);
+      const currentProgress = studentForView.activePlan?.progress || { A: 0, B: 0, C: 0 };
+      const currentCountForType = Math.max(
+        currentProgress[tipoTreino] || 0,
+        (studentForView as any)[`faseAjuste${tipoTreino}`] || 0,
+        (studentForView as any)[`totalGlobal${tipoTreino}`] || 0
+      );
+      let novaContagem = currentCountForType + 1;
 
       await runTransaction(db, async (transaction) => {
         const planDoc = await transaction.get(planRef);
         if (!planDoc.exists()) {
           transaction.set(planRef, {
-            phaseName: 'Fase 1: Retorno & Adaptação',
-            targetSets: 18,
-            progress: { A: tipoTreino === 'A' ? 1 : 0, B: tipoTreino === 'B' ? 1 : 0, C: tipoTreino === 'C' ? 1 : 0 },
+            phaseName: studentForView.periodization?.phaseTitle || 'Fase 1: Retorno & Adaptação',
+            targetSets: targetSets,
+            progress: { 
+              A: tipoTreino === 'A' ? novaContagem : (currentProgress.A || 0), 
+              B: tipoTreino === 'B' ? novaContagem : (currentProgress.B || 0), 
+              C: tipoTreino === 'C' ? novaContagem : (currentProgress.C || 0) 
+            },
             updatedAt: serverTimestamp()
           });
-          novaContagem = 1;
-          targetSets = 18;
-          return;
+        } else {
+          const planData = planDoc.data();
+          targetSets = planData.targetSets || targetSets;
+          const prog = planData.progress || currentProgress;
+          const dbCount = (prog[tipoTreino] || 0) + 1;
+          novaContagem = Math.max(novaContagem, dbCount);
+
+          transaction.update(planRef, {
+            [`progress.${tipoTreino}`]: novaContagem,
+            updatedAt: serverTimestamp()
+          });
         }
-
-        const planData = planDoc.data();
-        targetSets = planData.targetSets || 18;
-        const currentProgress = planData.progress || { A: 0, B: 0, C: 0 };
-        novaContagem = (currentProgress[tipoTreino] || 0) + 1;
-
-        transaction.update(planRef, {
-          [`progress.${tipoTreino}`]: novaContagem,
-          updatedAt: serverTimestamp()
-        });
       });
 
-      // Atualiza o estado React local para feedback instantâneo na interface
-      setSelectedStudent((prev: any) => {
-        if (!prev) return prev;
-        const updatedProg = { ...(prev.activePlan?.progress || { A: 0, B: 0, C: 0 }), [tipoTreino]: novaContagem };
-        return {
-          ...prev,
-          [`faseAjuste${tipoTreino}`]: novaContagem,
-          [`totalGlobal${tipoTreino}`]: novaContagem,
-          activePlan: {
-            ...prev.activePlan,
-            phaseName: novaContagem >= targetSets ? 'Aguardando Nova Periodização' : (prev.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação'),
-            targetSets: novaContagem >= targetSets ? 0 : (prev.activePlan?.targetSets || targetSets),
-            progress: updatedProg,
-            status: novaContagem >= targetSets ? 'waiting' : prev.activePlan?.status
+      // 5. ATUALIZAÇÃO COMPLETA DAS CARGAS NOS EXERCÍCIOS DAS PLANILHAS (SALVAMENTO PERMANENTE NA NUVEM)
+      const updatedWorkouts = (studentForView.workouts || []).map(w => {
+        const wTitle = (w.title || '').toLowerCase();
+        const matchesThis = (tipoTreino === 'A' && (wTitle.includes('treino a') || w.id.includes('treino-a'))) ||
+                            (tipoTreino === 'B' && (wTitle.includes('treino b') || w.id.includes('treino-b'))) ||
+                            (tipoTreino === 'C' && (wTitle.includes('treino c') || w.id.includes('treino-c')));
+        if (matchesThis && post.exercises && post.exercises.length > 0) {
+          const exMap = new Map<string, Exercise>();
+          post.exercises.forEach(pe => {
+            if (pe.name) exMap.set(pe.name.toLowerCase().trim(), pe);
+            if (pe.id) exMap.set(pe.id, pe);
+          });
+          const updatedExercises = w.exercises.map(ex => {
+            const found = exMap.get(ex.name.toLowerCase().trim()) || (ex.id ? exMap.get(ex.id) : null);
+            if (found && found.load) {
+              return { ...ex, load: found.load, loadUnit: found.loadUnit || ex.loadUnit || 'Kg' };
+            }
+            return ex;
+          });
+          return { ...w, exercises: updatedExercises };
+        }
+        return w;
+      });
+
+      // 6. Atualiza mapa persistente de cargas em analytics.exercises e no mapa direto de cargas
+      const updatedAnalyticsExercises = { ...(studentForView.analytics?.exercises || {}) };
+      const updatedCargas = { ...(studentForView.cargas || {}) };
+      (post.exercises || []).forEach(ex => {
+        if (ex.name && ex.load) {
+          updatedAnalyticsExercises[ex.name] = {
+            ...(updatedAnalyticsExercises[ex.name] || {}),
+            lastLoad: ex.load,
+            lastUpdate: Date.now()
+          };
+          updatedCargas[ex.name.toLowerCase().trim()] = ex.load;
+          if (ex.id) updatedCargas[ex.id] = ex.load;
+        }
+      });
+
+      // 7. Novo registro de treino no histórico
+      const now = new Date();
+      const newHistoryEntry: WorkoutHistoryEntry = {
+        id: `workout-${Date.now()}`,
+        workoutId: post.workoutId || `treino-${tipoTreino.toLowerCase()}`,
+        name: post.name || `Treino ${tipoTreino}`,
+        duration: post.duration || '00:00',
+        date: now.toLocaleDateString('pt-BR'),
+        time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        dayOfWeek: now.toLocaleDateString('pt-BR', { weekday: 'long' }),
+        timestamp: Date.now(),
+        type: 'STRENGTH',
+        exercises: post.exercises || []
+      };
+
+      const updatedHistory = [newHistoryEntry, ...(studentForView.workoutHistory || [])];
+
+      const currentA = tipoTreino === 'A' ? novaContagem : ((studentForView as any).faseAjusteA ?? currentProgress.A ?? 0);
+      const currentB = tipoTreino === 'B' ? novaContagem : ((studentForView as any).faseAjusteB ?? currentProgress.B ?? 0);
+      const currentC = tipoTreino === 'C' ? novaContagem : ((studentForView as any).faseAjusteC ?? currentProgress.C ?? 0);
+      const newTotalGlobal = currentA + currentB + currentC;
+
+      const studentUpdates = {
+        workouts: updatedWorkouts,
+        cargas: updatedCargas,
+        workoutHistory: updatedHistory,
+        [`faseAjuste${tipoTreino}`]: novaContagem,
+        [`totalGlobal${tipoTreino}`]: novaContagem,
+        faseAjusteA: currentA,
+        faseAjusteB: currentB,
+        faseAjusteC: currentC,
+        totalGlobalA: currentA,
+        totalGlobalB: currentB,
+        totalGlobalC: currentC,
+        trainingProgress: {
+          targetCount: studentForView.trainingProgress?.targetCount || 36,
+          completedCount: newTotalGlobal
+        },
+        activePlan: {
+          ...(studentForView.activePlan || {}),
+          id: 'current',
+          phaseName: novaContagem >= targetSets ? 'Aguardando Nova Periodização' : (studentForView.activePlan?.phaseName || 'Fase 1: Retorno & Adaptação (18 Sessões)'),
+          targetSets: novaContagem >= targetSets ? 0 : (studentForView.activePlan?.targetSets || targetSets),
+          progress: {
+            A: currentA,
+            B: currentB,
+            C: currentC
           },
-          trainingProgress: {
-            targetCount: prev.trainingProgress?.targetCount || 36,
-            completedCount: (prev.trainingProgress?.completedCount || 0) + 1
-          }
-        };
-      });
+          status: novaContagem >= targetSets ? 'waiting' : (studentForView.activePlan?.status || 'active'),
+          updatedAt: Date.now()
+        },
+        analytics: {
+          ...(studentForView.analytics || {}),
+          sessionsCompleted: newTotalGlobal,
+          lastSessionDate: now.toLocaleDateString('pt-BR'),
+          exercises: updatedAnalyticsExercises
+        }
+      };
 
-      // 5. Lógica de Notificação dos Terços (6, 12, 18)
-      const umTerco = Math.round(targetSets / 3); // 6
-      const doisTercos = umTerco * 2; // 12
+      // 8. PERSISTÊNCIA COMPLETA NA NUVEM (FIRESTORE) PARA VISUALIZAÇÃO EM QUALQUER APARELHO
+      await handleSaveData(studentForView.id, studentUpdates);
+
+      // 9. Atualiza caches locais de contadores e cargas para transição sem delay
+      try {
+        const counters = { A: currentA, B: currentB, C: currentC };
+        localStorage.setItem(`abfit_counters_${studentForView.id}`, JSON.stringify(counters));
+        const cargasMap = JSON.parse(localStorage.getItem(`cargasTreino_${studentForView.id}`) || localStorage.getItem('cargasTreino') || '{}');
+        (post.exercises || []).forEach(ex => {
+          if (ex.name && ex.load) {
+            cargasMap[ex.name.toLowerCase().trim()] = ex.load;
+            if (ex.id) cargasMap[ex.id] = ex.load;
+          }
+        });
+        localStorage.setItem(`cargasTreino_${studentForView.id}`, JSON.stringify(cargasMap));
+        localStorage.setItem('cargasTreino', JSON.stringify(cargasMap));
+      } catch (e) {}
+
+      // 10. Lógica de Notificação dos Terços (6, 12, 18)
+      const umTerco = Math.round(targetSets / 3);
+      const doisTercos = umTerco * 2;
 
       if (novaContagem === umTerco) {
         setWorkoutAlertNotification(`Ajuste de Carga! Você concluiu ${novaContagem} sessões (1/3 do treino). Aumente a carga para a próxima sessão!`);
@@ -2988,11 +3066,10 @@ export default function App() {
         // Arquivamento e Geração de Novo Treino
         setWorkoutAlertNotification(`Parabéns! Você concluiu os ${targetSets} treinos da fase atual. Seu treino foi arquivado e você está aguardando a nova periodização do seu treinador.`);
         
-        // Arquiva o plano atual no histórico e cria um novo "Aguardando"
         const historyPlanRef = doc(db, `users/${studentForView.id}/active_plans`, `history_${Date.now()}`);
         const planSnap = await getDoc(planRef);
         if (planSnap.exists()) {
-          await setDoc(historyPlanRef, planSnap.data()); // Salva o histórico do plano prescrito
+          await setDoc(historyPlanRef, planSnap.data());
         }
         
         await setDoc(planRef, {
@@ -3006,7 +3083,7 @@ export default function App() {
         setWorkoutAlertNotification(`Treino ${tipoTreino} salvo e contabilizado! (${novaContagem} de ${targetSets})`);
       }
 
-      // 6. Atualiza contador global
+      // 11. Atualiza contador global na coleção userProgress
       const userProgressRef = doc(db, 'userProgress', studentForView.id);
       await setDoc(userProgressRef, { 
         totalWorkouts: increment(1), 

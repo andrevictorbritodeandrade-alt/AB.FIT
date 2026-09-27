@@ -189,8 +189,8 @@ export interface NutritionProfile {
 export interface AnalyticsData {
   sessionsCompleted: number;
   streakDays: number;
-  exercises: Record<string, { completed: number; skipped: number }>;
-  lastSessionDate?: string;
+  exercises: Record<string, { completed?: number; skipped?: number; lastLoad?: string; lastUpdate?: number }>;
+  lastSessionDate?: string | null;
 }
 
 export interface TrainingProgress {
@@ -207,6 +207,7 @@ export interface ActivePlan {
     B: number;
     C: number;
   };
+  status?: string;
   updatedAt?: any;
 }
 
@@ -217,6 +218,7 @@ export interface Student {
   photoUrl?: string;
   sexo?: 'Masculino' | 'Feminino';
   workouts?: Workout[];
+  cargas?: Record<string, string>;
   workoutHistory?: WorkoutHistoryEntry[];
   physicalAssessments?: PhysicalAssessment[];
   periodization?: PeriodizationPlan;

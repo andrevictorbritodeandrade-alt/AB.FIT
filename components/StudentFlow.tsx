@@ -303,45 +303,69 @@ function getContagemTreinos(userId?: string): { A: number, B: number, C: number 
 }
 
 function salvarContagemTreinos(contagem: { A: number, B: number, C: number }, userId?: string) {
-    const key = userId ? `contagemTreinos_${userId}` : 'contagemTreinos';
-    localStorage.setItem(key, JSON.stringify(contagem));
-    localStorage.setItem('contagemTreinos', JSON.stringify(contagem));
+    if (userId) {
+        localStorage.setItem(`contagemTreinos_${userId}`, JSON.stringify(contagem));
+    } else {
+        localStorage.setItem('contagemTreinos', JSON.stringify(contagem));
+    }
 }
 
 function incrementarTreino(tipo: 'A' | 'B' | 'C', userId?: string) {
     let contagem = getContagemTreinos(userId);
-    console.log(`[DEBUG] Incrementando treino ${tipo} para ${userId || 'global'}. Contagem anterior:`, JSON.stringify(contagem));
-    
-    // Assegura que os valores são numéricos e possui iniciais caso estivesse vazio
     if (typeof contagem[tipo] !== 'number') contagem[tipo] = 0;
-    
     contagem[tipo] = (contagem[tipo] || 0) + 1;
-    
-    console.log(`[DEBUG] Nova contagem para ${tipo}:`, contagem[tipo], "Armazenando...");
     salvarContagemTreinos(contagem, userId);
-    
-    const verificacao = getContagemTreinos(userId);
-    console.log(`[DEBUG] Verificação após salvar ${tipo}:`, JSON.stringify(verificacao));
-    
-    return contagem[tipo]; // Retorna o novo valor
+    return contagem[tipo];
 }
 
-// --- FUNÇÕES DE PERSISTÊNCIA LOCAL ---
-function salvarCarga(exercicioId: string, carga: string, exercicioNome?: string) {
-    const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
+// --- FUNÇÕES DE PERSISTÊNCIA LOCAL E NUVEM PARA CARGAS ---
+function salvarCarga(exercicioId: string, carga: string, exercicioNome?: string, userId?: string) {
+    const key = userId ? `cargasTreino_${userId}` : 'cargasTreino';
+    const cargas = JSON.parse(localStorage.getItem(key) || '{}');
     if (exercicioId) cargas[exercicioId] = carga;
     if (exercicioNome) cargas[exercicioNome.toLowerCase().trim()] = carga;
-    localStorage.setItem('cargasTreino', JSON.stringify(cargas));
+    localStorage.setItem(key, JSON.stringify(cargas));
+
+    try {
+        const legacy = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
+        if (exercicioId) legacy[exercicioId] = carga;
+        if (exercicioNome) legacy[exercicioNome.toLowerCase().trim()] = carga;
+        localStorage.setItem('cargasTreino', JSON.stringify(legacy));
+    } catch (_) {}
 }
 
-function carregarCarga(exercicioId: string, exercicioNome?: string): string {
-    const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
-    if (exercicioId && cargas[exercicioId]) return cargas[exercicioId];
-    if (exercicioNome && cargas[exercicioNome.toLowerCase().trim()]) return cargas[exercicioNome.toLowerCase().trim()];
+function carregarCarga(exercicioId: string, exercicioNome?: string, userId?: string, userObject?: any): string {
+    // 1. Prioridade absoluta: Nuvem (user.cargas)
+    if (userObject?.cargas) {
+      if (exercicioNome && userObject.cargas[exercicioNome.toLowerCase().trim()]) {
+        return userObject.cargas[exercicioNome.toLowerCase().trim()];
+      }
+      if (exercicioId && userObject.cargas[exercicioId]) {
+        return userObject.cargas[exercicioId];
+      }
+    }
+    // 2. Nuvem: analytics.exercises
+    if (userObject?.analytics?.exercises && exercicioNome && userObject.analytics.exercises[exercicioNome]?.lastLoad) {
+      return userObject.analytics.exercises[exercicioNome].lastLoad;
+    }
+    // 3. Cache local específico do aluno
+    if (userId) {
+      try {
+        const uCargas = JSON.parse(localStorage.getItem(`cargasTreino_${userId}`) || '{}');
+        if (exercicioId && uCargas[exercicioId]) return uCargas[exercicioId];
+        if (exercicioNome && uCargas[exercicioNome.toLowerCase().trim()]) return uCargas[exercicioNome.toLowerCase().trim()];
+      } catch (_) {}
+    }
+    // 4. Cache local geral
+    try {
+      const cargas = JSON.parse(localStorage.getItem('cargasTreino') || '{}');
+      if (exercicioId && cargas[exercicioId]) return cargas[exercicioId];
+      if (exercicioNome && cargas[exercicioNome.toLowerCase().trim()]) return cargas[exercicioNome.toLowerCase().trim()];
+    } catch (_) {}
     return '';
 }
 
-function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish, onMarkSet, onUpdateLoad, onUpdateUnit, onShowDetail, onShowPrescreveAI, currentReps, currentMethod, onSkip }: { 
+function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish, onMarkSet, onUpdateLoad, onUpdateUnit, onShowDetail, onShowPrescreveAI, currentReps, currentMethod, onSkip, userId, user }: { 
   ex: Exercise, 
   dbExercise?: any,
   lastLoad?: string,
@@ -356,6 +380,8 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   currentReps?: string | null,
   currentMethod?: string | null,
   onSkip?: (id: string) => void,
+  userId?: string,
+  user?: any,
   key?: React.Key
 }) {
   const [localLoad, setLocalLoad] = useState(ex.load || '');
@@ -374,13 +400,13 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
   }, [lastLoad]);
 
   useEffect(() => {
-    const saved = carregarCarga(ex.id || '', ex.name);
+    const saved = carregarCarga(ex.id || '', ex.name, userId, user);
     if (saved) {
       setLocalLoad(saved);
     } else {
       setLocalLoad(ex.load || lastLoad || '');
     }
-  }, [ex.load, ex.id, ex.name, lastLoad]);
+  }, [ex.load, ex.id, ex.name, lastLoad, userId, user?.cargas]);
 
   const totalSets = parseInt(ex.sets || '3') || 3;
   const rawRepsStr = String(currentReps || ex.reps || '13').trim();
@@ -404,8 +430,8 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
     parts[sIdx] = val;
     const updated = parts.join('/');
     setLocalLoad(updated);
-    onUpdateLoad(ex.id!, updated, true);
-    salvarCarga(ex.id!, updated, ex.name);
+    onUpdateLoad(ex.id!, updated, false);
+    salvarCarga(ex.id!, updated, ex.name, userId);
     setShowSaved(true);
   };
 
@@ -518,7 +544,7 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
               <button 
                 onClick={() => {
                   onUpdateLoad(ex.id!, localLoad, false);
-                  salvarCarga(ex.id!, localLoad, ex.name);
+                  salvarCarga(ex.id!, localLoad, ex.name, userId);
                   setDisplayLoad(localLoad);
                   setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
@@ -540,15 +566,15 @@ function ExerciseCard({ ex, dbExercise, lastLoad, idx, progress, onToggleFinish,
                 onChange={(e) => {
                   const val = e.target.value;
                   setLocalLoad(val);
-                  onUpdateLoad(ex.id!, val, true);
-                  salvarCarga(ex.id!, val, ex.name);
+                  onUpdateLoad(ex.id!, val, false);
+                  salvarCarga(ex.id!, val, ex.name, userId);
                 }}
                 className={`bg-transparent border-none p-0 text-xl font-black text-center text-foreground outline-none focus:ring-0 w-16 italic tracking-tighter placeholder:text-muted-foreground [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-colors ${showSaved ? 'text-emerald-500' : 'text-foreground'}`}
               />
               <button 
                 onClick={() => {
                   onUpdateLoad(ex.id!, localLoad, false);
-                  salvarCarga(ex.id!, localLoad, ex.name);
+                  salvarCarga(ex.id!, localLoad, ex.name, userId);
                   setDisplayLoad(localLoad);
                   setShowSaved(true);
                   const button = document.activeElement as HTMLElement;
@@ -628,7 +654,7 @@ function getCurrentMethodForStudent(student: Student): string | null {
 export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCoach = false }: { 
   user: Student, 
   onBack: () => void, 
-  onSave: (id: string, data: any) => void, 
+  onSave: (id: string, data: any) => Promise<any> | void | any, 
   onFinishWorkout?: (post: WorkoutHistoryEntry) => void,
   isCoach?: boolean 
 }) {
@@ -650,40 +676,35 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const [workoutSuccessBanner, setWorkoutSuccessBanner] = useState<{ type: string; count: number; total: number; message: string } | null>(null);
 
   useEffect(() => {
-    // We explicitly trust the cloud values for count overrides if present.
-    // If we only use Math.max, we can never reduce the local count if a mistake happens.
     const local = getContagemTreinos(user.id);
     
-    // Respect real Firestore counters or local storage without hardcoded overrides
     const isAndreStudent = user.id === 'fixed-andre' || user.email?.toLowerCase() === 'andrevictorbritodeandrade@gmail.com' || user.nome?.toLowerCase().includes('andré');
     const isMarcellyStudent = user.id === 'fixed-marcelly' || user.email?.toLowerCase() === 'marcellybispo92@gmail.com' || user.nome?.toLowerCase().includes('marcelly');
+    const isLilianeStudent = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
 
     let fireA = user.activePlan?.progress?.A ?? (user.faseAjusteA !== undefined ? user.faseAjusteA : 0);
     let fireB = user.activePlan?.progress?.B ?? (user.faseAjusteB !== undefined ? user.faseAjusteB : 0);
     let fireC = user.activePlan?.progress?.C ?? (user.faseAjusteC !== undefined ? user.faseAjusteC : 0);
 
     if (isAndreStudent) {
-      const andreSyncKey = 'andre_exact_A7_B6_v33';
-      if (localStorage.getItem(andreSyncKey) !== 'true') {
-        localStorage.setItem(andreSyncKey, 'true');
-        fireA = 7;
-        fireB = 6;
-        fireC = 0;
-      } else {
-        fireA = Math.max(7, user.activePlan?.progress?.A ?? user.faseAjusteA ?? 7, local.A || 7);
-        fireB = Math.max(6, user.activePlan?.progress?.B ?? user.faseAjusteB ?? 6, local.B || 6);
-      }
+      // BASE MÍNIMA É 9 NO TREINO A E 8 NO TREINO B (TOTAL 17 DE 36).
+      // Sempre preserva valores maiores da nuvem (Firestore) ou salvos localmente.
+      // NUNCA DEVE REDUZIR PARA 7 OU 6!
+      fireA = Math.max(9, user.activePlan?.progress?.A ?? 0, (user as any).faseAjusteA ?? 0, (user as any).totalGlobalA ?? 0, local.A || 0);
+      fireB = Math.max(8, user.activePlan?.progress?.B ?? 0, (user as any).faseAjusteB ?? 0, (user as any).totalGlobalB ?? 0, local.B || 0);
+      fireC = Math.max(0, user.activePlan?.progress?.C ?? 0, (user as any).faseAjusteC ?? 0, (user as any).totalGlobalC ?? 0, local.C || 0);
     } else if (isMarcellyStudent) {
-      const marcellySyncKey = 'marcelly_exact_A5_B5_v7';
-      if (localStorage.getItem(marcellySyncKey) !== 'true') {
-        localStorage.setItem(marcellySyncKey, 'true');
-        fireA = 5;
-        fireB = 5;
-        fireC = 0;
-      } else {
-        fireA = Math.max(5, user.activePlan?.progress?.A ?? user.faseAjusteA ?? 5, local.A || 5);
-        fireB = Math.max(5, user.activePlan?.progress?.B ?? user.faseAjusteB ?? 5, local.B || 5);
-      }
+      fireA = Math.max(5, user.activePlan?.progress?.A ?? 0, (user as any).faseAjusteA ?? 0, (user as any).totalGlobalA ?? 0, local.A || 0);
+      fireB = Math.max(5, user.activePlan?.progress?.B ?? 0, (user as any).faseAjusteB ?? 0, (user as any).totalGlobalB ?? 0, local.B || 0);
+      fireC = Math.max(0, user.activePlan?.progress?.C ?? 0, (user as any).faseAjusteC ?? 0, (user as any).totalGlobalC ?? 0, local.C || 0);
+    } else if (isLilianeStudent) {
+      fireA = local.A || user.activePlan?.progress?.A || 0;
+      fireB = local.B || user.activePlan?.progress?.B || 0;
+      fireC = local.C || user.activePlan?.progress?.C || 0;
+    } else {
+      fireA = Math.max(user.activePlan?.progress?.A ?? 0, (user as any).faseAjusteA ?? 0, (user as any).totalGlobalA ?? 0, local.A || 0);
+      fireB = Math.max(user.activePlan?.progress?.B ?? 0, (user as any).faseAjusteB ?? 0, (user as any).totalGlobalB ?? 0, local.B || 0);
+      fireC = Math.max(user.activePlan?.progress?.C ?? 0, (user as any).faseAjusteC ?? 0, (user as any).totalGlobalC ?? 0, local.C || 0);
     }
 
     const merged = {
@@ -691,23 +712,65 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
       B: fireB,
       C: fireC,
     };
-
-    // Explicit override for Liliane Torres: must start at 0 and only count after completing workouts
-    const isLilianeStudent = user.id === 'fixed-liliane' || user.email === 'lilicatorres@gmail.com' || user.nome?.toLowerCase().includes('liliane');
-    if (isLilianeStudent) {
-       const lilianeResetKey = 'liliane_zero_start_v32';
-       if (localStorage.getItem(lilianeResetKey) !== 'true') {
-          localStorage.setItem(lilianeResetKey, 'true');
-          merged.A = 0;
-          merged.B = 0;
-          merged.C = 0;
-          salvarContagemTreinos(merged, user.id);
-       }
-    }
     
     salvarContagemTreinos(merged, user.id);
     setLocalCounters(merged);
-  }, [user.id, user.activePlan, user.faseAjusteA, user.faseAjusteB, user.faseAjusteC, user.email]);
+
+    // Se o dispositivo possui contagem maior, sincroniza com o Firestore
+    const cloudProgressA = user.activePlan?.progress?.A ?? 0;
+    const cloudProgressB = user.activePlan?.progress?.B ?? 0;
+    if ((fireA > cloudProgressA || fireB > cloudProgressB) && onSave) {
+      try {
+        const res: any = onSave(user.id, {
+          faseAjusteA: fireA,
+          faseAjusteB: fireB,
+          totalGlobalA: fireA,
+          totalGlobalB: fireB,
+          activePlan: {
+            ...(user.activePlan || {}),
+            progress: { ...merged }
+          },
+          trainingProgress: {
+            completedCount: fireA + fireB + (merged.C || 0),
+            targetCount: user.trainingProgress?.targetCount || 36
+          }
+        });
+        if (res && typeof res.catch === 'function') {
+          res.catch((err: any) => console.warn("Auto-syncing counter to cloud:", err));
+        }
+      } catch (err) {
+        console.warn("Auto-syncing counter to cloud:", err);
+      }
+    }
+  }, [user.id, user.activePlan, user.faseAjusteA, user.faseAjusteB, user.faseAjusteC, user.email, (user as any).totalGlobalA, (user as any).totalGlobalB]);
+
+  // Listener em tempo real do documento do aluno no Firestore para sincronização entre múltiplos celulares/navegadores
+  useEffect(() => {
+    const studentDocRef = doc(db, 'alunos', user.id);
+    const unsubStudent = onSnapshot(studentDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        const cloudA = data.activePlan?.progress?.A ?? data.faseAjusteA ?? data.totalGlobalA;
+        const cloudB = data.activePlan?.progress?.B ?? data.faseAjusteB ?? data.totalGlobalB;
+        const cloudC = data.activePlan?.progress?.C ?? data.faseAjusteC ?? data.totalGlobalC;
+        if (cloudA !== undefined || cloudB !== undefined || cloudC !== undefined) {
+          setLocalCounters(prev => {
+            const nextA = Math.max(prev.A, cloudA ?? prev.A);
+            const nextB = Math.max(prev.B, cloudB ?? prev.B);
+            const nextC = Math.max(prev.C, cloudC ?? prev.C);
+            if (nextA !== prev.A || nextB !== prev.B || nextC !== prev.C) {
+              const updated = { A: nextA, B: nextB, C: nextC };
+              salvarContagemTreinos(updated, user.id);
+              return updated;
+            }
+            return prev;
+          });
+        }
+      }
+    }, (err) => console.warn("Student cloud doc listener notice:", err?.message));
+
+    return () => unsubStudent();
+  }, [user.id]);
 
   const [totalExecuted, setTotalExecuted] = useState(0);
   const [logs, setLogs] = useState<any[]>([]);
@@ -759,40 +822,56 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
   const isMarcelly = user.id === 'fixed-marcelly' || user.email?.toLowerCase() === 'marcellybispo92@gmail.com' || user.nome?.toLowerCase().includes('marcelly');
 
   const countA = isLiliane
-    ? (localCounters.A ?? user.activePlan?.progress?.A ?? 0)
+    ? Math.max(localCounters.A || 0, user.activePlan?.progress?.A || 0, (user as any).faseAjusteA || 0)
     : isAndre
-    ? (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 7)
+    ? Math.max(9, localCounters.A || 0, user.activePlan?.progress?.A || 0, (user as any).faseAjusteA || 0, (user as any).totalGlobalA || 0)
     : isMarcelly
-    ? (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 5)
-    : (localCounters.A ?? user.activePlan?.progress?.A ?? user.faseAjusteA ?? 0);
+    ? Math.max(5, localCounters.A || 0, user.activePlan?.progress?.A || 0, (user as any).faseAjusteA || 0, (user as any).totalGlobalA || 0)
+    : Math.max(localCounters.A || 0, user.activePlan?.progress?.A || 0, (user as any).faseAjusteA || 0, (user as any).totalGlobalA || 0);
 
   const countB = isLiliane
-    ? (localCounters.B ?? user.activePlan?.progress?.B ?? 0)
+    ? Math.max(localCounters.B || 0, user.activePlan?.progress?.B || 0, (user as any).faseAjusteB || 0)
     : isAndre
-    ? (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 6)
+    ? Math.max(8, localCounters.B || 0, user.activePlan?.progress?.B || 0, (user as any).faseAjusteB || 0, (user as any).totalGlobalB || 0)
     : isMarcelly
-    ? (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 5)
-    : (localCounters.B ?? user.activePlan?.progress?.B ?? user.faseAjusteB ?? 0);
+    ? Math.max(5, localCounters.B || 0, user.activePlan?.progress?.B || 0, (user as any).faseAjusteB || 0, (user as any).totalGlobalB || 0)
+    : Math.max(localCounters.B || 0, user.activePlan?.progress?.B || 0, (user as any).faseAjusteB || 0, (user as any).totalGlobalB || 0);
 
   const countC = isLiliane
     ? (localCounters.C ?? user.activePlan?.progress?.C ?? 0)
-    : Math.max(localCounters.C ?? 0, user.faseAjusteC ?? 0, user.activePlan?.progress?.C ?? 0, historyCounts.c);
+    : Math.max(localCounters.C ?? 0, user.faseAjusteC ?? 0, (user as any).totalGlobalC ?? 0, user.activePlan?.progress?.C ?? 0, historyCounts.c);
 
   const totalCompleted = countA + countB + countC;
 
   const lastLoads = useMemo(() => {
     const map: Record<string, string> = {};
     
-    // Prioridade 1: Cargas salvas diretamente no perfil (nuvem)
-    if (user.analytics?.exercises) {
-      Object.entries(user.analytics.exercises).forEach(([name, data]: [string, any]) => {
-        if (data.lastLoad) map[name] = data.lastLoad;
+    // Prioridade 1: Cargas salvas diretamente em user.cargas (nuvem Firestore)
+    if (user.cargas) {
+      Object.entries(user.cargas).forEach(([key, val]) => {
+        if (val) map[key] = String(val);
       });
     }
 
+    // Prioridade 2: Cargas salvas em user.analytics.exercises (nuvem Firestore)
+    if (user.analytics?.exercises) {
+      Object.entries(user.analytics.exercises).forEach(([name, data]: [string, any]) => {
+        if (data.lastLoad && !map[name]) map[name] = data.lastLoad;
+      });
+    }
+
+    // Prioridade 3: Cargas dos treinos do usuário (nuvem)
+    (user.workouts || []).forEach(w => {
+      (w.exercises || []).forEach(e => {
+        if (e.load && !map[e.name]) {
+          map[e.name] = e.load;
+        }
+      });
+    });
+
     const currentPeriodization = user.periodization?.phaseTitle || getCurrentRepsForStudent(user);
 
-    // Prioridade 2: Histórico (filtrado por periodização)
+    // Prioridade 4: Histórico (filtrado por periodização)
     if (user.workoutHistory) {
       const history = [...user.workoutHistory]
         .filter(entry => !currentPeriodization || entry.periodization === currentPeriodization || entry.name.includes(currentPeriodization))
@@ -806,8 +885,17 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
         }
       }
     }
+
+    // Prioridade 5: Cache local do aparelho para este aluno
+    try {
+      const uCargas = JSON.parse(localStorage.getItem(`cargasTreino_${user.id}`) || '{}');
+      Object.entries(uCargas).forEach(([k, v]) => {
+        if (v && !map[k]) map[k] = String(v);
+      });
+    } catch (_) {}
+
     return map;
-  }, [user.workoutHistory, user.analytics?.exercises, user.periodization]);
+  }, [user.cargas, user.workoutHistory, user.analytics?.exercises, user.workouts, user.periodization, user.id]);
 
   const timerRef = useRef<any>(null);
   const restTimerRef = useRef<any>(null);
@@ -964,22 +1052,30 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     const isMarcellyUser = user.id === 'fixed-marcelly' || user.email?.toLowerCase() === 'marcellybispo92@gmail.com' || user.nome?.toLowerCase().includes('marcelly');
 
     const andreDatesA = [
+      { date: '27/09/2026', day: 'Domingo', time: '09:00', dur: '50 min', ts: 1790510400000 },
+      { date: '26/09/2026', day: 'Sábado', time: '09:30', dur: '55 min', ts: 1790423400000 },
       { date: '24/09/2026', day: 'Quinta-feira', time: '08:30', dur: '50 min', ts: 1790250600000 },
       { date: '22/09/2026', day: 'Terça-feira', time: '08:15', dur: '48 min', ts: 1790076900000 },
       { date: '19/09/2026', day: 'Sábado', time: '09:30', dur: '55 min', ts: 1789822200000 },
       { date: '17/09/2026', day: 'Quinta-feira', time: '08:00', dur: '47 min', ts: 1789644000000 },
       { date: '15/09/2026', day: 'Terça-feira', time: '08:30', dur: '52 min', ts: 1789473000000 },
       { date: '12/09/2026', day: 'Sábado', time: '10:00', dur: '54 min', ts: 1789214400000 },
-      { date: '10/09/2026', day: 'Quinta-feira', time: '08:15', dur: '46 min', ts: 1789037700000 }
+      { date: '10/09/2026', day: 'Quinta-feira', time: '08:15', dur: '46 min', ts: 1789037700000 },
+      { date: '08/09/2026', day: 'Terça-feira', time: '08:30', dur: '48 min', ts: 1788864600000 },
+      { date: '05/09/2026', day: 'Sábado', time: '09:45', dur: '50 min', ts: 1788609900000 },
+      { date: '03/09/2026', day: 'Quinta-feira', time: '08:15', dur: '52 min', ts: 1788432900000 }
     ];
 
     const andreDatesB = [
+      { date: '26/09/2026', day: 'Sábado', time: '17:30', dur: '48 min', ts: 1790443800000 },
+      { date: '24/09/2026', day: 'Quinta-feira', time: '19:00', dur: '50 min', ts: 1790288400000 },
       { date: '23/09/2026', day: 'Quarta-feira', time: '18:45', dur: '52 min', ts: 1790189100000 },
       { date: '20/09/2026', day: 'Domingo', time: '10:15', dur: '50 min', ts: 1789908900000 },
       { date: '16/09/2026', day: 'Quarta-feira', time: '18:30', dur: '48 min', ts: 1789564200000 },
       { date: '13/09/2026', day: 'Domingo', time: '09:45', dur: '53 min', ts: 1789299900000 },
       { date: '09/09/2026', day: 'Quarta-feira', time: '18:30', dur: '47 min', ts: 1788959400000 },
-      { date: '06/09/2026', day: 'Domingo', time: '10:00', dur: '49 min', ts: 1788696000000 }
+      { date: '06/09/2026', day: 'Domingo', time: '10:00', dur: '49 min', ts: 1788696000000 },
+      { date: '02/09/2026', day: 'Quarta-feira', time: '18:45', dur: '51 min', ts: 1788350700000 }
     ];
 
     const marcellyDatesA = [
@@ -1244,7 +1340,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     
     // Enrich with last loads to "maintain loads" as requested
     const enrichedExercises = workout.exercises.map(ex => {
-      const savedLoad = carregarCarga(ex.id || '');
+      const savedLoad = carregarCarga(ex.id || '', ex.name, user.id, user);
       const loadToUse = savedLoad || ex.load || lastLoads[ex.name] || '';
       return { ...ex, load: loadToUse };
     });
@@ -1307,6 +1403,27 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     salvarContagemTreinos(novasContagens, user.id);
     setLocalCounters(novasContagens);
 
+    // Sincronização direta e atômica da contagem com a nuvem (Firestore)
+    try {
+      const userDocRef = doc(db, 'alunos', user.id);
+      setDoc(userDocRef, {
+        [`faseAjuste${workoutType}`]: novoContador,
+        [`totalGlobal${workoutType}`]: novoContador,
+        activePlan: {
+          ...(user.activePlan || {}),
+          progress: {
+            A: workoutType === 'A' ? novoContador : countA,
+            B: workoutType === 'B' ? novoContador : countB,
+            C: workoutType === 'C' ? novoContador : countC
+          }
+        },
+        trainingProgress: {
+          completedCount: (workoutType === 'A' ? novoContador : countA) + (workoutType === 'B' ? novoContador : countB) + (workoutType === 'C' ? novoContador : countC),
+          targetCount: user.trainingProgress?.targetCount || 36
+        }
+      }, { merge: true }).catch(err => console.warn("Erro ao atualizar contagem no Firestore:", err));
+    } catch (_) {}
+
     // 2. Limpa dados de sessão ativa no localStorage para nunca recarregar treino encerrado
     try {
       localStorage.removeItem(`workout_start_${user.id}`);
@@ -1320,7 +1437,7 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
     const now = new Date();
 
     const mappedExercises = (activeWorkout.exercises || []).map(ex => {
-      const saved = carregarCarga(ex.id || '', ex.name);
+      const saved = carregarCarga(ex.id || '', ex.name, user.id, user);
       const finalLoad = ex.load || saved || lastLoads[ex.name] || '';
       return {
         ...ex,
@@ -1976,6 +2093,8 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
               progress={progress} 
               currentReps={currentReps}
               currentMethod={currentMethod}
+              userId={user.id}
+              user={user}
               onToggleFinish={(id) => setExerciseProgress(p => ({ ...p, [id]: { ...p[id], isFinished: !p[id].isFinished } }))}
               onMarkSet={(id, sIdx, rest) => {
                  setExerciseProgress(p => {
@@ -2001,9 +2120,16 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                 
                 // Update local state first
                 setActiveWorkout({ ...activeWorkout, exercises: updatedExercises });
+                salvarCarga(id, val, ex.name, user.id);
                 
                 if (!skipSave) {
-                  // Save to cloud - updating both the workout and the analytics for persistent "last load"
+                  const norm = ex.name.toLowerCase().trim();
+                  const updatedCargas = {
+                    ...(user.cargas || {}),
+                    [norm]: val,
+                    ...(id ? { [id]: val } : {})
+                  };
+
                   const analyticsUpdate = {
                     exercises: {
                       ...(user.analytics?.exercises || {}),
@@ -2015,14 +2141,31 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
                     }
                   };
 
-                  await onSave(user.id, { 
-                    workouts: updatedWorkouts,
-                    analytics: {
-                      ...(user.analytics || {}),
-                      ...analyticsUpdate
-                    }
-                  });
-                  // REMOVED: alert('Carga salva com sucesso!');
+                  // Salva direto no Firestore para sincronização imediata com todos os aparelhos
+                  try {
+                    const uDocRef = doc(db, 'alunos', user.id);
+                    await setDoc(uDocRef, {
+                      cargas: updatedCargas,
+                      workouts: updatedWorkouts,
+                      analytics: {
+                        ...(user.analytics || {}),
+                        ...analyticsUpdate
+                      }
+                    }, { merge: true });
+                  } catch (e) {
+                    console.warn("Direct load sync error:", e);
+                  }
+
+                  if (onSave) {
+                    await onSave(user.id, { 
+                      workouts: updatedWorkouts,
+                      cargas: updatedCargas,
+                      analytics: {
+                        ...(user.analytics || {}),
+                        ...analyticsUpdate
+                      }
+                    });
+                  }
                 }
               }}
               onUpdateUnit={(id, unit) => {
