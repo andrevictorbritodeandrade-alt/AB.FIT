@@ -283,23 +283,24 @@ export function AnalyticsDashboard({ student, onBack, onToggleMenu }: AnalyticsP
 
   return (
     <div className="p-6 pb-48 animate-in fade-in duration-500 text-white overflow-y-auto h-screen custom-scrollbar text-left bg-transparent relative">
-      <header className="flex items-center gap-4 mb-6 sticky top-0 bg-black/80 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-white/5">
-        <div className="flex items-center gap-3">
+      <header className="flex items-center gap-3 sm:gap-4 mb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
            {onToggleMenu && (
-             <button onClick={onToggleMenu} className="p-2 bg-zinc-900 rounded-full text-zinc-500 hover:text-white transition-colors shadow-lg">
+             <button onClick={onToggleMenu} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer" title="Menu">
                <Menu size={20}/>
              </button>
            )}
            <button 
              onClick={onBack} 
-             className="p-2 bg-zinc-900 rounded-full shadow-lg text-white hover:bg-red-600 transition-colors"
+             className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer"
+             title="Voltar"
            >
-             <ArrowLeft size={20}/>
+             <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
            </button>
+           <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+             <HeaderTitle text="Análise de Dados" />
+           </h2>
         </div>
-        <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">
-          <HeaderTitle text="Análise de Dados" />
-        </h2>
       </header>
 
       {/* FILTROS INTEGRADOS */}

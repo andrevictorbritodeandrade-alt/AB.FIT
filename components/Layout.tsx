@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CloudRain, Sun, RefreshCw, Bell, Dumbbell, Wifi, WifiOff, 
-  Mail, Phone, Loader2, MapPin, MessageCircle, Menu, X, 
+  Mail, Phone, Loader2, MapPin, MessageCircle, Menu, X, ArrowLeft,
   LayoutGrid, Bot, Settings2, User, Layout, Brain, Ruler, 
   Footprints, BarChart3, Info, Cloud, CloudOff, Thermometer, Droplets, AlertTriangle, Smartphone, Headphones
 } from 'lucide-react';
@@ -57,27 +57,83 @@ export function BackgroundCarousel({ images }: { images: string[] }) {
   );
 }
 
-export function HeaderTitle({ text }: { text: string }) {
+export function HeaderTitle({ text, className = "" }: { text: string; className?: string }) {
   if (!text) return null;
   const words = text.trim().split(/\s+/);
   
   if (words.length === 1) {
     const word = words[0];
-    if (word.length <= 2) return <span className="text-red-600 uppercase italic tracking-tighter">{word}</span>;
+    if (word.length <= 2) return <span className={`text-red-500 uppercase italic tracking-tighter drop-shadow-sm ${className}`}>{word}</span>;
     const splitIndex = word.length > 3 ? word.length - 3 : word.length - 2;
     return (
-      <span className="tracking-tighter uppercase italic text-foreground">
+      <span className={`tracking-tighter uppercase italic text-white drop-shadow-sm ${className}`}>
         {word.substring(0, splitIndex)}
-        <span className="text-red-600">{word.substring(splitIndex)}</span>
+        <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">{word.substring(splitIndex)}</span>
       </span>
     );
   }
   
   const lastWord = words.pop();
   return (
-    <span className="tracking-tighter uppercase italic text-foreground">
-      {words.join(' ')} <span className="text-red-600">{lastWord}</span>
+    <span className={`tracking-tighter uppercase italic text-white drop-shadow-sm ${className}`}>
+      {words.join(' ')} <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">{lastWord}</span>
     </span>
+  );
+}
+
+export function StandardScreenHeader({
+  title,
+  onBack,
+  onToggleMenu,
+  rightElement,
+  badgeText,
+  className = ""
+}: {
+  title: string;
+  onBack?: () => void;
+  onToggleMenu?: () => void;
+  rightElement?: React.ReactNode;
+  badgeText?: string;
+  className?: string;
+}) {
+  return (
+    <header className={`flex items-center justify-between mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 gap-3 shadow-sm ${className}`}>
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+        {onToggleMenu && (
+          <button 
+            onClick={onToggleMenu} 
+            className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white hover:bg-zinc-800 transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer"
+            title="Menu"
+          >
+            <Menu size={20}/>
+          </button>
+        )}
+        {onBack && (
+          <button 
+            onClick={onBack} 
+            className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer"
+            title="Voltar"
+          >
+            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white" />
+          </button>
+        )}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+            <HeaderTitle text={title} />
+          </h2>
+          {badgeText && (
+            <span className="hidden sm:inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-red-600/20 text-red-500 border border-red-500/30 shrink-0">
+              {badgeText}
+            </span>
+          )}
+        </div>
+      </div>
+      {rightElement && (
+        <div className="shrink-0 flex items-center gap-2">
+          {rightElement}
+        </div>
+      )}
+    </header>
   );
 }
 

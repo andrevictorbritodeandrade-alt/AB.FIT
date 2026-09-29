@@ -300,11 +300,11 @@ export function StudentWorkoutHistoryView({ student, onBack }: { student: Studen
 
   return (
     <div className="p-6 pb-48 animate-in fade-in duration-500 text-white overflow-y-auto h-screen custom-scrollbar text-left bg-background transition-colors">
-      <header className="flex items-center gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-border">
-        <button onClick={onBack} className="p-2 bg-card rounded-full hover:bg-red-600 transition-colors shadow-lg">
-          <ArrowLeft size={20}/>
+      <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+        <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+          <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
         </button>
-        <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
+        <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
           <HeaderTitle text={`Histórico: ${student.nome}`} />
         </h2>
       </header>
@@ -431,10 +431,12 @@ export function StudentManagement({ student, runningWorkouts, onBack, onNavigate
 
   return (
     <div className="p-6 text-foreground bg-background h-screen overflow-y-auto custom-scrollbar text-left transition-colors">
-      <header className="flex items-center justify-between mb-8 sticky top-0 bg-background/90 backdrop-blur-md z-40 py-4 -mx-6 px-6 border-b border-border">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 bg-card rounded-full hover:bg-red-600 transition-colors shadow-lg"><ArrowLeft size={20}/></button>
-          <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
+      <header className="flex items-center justify-between mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 gap-3 shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+          </button>
+          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
             <HeaderTitle text={student.nome} />
           </h2>
         </div>
@@ -789,10 +791,12 @@ export function WorkoutEditorView({ student, workoutToEdit, onBack, onSave }: { 
 
   return (
     <div className="p-6 text-foreground bg-background h-screen overflow-y-auto custom-scrollbar text-left transition-colors">
-      <header className="flex items-center justify-between mb-10 sticky top-0 bg-background/90 backdrop-blur-md z-50 py-4 -mx-6 px-6 border-b border-border">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 bg-card rounded-full hover:bg-red-600 transition-colors shadow-lg"><ArrowLeft size={20}/></button>
-          <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
+      <header className="flex items-center justify-between mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-50 py-4 -mx-6 px-6 border-b border-border/80 gap-3 shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+          <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+          </button>
+          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
             <HeaderTitle text="Editor de Treino" />
           </h2>
         </div>
@@ -1025,10 +1029,12 @@ export function PeriodizationView({ student, onBack, onProceedToWorkout, onSave 
 
    return (
     <div className="p-6 text-foreground bg-background h-screen overflow-y-auto custom-scrollbar text-left transition-colors">
-      <header className="flex items-center justify-between mb-10 sticky top-0 bg-background/90 backdrop-blur-md z-50 py-4 -mx-6 px-6 border-b border-border">
-        <div className="flex items-center gap-4">
-           <button onClick={onBack} className="p-2 bg-card rounded-full hover:bg-red-600 transition-colors shadow-lg"><ArrowLeft size={20}/></button>
-           <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
+      <header className="flex items-center justify-between mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-50 py-4 -mx-6 px-6 border-b border-border/80 gap-3 shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+           <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+             <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+           </button>
+           <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
              <HeaderTitle text="Periodização" />
            </h2>
         </div>

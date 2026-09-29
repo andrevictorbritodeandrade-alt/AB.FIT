@@ -166,22 +166,31 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack, userName }) =>
       {/* ========================================================= */}
       {/* BARRA SUPERIOR DE NAVEGAÇÃO (ESTILO SPOTIFY)              */}
       {/* ========================================================= */}
-      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-b border-zinc-800/60 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-b border-border/80 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           {/* Botão de Retorno ao Dashboard ABFIT */}
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 transition-all active:scale-95 shadow-md flex items-center gap-1.5 group cursor-pointer"
+              className="p-2.5 rounded-2xl bg-card/90 border border-border/80 text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 flex items-center gap-1 group cursor-pointer"
               title="Voltar ao Painel"
             >
-              <ChevronLeft size={18} className="group-hover:-translate-x-0.5 transition-transform" />
-              <span className="text-[11px] font-black uppercase tracking-widest hidden sm:inline pr-1">Painel ABFIT</span>
+              <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white" />
             </button>
           )}
 
+          {/* Logo / Badge ABFIT MUSIC */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-950/60 shrink-0">
+              <Disc3 size={18} className={`text-white ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+              <span className="text-white">ABFIT </span><span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">MUSIC</span>
+            </h2>
+          </div>
+
           {/* Navegação Interna Spotify (< e >) */}
-          <div className="flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1 pl-2">
             <button
               onClick={() => audioService.setSelectedCategory(null)}
               disabled={!selectedCategory}
@@ -200,19 +209,6 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack, userName }) =>
             >
               <ChevronRight size={18} />
             </button>
-          </div>
-
-          {/* Logo / Badge ABFIT MUSIC */}
-          <div className="flex items-center gap-2 pl-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-950/60">
-              <Disc3 size={18} className={`text-white ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
-            </div>
-            <div className="hidden sm:block">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black italic tracking-widest text-white">ABFIT</span>
-                <span className="text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-red-600/20 text-red-500 border border-red-500/30">MUSIC</span>
-              </div>
-            </div>
           </div>
         </div>
 

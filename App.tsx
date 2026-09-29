@@ -120,11 +120,11 @@ function SettingsView({
 
   return (
     <div className="p-6 pb-48 animate-in fade-in duration-500 text-foreground overflow-y-auto h-screen custom-scrollbar text-left bg-background transition-colors">
-      <header className="flex items-center gap-4 mb-10">
-        <button onClick={onBack} className="p-2 bg-secondary rounded-full shadow-lg text-foreground hover:bg-red-600 transition-colors">
-          <ArrowLeft size={20}/>
+      <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+        <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+          <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
         </button>
-        <h2 className="text-xl font-black italic uppercase tracking-tighter text-foreground">
+        <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
           <HeaderTitle text="Configurações ABFIT" />
         </h2>
       </header>

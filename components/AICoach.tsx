@@ -122,18 +122,20 @@ const AICoach: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col h-screen bg-black text-white p-6 pb-32">
-      <header className="flex items-center gap-4 mb-6">
+      <header className="flex items-center gap-3 sm:gap-4 mb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
         {onBack && (
-          <button onClick={onBack} className="p-3 bg-zinc-900 rounded-2xl text-white hover:bg-red-600 transition-colors shadow-lg">
-            <ArrowLeft size={20}/>
+          <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
           </button>
         )}
-        <div className="p-3 bg-red-600 rounded-2xl shadow-lg">
+        <div className="p-2.5 bg-red-600 rounded-2xl shadow-lg shrink-0">
           <BrainCircuit className="text-white" size={24} />
         </div>
-        <div>
-          <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">ABFIT AI</h2>
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Consultoria Mestre em Biomecânica</p>
+        <div className="min-w-0">
+          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md leading-none truncate">
+            ABFIT <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">AI</span>
+          </h2>
+          <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">Consultoria Mestre em Biomecânica</p>
         </div>
       </header>
 
