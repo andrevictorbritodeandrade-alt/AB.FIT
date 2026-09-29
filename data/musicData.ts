@@ -85,6 +85,11 @@ export const musicCategories: MusicCategory[] = [
     color: '#dc2626',
     gradient: 'from-red-600 to-amber-600',
     songs: [
+      { id: 'xCiGezUDTng', title: 'Pagodão Baiano - Lançamento Especial', artist: 'Pagodão Baiano' },
+      { id: '1MW587oGfQM', title: 'Pagodão Baiano - Hit Atualizado 2026', artist: 'Pagodão Baiano' },
+      { id: 'KcWCDUx-glM', title: 'Pagodão Baiano - Nova Faixa Destaque', artist: 'Pagodão Baiano' },
+      { id: 'RDDthf16tWU1w', title: 'Pagodão Baiano - Playlist Oficial 2026', artist: 'Pagodão Baiano' },
+      { id: 'AqoWP9jR1xk', title: 'Pagodão Baiano - Faixa Especial / Lançamento', artist: 'Pagodão Baiano' },
       { id: 'T7RsHot9MBU', title: 'Léo Santana - Promo Outubro 2026 (Repertório Atualizado)', artist: 'Léo Santana' },
       { id: 'AljJx6atPDg', title: 'Igor Kannário Ao Vivão - Copa Vela 2026', artist: 'Igor Kannário' },
       { id: '4iFfuyOUM1Q', title: 'Tony Salles Ao Vivo - Repertório Atualizado', artist: 'Tony Salles' },

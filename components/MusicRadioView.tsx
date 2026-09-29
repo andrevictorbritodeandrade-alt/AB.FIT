@@ -27,8 +27,8 @@ const RADIO_CHANNELS: RadioChannel[] = [
         id: 'pagodao-baiano',
         name: 'Pagodão Baiano 2026',
         genre: 'Pagodão & Swingueira',
-        description: 'Batuque pesado, coreografias e energia lá em cima para o seu treino.',
-        videoId: '7ytgueWKpbY',
+        description: 'Batuque pesado, coreografias e energia lá em cima para o seu treino (Playlist oficial).',
+        videoId: 'RDDthf16tWU1w',
         bgGradient: 'from-amber-600 via-orange-900 to-black',
         icon: '🔥',
         tag: 'MAIS OUVIDO'
@@ -222,7 +222,10 @@ export function MusicRadioView({ onBack, onToggleMenu }: { onBack: () => void, o
                 {isPlaying && (
                     <div className="mt-6 w-full h-24 bg-black/80 rounded-2xl overflow-hidden border border-zinc-800 relative flex items-center justify-center">
                         <iframe 
-                            src={`https://www.youtube-nocookie.com/embed/${currentVid}?autoplay=1&loop=1&playlist=${currentVid}&controls=1&modestbranding=1&rel=0`} 
+                            src={currentVid.startsWith('RD') || currentVid.startsWith('PL') || currentVid.startsWith('UU')
+                              ? `https://www.youtube-nocookie.com/embed/videoseries?list=${currentVid}&autoplay=1`
+                              : `https://www.youtube-nocookie.com/embed/${currentVid}?autoplay=1&loop=1&playlist=${currentVid}&controls=1&modestbranding=1&rel=0`
+                            } 
                             title={currentName}
                             className="w-full h-full opacity-90"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

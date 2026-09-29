@@ -25,6 +25,22 @@ class YouTubeAudioService {
   private timer: any = null;
   private listeners: Set<StateListener> = new Set();
   private ytPlayer: any = null;
+  private wakeLock: any = null;
+
+  private async requestWakeLock() {
+    if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+      try {
+        if (!this.wakeLock) {
+          this.wakeLock = await (navigator as any).wakeLock.request('screen');
+          this.wakeLock.addEventListener('release', () => {
+            this.wakeLock = null;
+          });
+        }
+      } catch (err) {
+        console.warn('[ABFIT Music] Wake Lock error:', err);
+      }
+    }
+  }
 
   private state: AudioPlayerState = {
     currentSong: musicCategories[0]?.songs[0] || null,
@@ -298,6 +314,20 @@ class YouTubeAudioService {
       }
       
       navigator.mediaSession.playbackState = this.state.isPlaying ? 'playing' : 'paused';
+
+      if ('setPositionState' in navigator.mediaSession && this.state.duration > 0) {
+        try {
+          (navigator.mediaSession as any).setPositionState({
+            duration: this.state.duration,
+            playbackRate: 1,
+            position: Math.min(this.state.currentTime, this.state.duration)
+          });
+        } catch (e) {}
+      }
+    }
+
+    if (this.state.isPlaying) {
+      this.requestWakeLock();
     }
     
     this.notify();
@@ -309,10 +339,20 @@ class YouTubeAudioService {
 
   private setupMediaSession() {
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
-      navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
-      navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
-      navigator.mediaSession.setActionHandler('previoustrack', () => this.handlePrevious());
-      navigator.mediaSession.setActionHandler('nexttrack', () => this.handleNext());
+      try {
+        navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
+        navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
+        navigator.mediaSession.setActionHandler('previoustrack', () => this.handlePrevious());
+        navigator.mediaSession.setActionHandler('nexttrack', () => this.handleNext());
+        navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+          const skipTime = details.seekOffset || 10;
+          this.seekTo(Math.max(0, this.state.currentTime - skipTime));
+        });
+        navigator.mediaSession.setActionHandler('seekforward', (details) => {
+          const skipTime = details.seekOffset || 10;
+          this.seekTo(Math.min(this.state.duration, this.state.currentTime + skipTime));
+        });
+      } catch (e) {}
     }
   }
 
