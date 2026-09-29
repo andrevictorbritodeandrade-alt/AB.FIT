@@ -63,20 +63,20 @@ export function HeaderTitle({ text, className = "" }: { text: string; className?
   
   if (words.length === 1) {
     const word = words[0];
-    if (word.length <= 2) return <span className={`text-red-500 uppercase italic tracking-tighter drop-shadow-sm ${className}`}>{word}</span>;
+    if (word.length <= 2) return <span className={`text-red-500 uppercase italic tracking-tight ${className}`}>{word}</span>;
     const splitIndex = word.length > 3 ? word.length - 3 : word.length - 2;
     return (
-      <span className={`tracking-tighter uppercase italic text-white drop-shadow-sm ${className}`}>
+      <span className={`tracking-tight uppercase italic text-zinc-200 ${className}`}>
         {word.substring(0, splitIndex)}
-        <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">{word.substring(splitIndex)}</span>
+        <span className="text-red-500">{word.substring(splitIndex)}</span>
       </span>
     );
   }
   
   const lastWord = words.pop();
   return (
-    <span className={`tracking-tighter uppercase italic text-white drop-shadow-sm ${className}`}>
-      {words.join(' ')} <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">{lastWord}</span>
+    <span className={`tracking-tight uppercase italic text-zinc-200 ${className}`}>
+      {words.join(' ')} <span className="text-red-500">{lastWord}</span>
     </span>
   );
 }
@@ -97,12 +97,12 @@ export function StandardScreenHeader({
   className?: string;
 }) {
   return (
-    <header className={`flex items-center justify-between mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 gap-3 shadow-sm ${className}`}>
+    <header className={`flex items-center justify-between mb-8 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 gap-3 shadow-sm ${className}`}>
       <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
         {onToggleMenu && (
           <button 
             onClick={onToggleMenu} 
-            className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white hover:bg-zinc-800 transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer"
+            className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 cursor-pointer"
             title="Menu"
           >
             <Menu size={20}/>
@@ -111,18 +111,18 @@ export function StandardScreenHeader({
         {onBack && (
           <button 
             onClick={onBack} 
-            className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer"
+            className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer"
             title="Voltar"
           >
-            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white" />
+            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white" />
           </button>
         )}
         <div className="flex items-center gap-2.5 min-w-0">
-          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+          <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
             <HeaderTitle text={title} />
           </h2>
           {badgeText && (
-            <span className="hidden sm:inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-red-600/20 text-red-500 border border-red-500/30 shrink-0">
+            <span className="hidden sm:inline-block text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700/50 shrink-0">
               {badgeText}
             </span>
           )}

@@ -166,26 +166,26 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = ({ onBack, userName }) =>
       {/* ========================================================= */}
       {/* BARRA SUPERIOR DE NAVEGAÇÃO (ESTILO SPOTIFY)              */}
       {/* ========================================================= */}
-      <header className="sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-b border-border/80 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4 shadow-sm">
+      <header className="sticky top-0 z-40 bg-zinc-900/80 backdrop-blur-xl border-b border-zinc-700/30 px-4 md:px-8 py-3.5 flex items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0">
           {/* Botão de Retorno ao Dashboard ABFIT */}
           {onBack && (
             <button
               onClick={onBack}
-              className="p-2.5 rounded-2xl bg-card/90 border border-border/80 text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 flex items-center gap-1 group cursor-pointer"
+              className="p-2.5 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 flex items-center gap-1 group cursor-pointer"
               title="Voltar ao Painel"
             >
-              <ChevronLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white" />
+              <ChevronLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white" />
             </button>
           )}
 
           {/* Logo / Badge ABFIT MUSIC */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-lg shadow-red-950/60 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-md shadow-red-950/60 shrink-0">
               <Disc3 size={18} className={`text-white ${isPlaying ? 'animate-spin' : ''}`} style={{ animationDuration: '4s' }} />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
-              <span className="text-white">ABFIT </span><span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">MUSIC</span>
+            <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
+              <span className="text-zinc-200">ABFIT </span><span className="text-red-500">MUSIC</span>
             </h2>
           </div>
 

@@ -190,15 +190,15 @@ export function BioimpedanceView({ assessment, allAssessments = [], onBack }: { 
   return (
     <div className="fixed inset-0 z-50 bg-black text-white overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Header */}
-      <div className="sticky top-0 bg-black/90 backdrop-blur-md z-40 border-b border-zinc-800 p-4">
+      <div className="sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 border-b border-zinc-700/30 p-4">
         <div className="flex items-center justify-between mb-4 gap-3">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <button onClick={onBack} className="w-11 h-11 bg-card/90 border border-border/80 hover:bg-red-600 hover:border-red-500 rounded-2xl flex items-center justify-center transition-all shadow-xl active:scale-95 shrink-0 group cursor-pointer" title="Fechar">
-              <X size={20} className="text-white" />
+            <button onClick={onBack} className="w-10 h-10 bg-zinc-800/80 border border-zinc-700/50 hover:bg-zinc-700 rounded-2xl flex items-center justify-center transition-all shadow-md active:scale-95 shrink-0 group cursor-pointer" title="Fechar">
+              <X size={18} className="text-zinc-300 group-hover:text-white" />
             </button>
             <div className="flex flex-col min-w-0">
-              <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md leading-none truncate">
-                AVALIAÇÃO <span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">FÍSICA</span>
+              <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 leading-none truncate">
+                AVALIAÇÃO <span className="text-red-500">FÍSICA</span>
               </h2>
               <span className="text-[10px] text-zinc-400 font-black uppercase tracking-[0.2em] mt-1">Bioimpedância</span>
             </div>

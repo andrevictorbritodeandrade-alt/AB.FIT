@@ -327,17 +327,17 @@ export function CorreRJView({ onBack }: { onBack: () => void }) {
       {/* BACKGROUND CARROSSEL */}
 
       <div className="relative z-10 pb-20 h-screen overflow-y-auto custom-scrollbar">
-        <header className="sticky top-0 z-50 glass-header border-b border-border/80 px-4 py-5 shadow-sm bg-background/90 backdrop-blur-xl">
+        <header className="sticky top-0 z-50 glass-header border-b border-zinc-700/30 px-4 py-4 shadow-sm bg-zinc-900/80 backdrop-blur-xl">
           <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-              <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-                 <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white" />
+              <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+                 <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white" />
               </button>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-poppins font-black italic tracking-tighter uppercase leading-none text-white drop-shadow-md">
-                  CORRE<span className="text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.4)]">RJ</span>
+                <h1 className="text-xl sm:text-2xl font-poppins font-black italic tracking-tight uppercase leading-none text-zinc-200">
+                  CORRE<span className="text-red-500">RJ</span>
                 </h1>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Calendário 2026</p>
+                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Calendário 2026</p>
               </div>
             </div>
             <Bell size={20} className="opacity-30 text-white shrink-0" />

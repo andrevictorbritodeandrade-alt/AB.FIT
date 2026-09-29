@@ -1239,11 +1239,11 @@ export function RunTrackCoachView({ student, onBack }: { student: Student, onBac
 
     return (
         <div className="p-6 space-y-8 animate-in fade-in duration-500 text-left h-screen overflow-y-auto custom-scrollbar bg-black">
-            <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-xl py-4 z-50 -mx-6 px-6 border-b border-border/80 shadow-sm">
-                <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-                    <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+            <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-zinc-900/80 backdrop-blur-xl py-3.5 z-50 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
+                <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+                    <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
                 </button>
-                <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+                <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
                   <HeaderTitle text={`ABFIT RUN ${student.nome}`} />
                 </h2>
             </header>
@@ -1706,17 +1706,17 @@ export function RunTrackStudentView({ student, onBack, onSave, onToggleMenu, onN
         <div className={`animate-in fade-in duration-500 text-left h-screen overflow-hidden bg-transparent flex flex-col relative ${isWatch ? 'rounded-full border-2 border-red-600 p-2' : ''}`}>
             {/* STICKY HEADER */}
             {!isWatch && (
-                <header className="p-6 pb-4 border-b border-border/80 bg-background/90 backdrop-blur-xl z-50 shadow-sm">
+                <header className="p-6 pb-4 border-b border-zinc-700/30 bg-zinc-900/80 backdrop-blur-xl z-50 shadow-sm">
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                         {onToggleMenu && (
-                          <button onClick={onToggleMenu} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer" title="Menu">
+                          <button onClick={onToggleMenu} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 cursor-pointer" title="Menu">
                             <Menu size={20}/>
                           </button>
                         )}
-                        <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-                          <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+                        <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+                          <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
                         </button>
-                        <h2 className="text-2xl sm:text-3xl font-black uppercase italic tracking-tighter text-white drop-shadow-md truncate">
+                        <h2 className="text-xl sm:text-2xl font-black uppercase italic tracking-tight text-zinc-200 truncate">
                           <HeaderTitle text="ABFIT RUN" />
                         </h2>
                     </div>

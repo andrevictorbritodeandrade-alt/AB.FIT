@@ -1694,18 +1694,18 @@ export function WorkoutSessionView({ user, onBack, onSave, onFinishWorkout, isCo
 
     return (
       <div className="p-6 pb-48 text-foreground overflow-y-auto h-screen text-left custom-scrollbar bg-transparent animate-in fade-in">
-        <header className="flex items-center justify-between mb-6 sticky top-0 bg-background/90 backdrop-blur-xl py-4 z-40 -mx-6 px-6 border-b border-border gap-3 shadow-sm">
+        <header className="flex items-center justify-between mb-6 sticky top-0 bg-zinc-900/80 backdrop-blur-xl py-3.5 z-40 -mx-6 px-6 border-b border-zinc-700/30 gap-3 shadow-sm">
            <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-              <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl shadow-xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shrink-0 group cursor-pointer" title="Voltar">
-                <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+              <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl shadow-md text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shrink-0 group cursor-pointer" title="Voltar">
+                <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
               </button>
-              <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+              <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
                 <HeaderTitle text="Planilhas de Treino" />
               </h2>
            </div>
-           <div className="bg-card/90 border border-border/80 px-3.5 py-1.5 rounded-full flex items-center gap-2 shrink-0 shadow-md">
+           <div className="bg-zinc-800/70 border border-zinc-700/40 px-3.5 py-1.5 rounded-full flex items-center gap-2 shrink-0 shadow-sm">
               <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
-              <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest italic">Global: {totalCompleted} de {strengthWorkouts.reduce((acc: number, w: any) => acc + (isLiliane ? 32 : (w.projectedSessions || user.activePlan?.targetSets || 18)), 0)}</span>
+              <span className="text-[10px] font-black uppercase text-zinc-400 tracking-widest italic">Global: {totalCompleted} de {strengthWorkouts.reduce((acc: number, w: any) => acc + (isLiliane ? 32 : (w.projectedSessions || user.activePlan?.targetSets || 18)), 0)}</span>
            </div>
         </header>
 
@@ -2552,11 +2552,11 @@ export function StudentAssessmentView({ student, onBack, onSave, onToggleMenu, i
   if (isCreating) {
     return (
       <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-        <header className="flex items-center gap-3 sm:gap-4 mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
-          <button onClick={() => { setIsCreating(false); resetForm(); }} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+        <header className="flex items-center gap-3 sm:gap-4 mb-8 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
+          <button onClick={() => { setIsCreating(false); resetForm(); }} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
           </button>
-          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+          <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
             <HeaderTitle text="Nova Avaliação" />
           </h2>
         </header>
@@ -2986,17 +2986,17 @@ export function StudentAssessmentView({ student, onBack, onSave, onToggleMenu, i
 
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center justify-between gap-3 sm:gap-4 mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+      <header className="flex items-center justify-between gap-3 sm:gap-4 mb-8 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
           {onToggleMenu && (
-            <button onClick={onToggleMenu} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer" title="Menu">
+            <button onClick={onToggleMenu} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 cursor-pointer" title="Menu">
               <Menu size={20}/>
             </button>
           )}
-          <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+          <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
           </button>
-          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+          <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
             <HeaderTitle text="Avaliação Física" />
           </h2>
         </div>
@@ -3317,16 +3317,16 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
     return (
       <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
 
-        <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+        <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
           {onToggleMenu && (
-            <button onClick={onToggleMenu} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer" title="Menu">
+            <button onClick={onToggleMenu} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 cursor-pointer" title="Menu">
               <Menu size={20}/>
             </button>
           )}
-          <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-            <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+          <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+            <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
           </button>
-          <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+          <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
             <HeaderTitle text="Periodização" />
           </h2>
         </header>
@@ -3340,16 +3340,16 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
 
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center gap-3 sm:gap-4 mb-8 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
+      <header className="flex items-center gap-3 sm:gap-4 mb-8 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
         {onToggleMenu && (
-          <button onClick={onToggleMenu} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-muted-foreground hover:text-white transition-all active:scale-95 shadow-lg shrink-0 cursor-pointer" title="Menu">
+          <button onClick={onToggleMenu} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-400 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 cursor-pointer" title="Menu">
             <Menu size={20}/>
           </button>
         )}
-        <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-          <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+        <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+          <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
         </button>
-        <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+        <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
           <HeaderTitle text="Periodização" />
         </h2>
       </header>
@@ -3642,11 +3642,11 @@ export function StudentPeriodizationView({ student, onBack, onToggleMenu }: { st
 export function AboutView({ onBack }: { onBack: () => void }) {
   return (
     <div className="p-6 pb-48 text-white overflow-y-auto h-screen text-left custom-scrollbar bg-transparent relative animate-in fade-in">
-      <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-background/90 backdrop-blur-xl z-40 py-4 -mx-6 px-6 border-b border-border/80 shadow-sm">
-        <button onClick={onBack} className="p-2.5 bg-card/90 border border-border/80 rounded-2xl text-white hover:bg-red-600 hover:border-red-500 transition-all active:scale-95 shadow-xl shrink-0 group cursor-pointer" title="Voltar">
-          <ArrowLeft size={22} className="group-hover:-translate-x-0.5 transition-transform text-white"/>
+      <header className="flex items-center gap-3 sm:gap-4 mb-10 sticky top-0 bg-zinc-900/80 backdrop-blur-xl z-40 py-3.5 -mx-6 px-6 border-b border-zinc-700/30 shadow-sm">
+        <button onClick={onBack} className="p-2.5 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl text-zinc-300 hover:text-white hover:bg-zinc-700 transition-all active:scale-95 shadow-md shrink-0 group cursor-pointer" title="Voltar">
+          <ArrowLeft size={20} className="group-hover:-translate-x-0.5 transition-transform text-zinc-300 group-hover:text-white"/>
         </button>
-        <h2 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tighter text-white drop-shadow-md truncate">
+        <h2 className="text-xl sm:text-2xl font-black italic uppercase tracking-tight text-zinc-200 truncate">
           <HeaderTitle text="Sobre a ABFIT" />
         </h2>
       </header>
