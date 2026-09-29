@@ -174,7 +174,13 @@ function SettingsView({
 }
 
 function LoginScreen({ onLogin, error, students }: { onLogin: (val: string) => void, error: string, students: Student[] }) {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(() => {
+    try {
+      return localStorage.getItem('abfit_last_login_email') || '';
+    } catch {
+      return '';
+    }
+  });
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
@@ -257,15 +263,41 @@ export const applyDynamicPeriodization = (u: Student): Student => {
 };
 
 export default function App() {
-  const [view, setView] = useState('LOGIN');
+  // Helper para restaurar sessão confiável imediatamente na inicialização
+  const initialSession = useMemo(() => {
+    try {
+      const trusted = localStorage.getItem('abfit_trusted_user') || localStorage.getItem('elite_session_v2');
+      if (trusted) {
+        return JSON.parse(trusted);
+      }
+    } catch (e) {
+      console.warn("Erro ao ler sessão confiável:", e);
+    }
+    return null;
+  }, []);
+
+  const [view, setView] = useState<string>(() => {
+    if (initialSession?.isCoach) return initialSession.view || 'PROFESSOR_DASH';
+    if (initialSession?.selectedStudentId || initialSession?.email) return initialSession.view || 'DASHBOARD';
+    return 'LOGIN';
+  });
   const [syncStatus, setSyncStatus] = useState<'synced' | 'syncing' | 'offline'>('synced');
   const [dbError, setDbError] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [isCoach, setIsCoach] = useState(false);
+  const [isCoach, setIsCoach] = useState<boolean>(() => Boolean(initialSession?.isCoach));
   const [students, setStudents] = useState<Student[]>([]);
   const [runningWorkouts, setRunningWorkouts] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(() => {
+    if (initialSession?.cachedStudent) return initialSession.cachedStudent;
+    if (initialSession?.selectedStudentId) {
+      try {
+        const cachedStr = localStorage.getItem(`student_cache_${initialSession.selectedStudentId}`);
+        if (cachedStr) return JSON.parse(cachedStr);
+      } catch (_) {}
+    }
+    return null;
+  });
   const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
   const [globalWorkoutCount, setGlobalWorkoutCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
@@ -329,11 +361,23 @@ export default function App() {
   }, [authReady]);
 
   const resetApp = () => {
+    localStorage.removeItem('abfit_trusted_user');
     localStorage.removeItem('elite_session_v2');
     localStorage.removeItem('theme');
     delete (window as any)._tempStudentId;
     delete (window as any)._tempWorkoutId;
     window.location.reload();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('abfit_trusted_user');
+    localStorage.removeItem('elite_session_v2');
+    delete (window as any)._tempStudentId;
+    delete (window as any)._tempWorkoutId;
+    setSelectedStudent(null);
+    setUser(null);
+    setIsCoach(false);
+    setView('LOGIN');
   };
 
   useEffect(() => {
@@ -363,48 +407,55 @@ export default function App() {
 
   const toggleSidebar = () => setIsSidebarOpen(true);
 
-  // --- 1. CONFIGURAÇÃO DE PERSISTÊNCIA E LOGIN AUTOMÁTICO ---
+  // --- 1. CONFIGURAÇÃO DE PERSISTÊNCIA E LOGIN AUTOMÁTICO (DISPOSITIVO DE CONFIANÇA) ---
   useEffect(() => {
     const restoreSession = async () => {
-        const savedSession = localStorage.getItem('elite_session_v2');
+        const savedSession = localStorage.getItem('abfit_trusted_user') || localStorage.getItem('elite_session_v2');
         if (savedSession) {
             try {
                 const parsed = JSON.parse(savedSession);
-                if (parsed.isCoach !== undefined) {
-                    setIsCoach(parsed.isCoach);
-                    // Restaurar a view se existir
-                    if (parsed.view) setView(parsed.view); 
-                    
-                    // O aluno será selecionado quando os dados do Firestore carregarem
+                if (parsed.isCoach) {
+                    setIsCoach(true);
+                    setView(parsed.view || 'PROFESSOR_DASH');
+                    setRestoredSession(true);
+                } else if (parsed.selectedStudentId || parsed.email) {
+                    setIsCoach(false);
+                    if (parsed.view && parsed.view !== 'LOGIN') {
+                      setView(parsed.view);
+                    } else {
+                      setView('DASHBOARD');
+                    }
                     if (parsed.selectedStudentId) {
-                        // Armazenamos temporariamente para usar no efeito de carga de dados
                         (window as any)._tempStudentId = parsed.selectedStudentId;
                     }
                     if (parsed.selectedWorkoutId) {
                         (window as any)._tempWorkoutId = parsed.selectedWorkoutId;
                     }
+                    if (parsed.cachedStudent) {
+                        setSelectedStudent(prev => prev || parsed.cachedStudent);
+                    }
                     setRestoredSession(true);
                 }
             } catch (e) {
-                console.error("Erro ao restaurar sessão", e);
-                localStorage.removeItem('elite_session_v2');
+                console.error("Erro ao restaurar sessão de confiança", e);
             }
         }
     };
     restoreSession();
   }, []);
 
-  // --- 2. SALVAMENTO AUTOMÁTICO DE ESTADO (VIEW E SELEÇÃO) ---
+  // --- 2. SALVAMENTO AUTOMÁTICO DE ESTADO (DISPOSITIVO DE CONFIANÇA) ---
   useEffect(() => {
-    if (view === 'LOGIN') {
-        localStorage.removeItem('elite_session_v2');
-    } else {
+    if (view !== 'LOGIN' && (isCoach || selectedStudent)) {
         const sessionData = {
             isCoach,
             view,
+            email: selectedStudent?.email,
             selectedStudentId: selectedStudent?.id,
-            selectedWorkoutId: selectedWorkout?.id
+            selectedWorkoutId: selectedWorkout?.id,
+            cachedStudent: selectedStudent
         };
+        localStorage.setItem('abfit_trusted_user', JSON.stringify(sessionData));
         localStorage.setItem('elite_session_v2', JSON.stringify(sessionData));
     }
   }, [view, isCoach, selectedStudent, selectedWorkout]);
@@ -2677,7 +2728,11 @@ export default function App() {
     
     if (cleanVal === "professor") { 
         setIsCoach(true);
-        setView('PROFESSOR_DASH'); 
+        setView('PROFESSOR_DASH');
+        const sessionData = { isCoach: true, view: 'PROFESSOR_DASH' };
+        localStorage.setItem('abfit_trusted_user', JSON.stringify(sessionData));
+        localStorage.setItem('elite_session_v2', JSON.stringify(sessionData));
+        localStorage.setItem('abfit_last_login_email', 'PROFESSOR');
         return; 
     }
     
@@ -2685,7 +2740,18 @@ export default function App() {
     if (student) { 
         setIsCoach(false);
         setSelectedStudent(student); 
-        setView('DASHBOARD'); 
+        setView('DASHBOARD');
+        const sessionData = { 
+          isCoach: false, 
+          email: student.email, 
+          selectedStudentId: student.id, 
+          view: 'DASHBOARD',
+          cachedStudent: student
+        };
+        localStorage.setItem('abfit_trusted_user', JSON.stringify(sessionData));
+        localStorage.setItem('elite_session_v2', JSON.stringify(sessionData));
+        localStorage.setItem('abfit_last_login_email', student.email);
+        localStorage.setItem(`student_cache_${student.id}`, JSON.stringify(student));
     } else { 
         setLoginError('ATLETA NÃO ENCONTRADO NO BANCO'); 
     }
@@ -3405,7 +3471,7 @@ export default function App() {
                   </div>
                 );
               })}
-              <button onClick={() => { setUser(null); setView('LOGIN'); }} className="w-full mt-4 py-4 bg-zinc-900 border border-zinc-800 rounded-3xl flex flex-row items-center justify-center gap-4 text-zinc-600 hover:text-red-600 transition-all active:scale-95 shadow-xl group">
+              <button onClick={handleLogout} className="w-full mt-4 py-4 bg-zinc-900 border border-zinc-800 rounded-3xl flex flex-row items-center justify-center gap-4 text-zinc-600 hover:text-red-600 transition-all active:scale-95 shadow-xl group">
                 <LogOut size={20} /> <span className="text-[11px] font-black uppercase tracking-[0.3em]">Finalizar Sessão</span>
               </button>
             </div>
@@ -3435,7 +3501,7 @@ export default function App() {
         {view === 'ANALYTICS' && studentForView && <AnalyticsDashboard student={studentForView} onBack={isCoach ? handleBackNavigation : () => setView('DASHBOARD')} onToggleMenu={toggleSidebar} />}
         {view === 'ABOUT_ABFIT' && <AboutView onBack={handleBackNavigation} />}
         
-        {view === 'PROFESSOR_DASH' && <ProfessorDashboard students={allStudentsForCoach} onLogout={() => setView('LOGIN')} onSelect={(s) => { setSelectedStudent(s); setView('STUDENT_MGMT'); }} onToggleMenu={toggleSidebar} onNavigate={setView} />}
+        {view === 'PROFESSOR_DASH' && <ProfessorDashboard students={allStudentsForCoach} onLogout={handleLogout} onSelect={(s) => { setSelectedStudent(s); setView('STUDENT_MGMT'); }} onToggleMenu={toggleSidebar} onNavigate={setView} />}
         {view === 'STUDENT_MGMT' && selectedStudent && <StudentManagement student={selectedStudent} runningWorkouts={runningWorkouts.filter(w => w.studentId === selectedStudent.id)} onBack={() => setView('PROFESSOR_DASH')} onNavigate={setView} onEditWorkout={setSelectedWorkout} onSave={handleSaveData} />}
         {view === 'WORKOUT_EDITOR' && selectedStudent && <WorkoutEditorView student={selectedStudent} workoutToEdit={selectedWorkout} onBack={() => setView('STUDENT_MGMT')} onSave={handleSaveData} />}
         {view === 'COACH_ASSESSMENT' && selectedStudent && <CoachAssessmentView student={selectedStudent} onBack={() => setView('STUDENT_MGMT')} onSave={handleSaveData} />}
