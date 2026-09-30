@@ -133,6 +133,9 @@ export const musicCategories: MusicCategory[] = [
     color: '#f59e0b',
     gradient: 'from-amber-600 to-orange-700',
     songs: [
+      { id: 'bg1sT4ILG0w', title: 'Afrobeats Hit - Destaque 2026', artist: 'Afrobeats' },
+      { id: 'jGflUbPQfW8', title: 'Afrobeats Hit - Seleção Especial', artist: 'Afrobeats' },
+      { id: 'p5OU5xud2Sk', title: 'Afrobeats Hit - Energia Máxima', artist: 'Afrobeats' },
       { id: 'Gqe6BfE1RvI', title: 'Amapiano 2026 Mix 🇿🇦🔥 New & Trending Amapiano Songs', artist: 'Amanda Par' },
       { id: 'O1sU1F6dZNk', title: 'DJ Phaphane - Amapiano To The World (Paris Nights)', artist: 'DJ Phaphane' },
       { id: 'ewLGbGqXdpY', title: 'Afrobeats, Reggae & Caribbean Vibes DJ Set', artist: 'DJ Lonely Star' },
